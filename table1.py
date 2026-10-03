@@ -2,14 +2,16 @@
 
 Paragraph-length summary of the protocol:
   FLORES-200 en/it/de/fr rows are parallel across languages.  For a directed pair
-  a->b, the language-shift vector D is the mean over DEV rows of (emb_a - emb_b);
-  meaning cancels in that difference, leaving the cross-lingual shift.  Retrieval
-  is evaluated on the DEVTEST rows only: the query is emb_a, the 1012 candidate
-  keys are emb_b ("raw"); adding D to every key ("+D") should move each key onto
-  the query side.  Rows are L2-normalized so dot products are cosine similarities,
-  and the rank of query i is 1 + #{keys strictly closer than its exact translation
-  key i}.  This script reports, per pooling mode, the min-max ranges over the 12
-  ordered directions of top-1, MRR and mean rank, before and after adding D.
+  a->b with English on one side, the language-shift vector D is the mean over DEV
+  rows of (emb_a - emb_b); meaning cancels in that difference, leaving the
+  cross-lingual shift.  Retrieval is evaluated on the DEVTEST rows only: the query
+  is emb_a, the 1012 candidate keys are emb_b ("raw"); adding D to every key ("+D")
+  should move each key onto the query side.  Rows are L2-normalized so dot products
+  are cosine similarities, and the rank of query i is 1 + #{keys strictly closer
+  than its exact translation key i}.  This script reports, per pooling mode, the
+  min-max ranges over the THREE foreign-to-English directions
+  (it->en, de->en, fr->en) of top-1, MRR and mean rank, before and after adding
+  D.  All other directions are out of scope.
 
 Usage: python table1.py
 """
@@ -50,9 +52,9 @@ def main():
     with CSV.open(encoding="utf-8-sig", newline="") as f:
         split = np.array([row["split"] for row in csv.DictReader(f)])
     dev, test = split == "dev", split == "devtest"
-    dirs = [(a, b) for a in LANGS for b in LANGS if a != b]
+    dirs = [(a, "en") for a in LANGS if a != "en"]
     print(f"Table 1 - devtest protocol | dev={int(dev.sum())} devtest N={int(test.sum())} "
-          f"| 12 ordered directions | chance rank {(test.sum() + 1) / 2:.1f}")
+          f"| 3 foreign-to-English directions | chance rank {(test.sum() + 1) / 2:.1f}")
 
     result = {}
     for mode in MODES:

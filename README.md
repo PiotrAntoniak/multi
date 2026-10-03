@@ -72,14 +72,14 @@ Data: `flores200_en_it_de_fr.csv` (2009 rows: 997 `dev`, 1012 `devtest`) with co
 
 Printed by `python table1.py`:
 
-**Table 1 - devtest protocol** | dev=997 | devtest N=1012 | 12 ordered directions | chance rank 506.5
+**Table 1 - devtest protocol** | dev=997 | devtest N=1012 | 3 foreign-to-English directions | chance rank 506.5
 
 | mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |
 |---|---|---|---|---|---|---|
-| mean | 27.1-80.8% | 78.8-93.7% | 0.485-0.869 | 0.836-0.961 | 2.1-13.1 | 1.2-6.3 |
-| lead | 7.3-26.5% | 10.5-28.9% | 0.118-0.333 | 0.144-0.354 | 181.2-308.7 | 179.4-316.8 |
-| bos | 2.5-8.9% | 4.4-11.8% | 0.044-0.128 | 0.075-0.173 | 208.4-364.6 | 180.5-330.0 |
-| eos | 1.8-7.5% | 9.1-21.1% | 0.043-0.139 | 0.154-0.289 | 155.7-290.0 | 105.7-194.9 |
+| mean | 38.5-60.6% | 83.9-90.0% | 0.537-0.763 | 0.882-0.931 | 2.1-8.5 | 1.6-4.4 |
+| lead | 7.3-22.6% | 11.1-25.9% | 0.118-0.285 | 0.155-0.325 | 189.7-265.6 | 189.6-267.1 |
+| bos | 2.5-6.2% | 4.4-10.7% | 0.044-0.098 | 0.075-0.150 | 280.0-364.6 | 257.0-330.0 |
+| eos | 2.0-2.5% | 10.0-15.8% | 0.049-0.068 | 0.165-0.230 | 200.4-259.8 | 154.8-190.3 |
 
 Column by column:
 
@@ -88,19 +88,19 @@ Column by column:
 - **MRR** — mean of `1 / rank` over queries.
 - **mean rank** — average rank of the exact translation (random chance is `(1012 + 1) / 2 = 506.5`).
 - **raw vs +D** — before vs after adding the dev-fitted shift `D` to every candidate key.
-- **ranges** — min–max over the **12 ordered directions** (`en->it`, `en->de`, ..., `fr->de`).
+- **ranges** — min–max over the three **foreign-to-English** directions (`it->en`, `de->en`, `fr->en`).
 
 ## What the experiment shows
 
-- **Mean pooling dominates.** After adding `D`, mean pooling reaches **78.8–93.7% top-1** and MRR
-  **0.836–0.961** across all 12 directions, and its mean rank drops to 1.2–6.3. It is the only
-  pooling that produces usable exact-translation retrieval.
+- **Mean pooling dominates.** Raw foreign-to-English retrieval is already 38.5–60.6% top-1; after
+  adding `D` it reaches **83.9–90.0% top-1** with MRR **0.882–0.931** and mean rank **1.6–4.4**
+  (from 2.1–8.5 raw). It is the only pooling that produces usable exact-translation retrieval.
 - **Lead / bos / eos fail.**
   - `bos` position 0 is dominated by the leading special id, whose input embedding is essentially
     untrained: id `128000` has row norm `0.00280` and is the **313th-smallest of all 128,256
     embedding rows**, so the bos vector carries almost no sentence signal.
   - `eos` distances saturate — rows are extremely close to one another regardless of content.
-  - `lead` degenerates; raw retrieval ranks are ~181–309.
+  - `lead` degenerates; raw retrieval ranks are ~190–266.
 - **`D` works and is not trained.** It is a single closed-form vector (`mean(emb_a - emb_b)` over
   997 dev rows), yet adding it improves every mode's metrics, most dramatically for `eos`
   (top-1 1.8–7.5% -> 9.1–21.1%, mean rank 155.7–290.0 -> 105.7–194.9).
