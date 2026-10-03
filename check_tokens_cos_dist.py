@@ -1,7 +1,11 @@
 """Input-embedding norms and per-pooling cosine distance on example pairs."""
+import sys
+
 import torch
 from torch.nn.functional import normalize
 from transformers import AutoModel, AutoTokenizer
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 MODEL = "EuroBERT/EuroBERT-210m"
 LEAD = 128000
