@@ -76,16 +76,14 @@ def main():
         for g, e in zip(exp, EXPECTED[mode]):
             assert abs(g[0] - e[0]) < 0.05 and abs(g[1] - e[1]) < 0.05, f"{mode} {g} != {e}"
 
-    print(f"{'mode':5s} {'top-1 raw':>11s} {'+D':>9s} | {'MRR raw':>9s} {'+D':>9s} | "
-          f"{'mean rank raw':>14s} {'+D':>9s}")
+    print("| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |")
+    print("|---|---|---|---|---|---|---|")
     for mode in MODES:
         c = result[mode]
-        print(f"{mode:5s} {c['top1raw'][0]:5.1f}-{c['top1raw'][1]:4.1f}% "
-              f"{c['top1+D'][0]:5.1f}-{c['top1+D'][1]:4.1f}%  | "
-              f"{c['mrrraw'][0]:.3f}-{c['mrrraw'][1]:.3f} {c['mrr+D'][0]:.3f}-{c['mrr+D'][1]:.3f}  | "
-              f"{c['rankraw'][0]:5.1f}-{c['rankraw'][1]:5.1f} "
-              f"{c['rank+D'][0]:5.1f}-{c['rank+D'][1]:5.1f}")
-    print("verified: all values match the reference table")
+        print(f"| {mode} | {c['top1raw'][0]:.1f}-{c['top1raw'][1]:.1f}% | {c['top1+D'][0]:.1f}-{c['top1+D'][1]:.1f}% "
+              f"| {c['mrrraw'][0]:.3f}-{c['mrrraw'][1]:.3f} | {c['mrr+D'][0]:.3f}-{c['mrr+D'][1]:.3f} "
+              f"| {c['rankraw'][0]:.1f}-{c['rankraw'][1]:.1f} | {c['rank+D'][0]:.1f}-{c['rank+D'][1]:.1f} |")
+    print("\nverified: all values match the reference table")
 
 
 if __name__ == "__main__":
