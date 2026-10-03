@@ -100,8 +100,8 @@ Column by column:
     untrained: id `128000` has row norm `0.00280` and is the **313th-smallest of all 128,256
     embedding rows**, so the bos vector carries almost no sentence signal.
   - `eos` distances saturate — rows are extremely close to one another regardless of content.
-  - `lead` degenerates: the position-0 hidden state is nearly constant across inputs, so raw
-    retrieval ranks are ~181–309.
+  - `lead` degenerates: position-0 hidden states are erratic (some unrelated pairs are nearly
+    identical, others near-orthogonal), so raw retrieval ranks are ~181–309.
 - **`D` works and is not trained.** It is a single closed-form vector (`mean(emb_a - emb_b)` over
   997 dev rows), yet adding it improves every mode's metrics, most dramatically for `eos`
   (top-1 1.8–7.5% -> 9.1–21.1%, mean rank 155.7–290.0 -> 105.7–194.9).
@@ -131,9 +131,10 @@ prepending `128000`) is uninformative.
 | pooling | unrelated | related | behavior |
 |---|---|---|---|
 | `mean` | +0.391 | +0.752 | orders relatedness correctly (related well above unrelated) |
-| `lead` | +0.650 | +0.770 | degenerate — unrelated pairs also score ~+0.99 (`+0.9982`, `+0.9924`), i.e. near-constant vectors |
+| `lead` | +0.650 | +0.770 | erratic — two unrelated pairs score ~+0.99 (`+0.9982`, `+0.9924`) while the third scores `-0.0406`; position 0 does not track relatedness |
 | `bos`  | +0.379 | +0.310 | **inverted** — related pairs score below unrelated |
 | `eos`  | +0.773 | +0.769 | saturated — related and unrelated are indistinguishable |
 
-Only `mean` separates related from unrelated pairs; `bos` is inverted, `lead` is degenerate, and
-`eos` is saturated. This mirrors the Table 1 result.
+Only `mean` separates related from unrelated pairs; `bos` is inverted, `lead` is erratic (unrelated
+inputs can score as high as related ones, or near-orthogonal), and `eos` is saturated. This mirrors
+the Table 1 result.
