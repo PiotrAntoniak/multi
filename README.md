@@ -143,21 +143,23 @@ Optuna trial (TPE, 50 trials, one shared search space) trains on dev+devtest (15
 and scores macro-F1 on `test` (506); the best params are then retrained on all 2009 English rows
 and transferred to it/de/fr — raw and shifted (`emb_L + D_L`, `D_L = mean(emb_en − emb_L)`).
 
-| pooling | English test base → tuned (macro-F1) | it raw → +D | de raw → +D | fr raw → +D |
-|---|---:|---:|---:|---:|
-| **mean** | 0.256 → **0.333** | 0.048 → **0.100** | 0.068 → 0.081 | 0.190 → 0.120 |
-| eos | 0.146 → 0.229 | 0.041 → 0.084 | 0.003 → 0.062 | 0.074 → 0.098 |
-| bos | 0.105 → 0.164 | 0.080 → 0.040 | 0.107 → 0.094 | 0.078 → 0.068 |
-| lead | 0.097 → 0.170 | 0.056 → 0.026 | 0.062 → 0.043 | 0.067 → 0.047 |
+Cells are **subset accuracy / macro-F1**; each transfer cell is `raw → +D` for that language.
 
-(Transfer columns are macro-F1; the subset-accuracy table and per-mode reports are in
-`xgboost_topic_allmodes.md`; script: `xgboost_topic_optuna.py`.)
+| pooling | English test base → tuned | it raw → +D | de raw → +D | fr raw → +D |
+|---|---:|---:|---:|---:|
+| **mean** | 0.672/0.256 → 0.666/0.333 | 0.595/0.048 → 0.634/0.100 | 0.589/0.068 → 0.637/0.081 | 0.642/0.190 → 0.647/0.120 |
+| eos | 0.632/0.146 → 0.615/0.229 | 0.586/0.041 → 0.593/0.084 | 0.572/0.003 → 0.594/0.062 | 0.525/0.074 → 0.603/0.098 |
+| bos | 0.607/0.105 → 0.597/0.164 | 0.565/0.080 → 0.579/0.040 | 0.578/0.107 → 0.592/0.094 | 0.568/0.078 → 0.577/0.068 |
+| lead | 0.607/0.097 → 0.615/0.170 | 0.583/0.056 → 0.581/0.026 | 0.580/0.062 → 0.593/0.043 | 0.592/0.067 → 0.588/0.047 |
+
+(Full tables and per-mode reports: `xgboost_topic_allmodes.md`; script: `xgboost_topic_optuna.py`.)
 
 Reading: `mean` leads again — best English test score and best raw transfer — and the shift lifts
-it (+0.052 it, +0.013 de, −0.070 fr). The other poolings transfer poorly and the shift is mixed
-for them (only `eos` gains on average). Rare tags (geography, science, safety, health) have very
-few positives, so macro-F1 is noisy and dominated by `travel`/`sports`. Optuna selects on the same
-`test` set it reports (selection-set scores, per protocol).
+it in every language on **subset accuracy** (it 0.595 → 0.634, de 0.589 → 0.637, fr 0.642 → 0.647)
+while macro-F1 is mixed (+0.052 it, +0.013 de, −0.070 fr). The other poolings transfer poorly and
+the shift is mixed for them (only `eos` gains on average). Rare tags (geography, science, safety,
+health) have very few positives, so macro-F1 is noisy and dominated by `travel`/`sports`. Optuna
+selects on the same `test` set it reports (selection-set scores, per protocol).
 
 ## `check_tokens_cos_dist.py`
 
