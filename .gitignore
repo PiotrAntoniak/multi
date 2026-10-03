@@ -12,3 +12,29 @@ pca_abtt.py
 pca_topics.py
 retrieval_full.py
 translation_retrieval.py
+
+# Europarl corpus, samples, embeddings and run files (generated)
+*.tgz
+europarl_it_en/
+europarl_de_en/
+europarl_es_en/
+europarl_fr_en/
+europarl_nl_en/
+europarl_pt_en/
+europarl_it_en.csv
+europarl_*_5k.csv
+europarl_*_embeddings/
+europarl_embeddings/
+europarl_multilang_table1.md
+europarl_*.log
+europarl_*.pid
+europarl_*status*.txt
+europarl_*progress*.json
+
+# XGBoost run files (generated)
+xgboost_allmodes*
+xgboost_*run.log
+
+# launchers
+*.cmd
+*.vbs

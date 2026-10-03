@@ -1,8 +1,9 @@
 # EuroBERT-210m cross-lingual sentence embeddings & exact-translation retrieval
 
-Sentence embeddings of **FLORES-200** (`en`, `it`, `de`, `fr`; 2009 aligned sentences) computed
-with **EuroBERT-210m**, plus an exact-translation retrieval evaluation and a token/cosine
-diagnostic.
+Sentence embeddings of **FLORES-200** (`en`, `it`, `de`, `fr`; 2009 aligned sentences) and of
+**Europarl v7** (five languages against English: de, es, fr, nl, pt; 5,000 pairs each) computed
+with **EuroBERT-210m**, plus exact-translation retrieval evaluations (foreign-to-English) and a
+token/cosine diagnostic.
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading
 special token. We therefore materialize **four pooling modes** over the last hidden state:
@@ -57,7 +58,9 @@ rank-1 misses visible in the tables.
 ```bash
 pip install -r requirements.txt
 python extract_embeddings.py      # downloads EuroBERT-210m, writes embeddings/<mode>/emb_<lang>.npy
-python table1.py                  # prints Table 1 (exact-translation retrieval ranges)
+python table1.py                  # prints Table 1 (FLORES foreign-to-English retrieval ranges)
+python fetch_europarl_langs.py    # downloads + extracts the five Europarl pairs (de/es/fr/nl/pt)
+python table1_europarl_multilang.py all   # Europarl: 5k pairs/lang, embed, foreign-to-English table
 python check_tokens_cos_dist.py   # prints input-embedding norms and per-pooling cosine distances
 ```
 
@@ -104,6 +107,27 @@ Column by column:
 - **`D` works and is not trained.** It is a single closed-form vector (`mean(emb_a - emb_b)` over
   997 dev rows), yet adding it improves every mode's metrics, most dramatically for `eos`
   (top-1 1.8–7.5% -> 9.1–21.1%, mean rank 155.7–290.0 -> 105.7–194.9).
+
+## Europarl (parliament corpus) — foreign-to-English
+
+Second corpus: **Europarl v7** (European Parliament proceedings). For each of five pairs against
+English (de, es, fr, nl, pt): 5,000 seeded, deduplicated line-aligned pairs, dev = 1,000 /
+devtest = 4,000; EuroBERT-210m `mean` embeddings; `D` fitted on dev and added to the keys;
+retrieval evaluated **foreign-to-English only** (`xx->en`), 4,000 queries vs 4,000 keys
+(chance rank 2,000.5).
+
+| pair | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |
+|---|---:|---:|---:|---:|---:|---:|
+| de-en | 4.2% | 41.5% | 0.102 | 0.493 | 177.2 | 111.4 |
+| es-en | 23.6% | 66.9% | 0.355 | 0.723 | 62.0 | 60.2 |
+| fr-en | 22.6% | 62.3% | 0.341 | 0.686 | 53.6 | 60.1 |
+| nl-en | 6.0% | 45.9% | 0.167 | 0.531 | 109.9 | 115.1 |
+| pt-en | _running_ | | | | | |
+
+Other poolings stay near chance, as on FLORES (`+D` `xx->en` top-1: lead ~9–12%, bos ~2–3%,
+eos ~3–7%). Reading: the same pattern replicates — `D` is the dominant lever (es 23.6% → 66.9%,
+de 4.2% → 41.5%), Romance pairs (es/fr) transfer far better than Germanic (de/nl), and mean rank
+can tick up slightly with `+D` even while top-1/MRR improve (a few sentences are pushed deep).
 
 ## `check_tokens_cos_dist.py`
 
