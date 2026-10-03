@@ -1,0 +1,14 @@
+__pycache__/
+embeddings/
+runs/
+pca_topics/
+pca_abtt/
+research/
+language_score*.png
+*.npy
+lang_shift.py
+pc1_dims.py
+pca_abtt.py
+pca_topics.py
+retrieval_full.py
+translation_retrieval.py
