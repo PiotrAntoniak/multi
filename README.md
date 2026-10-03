@@ -23,6 +23,35 @@ cosine similarities, and the rank of query `i` is `1 + #{keys strictly closer th
 translation key i}` (rank 1 = nearest). `D` is a single closed-form dev-fitted vector — it is not
 trained by gradient descent.
 
+## The shift vector `D` — derivation
+
+For a parallel sentence `i` (same meaning in every language), model each language's embedding as
+
+```
+emb_a(i) = lang_a + meaning(i) + eps_a(i)
+emb_b(i) = lang_b + meaning(i) + eps_b(i)
+```
+
+where `lang_*` is a sentence-independent language offset and `meaning(i)` is the shared content.
+Taking the paired difference makes the meaning term cancel:
+
+```
+emb_a(i) - emb_b(i) = (lang_a - lang_b) + (eps_a(i) - eps_b(i))
+```
+
+and averaging over the 997 `dev` sentences (the residual noise is approximately zero-mean) leaves
+
+```
+D_ab = (1/997) * sum_i ( emb_a(i) - emb_b(i) )  ~=  lang_a - lang_b
+```
+
+So `D` is a closed-form estimate of the pure language offset: one 768-dimensional vector,
+independent of the sentence, obtained with two means and a subtraction (no gradients, no training).
+At test time, `key_b + D` moves every language-`b` candidate toward the `a` side, which is why the
+"+D" columns should improve on "raw". The `eps` term is also exactly why `D` cannot be perfect: it
+is a single constant offset while the true per-sentence shift fluctuates, leaving the small
+rank-1 misses visible in the tables.
+
 ## Run end-to-end
 
 ```bash
