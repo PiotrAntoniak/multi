@@ -118,18 +118,21 @@ devtest = 4,000; EuroBERT-210m `mean` embeddings; `D` fitted on dev and added to
 retrieval evaluated **foreign-to-English only** (`xx->en`), 4,000 queries vs 4,000 keys
 (chance rank 2,000.5).
 
-| pair | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |
-|---|---:|---:|---:|---:|---:|---:|
-| de-en | 4.2% | 41.5% | 0.102 | 0.493 | 177.2 | 111.4 |
-| es-en | 23.6% | 66.9% | 0.355 | 0.723 | 62.0 | 60.2 |
-| fr-en | 22.6% | 62.3% | 0.341 | 0.686 | 53.6 | 60.1 |
-| nl-en | 6.0% | 45.9% | 0.167 | 0.531 | 109.9 | 115.1 |
-| pt-en | _running_ | | | | | |
+| pair | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D | median rank raw | median rank +D |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| de-en | 4.2% | 41.5% | 0.102 | 0.493 | 177.2 | 111.4 | 54 | 3 |
+| es-en | 23.6% | 66.9% | 0.355 | 0.723 | 62.0 | 60.2 | 6 | 1 |
+| fr-en | 22.6% | 62.3% | 0.341 | 0.686 | 53.6 | 60.1 | 7 | 1 |
+| it-en | 19.6% | 45.6% | 0.304 | 0.527 | 100.2 | 118.4 | 10 | 2 |
+| nl-en | 6.0% | 45.9% | 0.167 | 0.531 | 109.9 | 115.1 | 14 | 2 |
+| pt-en | 21.5% | 50.6% | 0.324 | 0.577 | 98.7 | 101.8 | 8 | 1 |
 
-Other poolings stay near chance, as on FLORES (`+D` `xx->en` top-1: lead ~9–12%, bos ~2–3%,
+Other poolings stay near chance, as on FLORES (`+D` `xx->en` top-1: lead ~7–12%, bos ~1–3%,
 eos ~3–7%). Reading: the same pattern replicates — `D` is the dominant lever (es 23.6% → 66.9%,
-de 4.2% → 41.5%), Romance pairs (es/fr) transfer far better than Germanic (de/nl), and mean rank
-can tick up slightly with `+D` even while top-1/MRR improve (a few sentences are pushed deep).
+de 4.2% → 41.5%), Romance pairs (es/fr/pt/it) transfer better than Germanic (de/nl), and **the
+median rank collapses (6–54 → 1–3)** even where the arithmetic mean rank ticks up — the mean is
+dominated by a small tail of sentences that the constant shift pushes deep, while the typical
+sentence moves to the very front.
 
 ## `check_tokens_cos_dist.py`
 

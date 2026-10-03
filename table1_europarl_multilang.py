@@ -49,7 +49,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent
-LANGS = ["de", "es", "fr", "nl", "pt"]
+LANGS = ["de", "es", "fr", "it", "nl", "pt"]
 DEV_N, TEST_N = 1000, 4000
 SAMPLE_N = DEV_N + TEST_N
 CAP = SAMPLE_N
@@ -367,6 +367,7 @@ def direction_stats(embs, a, b, dev, test):
         out[tag] = {"top1": round(100.0 * float((r <= 1).mean()), 4),
                     "mrr": round(float(np.mean(1.0 / r)), 6),
                     "meanrank": round(float(r.mean()), 4),
+                    "medrank": round(float(np.median(r)), 1),
                     "lo": lo, "hi": hi}
     return out
 
@@ -395,14 +396,15 @@ def print_metrics(name, metrics):
     print(f"\nTable 1 ({name}) per-mode, both directions "
           f"(rank columns min..max over devtest queries):", flush=True)
     print("| mode | direction | top-1 raw | top-1 +D | MRR raw | MRR +D "
-          "| mean rank raw | mean rank +D |", flush=True)
-    print("|---|---|---|---|---|---|---|---|", flush=True)
+          "| mean rank raw | mean rank +D | median rank raw | median rank +D |", flush=True)
+    print("|---|---|---|---|---|---|---|---|---|---|", flush=True)
     for mode in POOLS:
         for d, s in metrics[mode].items():
             print(f"| {mode} | {d} | {s['raw']['top1']:.1f}% "
                   f"| {s['+D']['top1']:.1f}% | {s['raw']['mrr']:.3f} "
                   f"| {s['+D']['mrr']:.3f} | {s['raw']['meanrank']:.1f} "
-                  f"| {s['+D']['meanrank']:.1f} |", flush=True)
+                  f"| {s['+D']['meanrank']:.1f} | {s['raw']['medrank']:.0f} "
+                  f"| {s['+D']['medrank']:.0f} |", flush=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -458,16 +460,19 @@ def write_summary(progress):
         out.append(f"dev={st.get('dev', DEV_N)}, devtest N={st.get('test', TEST_N)}, "
                    f"chance rank {(st.get('test', TEST_N) + 1) / 2:.1f}\n")
         out.append("| mode | direction | top-1 raw | top-1 +D | MRR raw | MRR +D "
-                   "| mean rank raw | mean rank +D |")
-        out.append("|---|---|---|---|---|---|---|---|")
+                   "| mean rank raw | mean rank +D | median rank raw | median rank +D |")
+        out.append("|---|---|---|---|---|---|---|---|---|---|")
         for mode in POOLS:
             for d in (f"en->{xx}", f"{xx}->en"):
                 s = m[mode][d]
+                mr, md = s["raw"].get("medrank"), s["+D"].get("medrank")
+                cell_r = f"{mr:.0f}" if mr is not None else "-"
+                cell_d = f"{md:.0f}" if md is not None else "-"
                 out.append(
                     f"| {mode} | {d} | {s['raw']['top1']:.1f}% "
                     f"| {s['+D']['top1']:.1f}% | {s['raw']['mrr']:.3f} "
                     f"| {s['+D']['mrr']:.3f} | {s['raw']['meanrank']:.1f} "
-                    f"| {s['+D']['meanrank']:.1f} |")
+                    f"| {s['+D']['meanrank']:.1f} | {cell_r} | {cell_d} |")
         out.append("")
     SUMMARY.write_text("\n".join(out) + "\n", encoding="utf-8")
     print(f"[summary] wrote {SUMMARY.name}", flush=True)
@@ -512,12 +517,12 @@ def run_lang(xx, progress, force=False):
     else:
         print(f"[{name}] stage embed: cached", flush=True)
 
-    if force or not st.get("evaluated"):
+    if force or not st.get("evaluated_v2"):
         print(f"[{name}] stage eval", flush=True)
         metrics, ndev, ntest = evaluate(xx, embdir, csv_path)
         st["metrics"] = metrics
         st["dev"], st["test"] = ndev, ntest
-        st["evaluated"] = True
+        st["evaluated_v2"] = True
         save_progress(progress)
         print_metrics(name, metrics)
     else:
