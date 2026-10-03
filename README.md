@@ -77,12 +77,12 @@ Printed by `python table1.py`:
 
 **Table 1 - devtest protocol** | dev=997 | devtest N=1012 | 3 foreign-to-English directions | chance rank 506.5
 
-| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |
-|---|---|---|---|---|---|---|
-| mean | 38.5-60.6% | 83.9-90.0% | 0.537-0.763 | 0.882-0.931 | 2.1-8.5 | 1.6-4.4 |
-| lead | 7.3-22.6% | 11.1-25.9% | 0.118-0.285 | 0.155-0.325 | 189.7-265.6 | 189.6-267.1 |
-| bos | 2.5-6.2% | 4.4-10.7% | 0.044-0.098 | 0.075-0.150 | 280.0-364.6 | 257.0-330.0 |
-| eos | 2.0-2.5% | 10.0-15.8% | 0.049-0.068 | 0.165-0.230 | 200.4-259.8 | 154.8-190.3 |
+| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D | median rank raw | median rank +D |
+|---|---|---|---|---|---|---|---|---|
+| mean | 38.5-60.6% | 83.9-90.0% | 0.537-0.763 | 0.882-0.931 | 2.1-8.5 | 1.6-4.4 | 1-2 | 1-1 |
+| lead | 7.3-22.6% | 11.1-25.9% | 0.118-0.285 | 0.155-0.325 | 189.7-265.6 | 189.6-267.1 | 33-139 | 22-128 |
+| bos | 2.5-6.2% | 4.4-10.7% | 0.044-0.098 | 0.075-0.150 | 280.0-364.6 | 257.0-330.0 | 166-291 | 116-224 |
+| eos | 2.0-2.5% | 10.0-15.8% | 0.049-0.068 | 0.165-0.230 | 200.4-259.8 | 154.8-190.3 | 107-164 | 36-62 |
 
 Column by column:
 
@@ -90,6 +90,8 @@ Column by column:
   of the 1012 candidate keys.
 - **MRR** — mean of `1 / rank` over queries.
 - **mean rank** — average rank of the exact translation (random chance is `(1012 + 1) / 2 = 506.5`).
+- **median rank** — the median rank; robust to the tail, whereas the arithmetic mean is dominated by
+  a few badly misplaced sentences.
 - **raw vs +D** — before vs after adding the dev-fitted shift `D` to every candidate key.
 - **ranges** — min–max over the three **foreign-to-English** directions (`it->en`, `de->en`, `fr->en`).
 

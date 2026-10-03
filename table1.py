@@ -10,8 +10,8 @@ Paragraph-length summary of the protocol:
   are cosine similarities, and the rank of query i is 1 + #{keys strictly closer
   than its exact translation key i}.  This script reports, per pooling mode, the
   min-max ranges over the THREE foreign-to-English directions
-  (it->en, de->en, fr->en) of top-1, MRR and mean rank, before and after adding
-  D.  All other directions are out of scope.
+  (it->en, de->en, fr->en) of top-1, MRR, mean rank and median rank, before and
+  after adding D.  All other directions are out of scope.
 
 Usage: python table1.py
 """
@@ -39,13 +39,14 @@ def ranks(sim):
 
 
 def direction_stats(embs, a, b, dev, test):
-    """Top-1 %, MRR and mean rank for a->b, raw and after adding D."""
+    """Top-1 %, MRR, mean rank and median rank for a->b, raw and after adding D."""
     D = (embs[a][dev] - embs[b][dev]).mean(axis=0)
     E, T, F = l2norm(embs[a][test]), l2norm(embs[b][test]), l2norm(embs[b][test] + D)
     out = []
     for r in (ranks(E @ T.T), ranks(E @ F.T)):
-        out.append((100.0 * (r <= 1).mean(), float(np.mean(1.0 / r)), float(r.mean())))
-    return out  # [raw(top1,mrr,rank), plusd(top1,mrr,rank)]
+        out.append((100.0 * (r <= 1).mean(), float(np.mean(1.0 / r)),
+                    float(r.mean()), float(np.median(r))))
+    return out  # [raw(top1,mrr,meanrank,medrank), plusd(...)]
 
 
 def main():
@@ -65,15 +66,18 @@ def main():
             return min(s[k][m] for s in rows), max(s[k][m] for s in rows)
 
         result[mode] = {"top1raw": span(0, 0), "top1+D": span(1, 0), "mrrraw": span(0, 1),
-                        "mrr+D": span(1, 1), "rankraw": span(0, 2), "rank+D": span(1, 2)}
+                        "mrr+D": span(1, 1), "rankraw": span(0, 2), "rank+D": span(1, 2),
+                        "medraw": span(0, 3), "med+D": span(1, 3)}
 
-    print("| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |")
-    print("|---|---|---|---|---|---|---|")
+    print("| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D "
+          "| median rank raw | median rank +D |")
+    print("|---|---|---|---|---|---|---|---|---|")
     for mode in MODES:
         c = result[mode]
         print(f"| {mode} | {c['top1raw'][0]:.1f}-{c['top1raw'][1]:.1f}% | {c['top1+D'][0]:.1f}-{c['top1+D'][1]:.1f}% "
               f"| {c['mrrraw'][0]:.3f}-{c['mrrraw'][1]:.3f} | {c['mrr+D'][0]:.3f}-{c['mrr+D'][1]:.3f} "
-              f"| {c['rankraw'][0]:.1f}-{c['rankraw'][1]:.1f} | {c['rank+D'][0]:.1f}-{c['rank+D'][1]:.1f} |")
+              f"| {c['rankraw'][0]:.1f}-{c['rankraw'][1]:.1f} | {c['rank+D'][0]:.1f}-{c['rank+D'][1]:.1f} "
+              f"| {c['medraw'][0]:.0f}-{c['medraw'][1]:.0f} | {c['med+D'][0]:.0f}-{c['med+D'][1]:.0f} |")
 
 
 if __name__ == "__main__":
