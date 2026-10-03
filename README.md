@@ -72,7 +72,7 @@ Data: `flores200_en_it_de_fr.csv` (2009 rows: 997 `dev`, 1012 `devtest`) with co
 
 Printed by `python table1.py`:
 
-Table 1 - devtest protocol | dev=997 devtest N=1012 | 12 ordered directions | chance rank 506.5
+**Table 1 - devtest protocol** | dev=997 | devtest N=1012 | 12 ordered directions | chance rank 506.5
 
 | mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |
 |---|---|---|---|---|---|---|
