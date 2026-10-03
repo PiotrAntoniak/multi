@@ -1,9 +1,9 @@
 # EuroBERT-210m cross-lingual sentence embeddings & exact-translation retrieval
 
 Sentence embeddings of **FLORES-200** (`en`, `it`, `de`, `fr`; 2009 aligned sentences) and of
-**Europarl v7** (five languages against English: de, es, fr, nl, pt; 5,000 pairs each) computed
-with **EuroBERT-210m**, plus exact-translation retrieval evaluations (foreign-to-English) and a
-token/cosine diagnostic.
+**Europarl v7** (five languages against English: de, es, fr, it, nl, pt; 5,000 pairs each) computed
+with **EuroBERT-210m**, plus exact-translation retrieval evaluations (foreign-to-English), an
+XGBoost topic-transfer experiment, and a token/cosine diagnostic.
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading
 special token. We therefore materialize **four pooling modes** over the last hidden state:
@@ -61,6 +61,7 @@ python extract_embeddings.py      # downloads EuroBERT-210m, writes embeddings/<
 python table1.py                  # prints Table 1 (FLORES foreign-to-English retrieval ranges)
 python fetch_europarl_langs.py    # downloads + extracts the five Europarl pairs (de/es/fr/nl/pt)
 python table1_europarl_multilang.py all   # Europarl: 5k pairs/lang, embed, foreign-to-English table
+python xgboost_topic_optuna.py --mode all --trials 50   # topic classifier: Optuna tuning + transfer
 python check_tokens_cos_dist.py   # prints input-embedding norms and per-pooling cosine distances
 ```
 
@@ -133,6 +134,30 @@ de 4.2% → 41.5%), Romance pairs (es/fr/pt/it) transfer better than Germanic (d
 median rank collapses (6–54 → 1–3)** even where the arithmetic mean rank ticks up — the mean is
 dominated by a small tail of sentences that the constant shift pushes deep, while the typical
 sentence moves to the very front.
+
+## XGBoost topic classifier — English training, cross-lingual transfer
+
+Multi-label XGBoost over the 8 canonical topic tags, with the pooling embeddings as features.
+Split: dev 997 / devtest 506 / test 506 (seed-0 shuffled halves of the original devtest). Every
+Optuna trial (TPE, 50 trials, one shared search space) trains on dev+devtest (1503 English rows)
+and scores macro-F1 on `test` (506); the best params are then retrained on all 2009 English rows
+and transferred to it/de/fr — raw and shifted (`emb_L + D_L`, `D_L = mean(emb_en − emb_L)`).
+
+| pooling | English test base → tuned (macro-F1) | it raw → +D | de raw → +D | fr raw → +D |
+|---|---:|---:|---:|---:|
+| **mean** | 0.256 → **0.333** | 0.048 → **0.100** | 0.068 → 0.081 | 0.190 → 0.120 |
+| eos | 0.146 → 0.229 | 0.041 → 0.084 | 0.003 → 0.062 | 0.074 → 0.098 |
+| bos | 0.105 → 0.164 | 0.080 → 0.040 | 0.107 → 0.094 | 0.078 → 0.068 |
+| lead | 0.097 → 0.170 | 0.056 → 0.026 | 0.062 → 0.043 | 0.067 → 0.047 |
+
+(Transfer columns are macro-F1; the subset-accuracy table and per-mode reports are in
+`xgboost_topic_allmodes.md`; script: `xgboost_topic_optuna.py`.)
+
+Reading: `mean` leads again — best English test score and best raw transfer — and the shift lifts
+it (+0.052 it, +0.013 de, −0.070 fr). The other poolings transfer poorly and the shift is mixed
+for them (only `eos` gains on average). Rare tags (geography, science, safety, health) have very
+few positives, so macro-F1 is noisy and dominated by `travel`/`sports`. Optuna selects on the same
+`test` set it reports (selection-set scores, per protocol).
 
 ## `check_tokens_cos_dist.py`
 
