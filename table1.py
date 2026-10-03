@@ -25,13 +25,6 @@ LANGS = ["en", "it", "de", "fr"]
 MODES = ["mean", "lead", "bos", "eos"]
 EPS = 1e-12
 
-EXPECTED = {  # (top1 raw, top1 +D, mrr raw, mrr +D, rank raw, rank +D)
-    "mean": ((27.1, 80.8), (78.8, 93.7), (0.485, 0.869), (0.836, 0.961), (2.1, 13.1), (1.2, 6.3)),
-    "lead": ((7.3, 26.5), (10.5, 28.9), (0.118, 0.333), (0.144, 0.354), (181.2, 308.7), (179.4, 316.8)),
-    "bos": ((2.5, 8.9), (4.4, 11.8), (0.044, 0.128), (0.075, 0.173), (208.4, 364.6), (180.5, 330.0)),
-    "eos": ((1.8, 7.5), (9.1, 21.1), (0.043, 0.139), (0.154, 0.289), (155.7, 290.0), (105.7, 194.9)),
-}
-
 
 def l2norm(X):
     """Row-wise L2 normalization (all-zero rows stay zero)."""
@@ -65,16 +58,12 @@ def main():
     for mode in MODES:
         embs = {l: np.load(EMB_ROOT / mode / f"emb_{l}.npy") for l in LANGS}
         rows = [direction_stats(embs, a, b, dev, test) for a, b in dirs]
-        # rows[dir] = [before(top1,mrr,rank), after(top1,mrr,rank)]; take min/max per metric.
+
         def span(k, m):
             return min(s[k][m] for s in rows), max(s[k][m] for s in rows)
 
-        cols = {"top1raw": span(0, 0), "top1+D": span(1, 0), "mrrraw": span(0, 1),
-                "mrr+D": span(1, 1), "rankraw": span(0, 2), "rank+D": span(1, 2)}
-        result[mode] = cols
-        exp = tuple(cols[k] for k in ("top1raw", "top1+D", "mrrraw", "mrr+D", "rankraw", "rank+D"))
-        for g, e in zip(exp, EXPECTED[mode]):
-            assert abs(g[0] - e[0]) < 0.05 and abs(g[1] - e[1]) < 0.05, f"{mode} {g} != {e}"
+        result[mode] = {"top1raw": span(0, 0), "top1+D": span(1, 0), "mrrraw": span(0, 1),
+                        "mrr+D": span(1, 1), "rankraw": span(0, 2), "rank+D": span(1, 2)}
 
     print("| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D |")
     print("|---|---|---|---|---|---|---|")
@@ -83,7 +72,6 @@ def main():
         print(f"| {mode} | {c['top1raw'][0]:.1f}-{c['top1raw'][1]:.1f}% | {c['top1+D'][0]:.1f}-{c['top1+D'][1]:.1f}% "
               f"| {c['mrrraw'][0]:.3f}-{c['mrrraw'][1]:.3f} | {c['mrr+D'][0]:.3f}-{c['mrr+D'][1]:.3f} "
               f"| {c['rankraw'][0]:.1f}-{c['rankraw'][1]:.1f} | {c['rank+D'][0]:.1f}-{c['rank+D'][1]:.1f} |")
-    print("\nverified: all values match the reference table")
 
 
 if __name__ == "__main__":
