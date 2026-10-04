@@ -209,7 +209,7 @@ cell is `raw → +D` for that language.
 | bos | 0.607/0.105 → 0.597/0.164 | 0.565/0.080 → 0.579/0.040 | 0.578/0.107 → 0.592/0.094 | 0.568/0.078 → 0.577/0.068 |
 | lead | 0.607/0.097 → 0.615/0.170 | 0.583/0.056 → 0.581/0.026 | 0.580/0.062 → 0.593/0.043 | 0.592/0.067 → 0.588/0.047 |
 
-(Full tables and per-mode reports: `xgboost_topic_allmodes.md`; script: `xgboost_topic_optuna.py`.)
+(The full strict-label per-mode reports were generated as untracked artifacts and are no longer in the repo; the inline table above carries their numbers. Script: `xgboost_topic_optuna.py`.)
 
 Strict-label reading: `mean` leads again — best English test score and best raw transfer — and the
 shift lifts it in every language on **subset accuracy** (it 0.595 → 0.634, de 0.589 → 0.637,

@@ -32,6 +32,8 @@ europarl_*progress*.json
 xgboost_allmodes*
 xgboost_*run.log
 predictions_*.csv
+xgboost_optuna_trials_*.csv
+xgboost_perlang_lenient_trials_*.csv
 
 # launchers
 *.cmd
