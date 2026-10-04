@@ -1,4 +1,4 @@
-"""Input-embedding norms and per-pooling cosine distance on example pairs."""
+"""Input-embedding norms and per-pooling cosine similarity on example pairs."""
 import sys
 
 import torch
