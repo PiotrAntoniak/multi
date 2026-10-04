@@ -15,8 +15,9 @@ protocol (dev-fitted language-shift vector D) on the Europarl v7 xx-en corpus:
            bos); `.float()` right after each forward.  Saves
            `europarl_{xx}_en_5k_embeddings/<mode>/emb_{xx,en}.npy`, float32
            (5000, 768), finite-checked.
-  table  : D = mean over dev of (emb_a - emb_b); directions en->xx and xx->en;
-           all 4,000 devtest queries vs all 4,000 keys; per-mode markdown table
+  table  : D = mean over dev of (emb_xx - emb_en); direction xx->en ONLY
+           (foreign-to-English, the same convention as FLORES); all 4,000
+           devtest queries vs all 4,000 keys; per-mode markdown table
            (raw -> +D; top-1 / MRR / mean rank).  Regenerates the combined
            `europarl_multilang_table1.md` after each language, including one
            summary line per language (mean-mode +D top-1).
@@ -382,7 +383,6 @@ def evaluate_from(csv_path, embdir, col):
         embs = {"en": np.load(Path(embdir) / mode / "emb_en.npy"),
                 col: np.load(Path(embdir) / mode / f"emb_{col}.npy")}
         metrics[mode] = {
-            f"en->{col}": direction_stats(embs, "en", col, dev, test),
             f"{col}->en": direction_stats(embs, col, "en", dev, test),
         }
     return metrics, int(len(dev)), int(len(test))
@@ -393,7 +393,7 @@ def evaluate(xx, embdir, csv_path):
 
 
 def print_metrics(name, metrics):
-    print(f"\nTable 1 ({name}) per-mode, both directions "
+    print(f"\nTable 1 ({name}) per-mode, foreign->English (xx->en) only "
           f"(rank columns min..max over devtest queries):", flush=True)
     print("| mode | direction | top-1 raw | top-1 +D | MRR raw | MRR +D "
           "| mean rank raw | mean rank +D | median rank raw | median rank +D |", flush=True)
@@ -421,22 +421,20 @@ def write_summary(progress):
         f"(chance rank {(TEST_N + 1) / 2:.1f}); EuroBERT-210m fp32; "
         f"`D = mean_dev(emb_a - emb_b)` fitted on dev and added to the key side "
         f"(`+D` columns). Regenerated as each language finishes.\n")
-    out.append("## Summary - mean pooling, +D top-1\n")
-    out.append("| pair | en->xx top-1 raw | en->xx top-1 +D | xx->en top-1 raw "
-               "| xx->en top-1 +D | en->xx MRR +D | xx->en MRR +D | status |")
-    out.append("|---|---|---|---|---|---|---|---|")
+    out.append("## Summary - mean pooling, xx->en (foreign->English) +D top-1\n")
+    out.append("| pair | xx->en top-1 raw | xx->en top-1 +D | xx->en MRR raw "
+               "| xx->en MRR +D | status |")
+    out.append("|---|---|---|---|---|---|")
     for xx in LANGS:
         st = progress.get(xx, {})
         m = st.get("metrics")
         if not m:
-            out.append(f"| {xx}-en | - | - | - | - | - | - | pending |")
+            out.append(f"| {xx}-en | - | - | - | - | pending |")
             continue
-        a = m["mean"][f"en->{xx}"]
         b = m["mean"][f"{xx}->en"]
         out.append(
-            f"| {xx}-en | {a['raw']['top1']:.1f}% | {a['+D']['top1']:.1f}% "
-            f"| {b['raw']['top1']:.1f}% | {b['+D']['top1']:.1f}% "
-            f"| {a['+D']['mrr']:.3f} | {b['+D']['mrr']:.3f} | done |")
+            f"| {xx}-en | {b['raw']['top1']:.1f}% | {b['+D']['top1']:.1f}% "
+            f"| {b['raw']['mrr']:.3f} | {b['+D']['mrr']:.3f} | done |")
     out.append("\n## Per-language summary (mean-mode +D top-1)\n")
     for xx in LANGS:
         st = progress.get(xx, {})
@@ -444,11 +442,9 @@ def write_summary(progress):
         if not m:
             out.append(f"- **{xx}-en**: _pending_")
             continue
-        a = m["mean"][f"en->{xx}"]
         b = m["mean"][f"{xx}->en"]
-        out.append(f"- **{xx}-en**: en->{xx} {a['+D']['top1']:.1f}% "
-                   f"(MRR {a['+D']['mrr']:.3f}) | {xx}->en "
-                   f"{b['+D']['top1']:.1f}% (MRR {b['+D']['mrr']:.3f})")
+        out.append(f"- **{xx}-en**: {xx}->en {b['+D']['top1']:.1f}% "
+                   f"(MRR {b['+D']['mrr']:.3f})")
     out.append("\n## Per-language detail (all modes, raw -> +D)\n")
     for xx in LANGS:
         st = progress.get(xx, {})
@@ -463,7 +459,7 @@ def write_summary(progress):
                    "| mean rank raw | mean rank +D | median rank raw | median rank +D |")
         out.append("|---|---|---|---|---|---|---|---|---|---|")
         for mode in POOLS:
-            for d in (f"en->{xx}", f"{xx}->en"):
+            for d in (f"{xx}->en",):
                 s = m[mode][d]
                 mr, md = s["raw"].get("medrank"), s["+D"].get("medrank")
                 cell_r = f"{mr:.0f}" if mr is not None else "-"
@@ -534,7 +530,6 @@ def run_lang(xx, progress, force=False):
 # smoke test (no model): reproduce the legacy it-en 4k numbers
 # --------------------------------------------------------------------------- #
 KNOWN = {
-    "en->it": {"raw": (19.2, 0.363), "+D": (71.0, 0.762)},
     "it->en": {"raw": (9.8, 0.277), "+D": (50.0, 0.574)},
 }
 

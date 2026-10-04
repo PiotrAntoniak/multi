@@ -6,12 +6,9 @@ pca_abtt/
 research/
 language_score*.png
 *.npy
-lang_shift.py
-pc1_dims.py
-pca_abtt.py
-pca_topics.py
-retrieval_full.py
-translation_retrieval.py
+*.log
+*.pid
+*_status.json
 
 # Europarl corpus, samples, embeddings and run files (generated)
 *.tgz
@@ -34,6 +31,7 @@ europarl_*progress*.json
 # XGBoost run files (generated)
 xgboost_allmodes*
 xgboost_*run.log
+predictions_*.csv
 
 # launchers
 *.cmd
