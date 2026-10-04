@@ -8,9 +8,14 @@ For each target language xx:
      https://object.pouta.csc.fi/OPUS-Europarl/v7/moses/{xx}-en.txt.zip
      (saved as `europarl_{xx}_en.txt.zip`);
   3. extract into `europarl_{xx}_en/`;
-  4. locate the xx-side and en-side plain-text files by filename suffix and
-     verify the two files are LINE-ALIGNED: equal line counts (streamed in
-     lockstep) and an identical empty/non-empty pattern on every line.
+   4. locate the xx-side and en-side plain-text files by filename suffix and
+      verify the two files are LINE-ALIGNED: equal line counts (streamed in
+      lockstep) and an identical empty/non-empty pattern on every line.
+
+After a fully successful run it also (re)writes the combined
+`europarl_all_5k.csv` from the six per-language sampled CSVs written by
+`table1_europarl_multilang.py` (`combine_5k`): one leading `lang` column plus
+the union of the per-language columns, row order preserved.
 
 Idempotent / resumable: a language whose two aligned files already exist in
 `europarl_{xx}_en/` is skipped; a cached archive (>= 1 MB) is reused instead of
@@ -23,6 +28,7 @@ to `europarl_multilang_status.txt`.
 
 Usage: python fetch_europarl_langs.py
 """
+import csv
 import os
 import shutil
 import sys
@@ -36,6 +42,12 @@ ROOT = Path(__file__).resolve().parent
 LANGS = ["de", "es", "fr", "nl", "pt"]
 STATMT = "https://www.statmt.org/europarl/v7/{xx}-en.tgz"
 OPUS = "https://object.pouta.csc.fi/OPUS-Europarl/v7/moses/{xx}-en.txt.zip"
+
+# Per-language sampled CSVs (written by table1_europarl_multilang.py's `sample`)
+# and their single combined counterpart for the minimal repo.
+CSV_FMT = "europarl_{xx}_en_5k.csv"
+COMBINED = ROOT / "europarl_all_5k.csv"
+COMBINE_LANGS = ["de", "es", "fr", "it", "nl", "pt"]
 
 PID_FILE = ROOT / "europarl_multilang.pid"
 LOG_FILE = ROOT / "europarl_multilang_fetch.log"
@@ -92,6 +104,51 @@ def now():
 def status(msg):
     with STATUS_FILE.open("a", encoding="utf-8") as f:
         f.write(f"[{now()}] {msg}\n")
+
+
+def combine_5k(langs=None):
+    """Concatenate the per-language 5k CSVs into ``europarl_all_5k.csv``.
+
+    Keeps every input file's row order and columns, prepending a leading
+    ``lang`` column with the language code (union of the per-language text
+    columns, in ``COMBINE_LANGS`` order).  Returns the output path, or ``None``
+    if any input file is missing (nothing is written in that case).
+    """
+    langs = list(langs or COMBINE_LANGS)
+    frames = []
+    for xx in langs:
+        path = ROOT / CSV_FMT.format(xx=xx)
+        if not path.exists():
+            print(f"[combine] {path.name} missing; combined file not written",
+                  flush=True)
+            return None
+        with path.open(encoding="utf-8-sig", newline="") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            rows = list(reader)
+        frames.append((xx, header, rows))
+
+    out_header = ["lang"]
+    for _xx, header, _rows in frames:
+        for col in header:
+            if col not in out_header:
+                out_header.append(col)
+
+    n_rows = sum(len(rows) for _xx, _h, rows in frames)
+    with COMBINED.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(out_header)
+        for xx, header, rows in frames:
+            for row in rows:
+                rec = {col: "" for col in out_header}
+                rec["lang"] = xx
+                for col, val in zip(header, row):
+                    rec[col] = val
+                writer.writerow([rec[col] for col in out_header])
+    size_mb = COMBINED.stat().st_size / 1e6
+    print(f"[combine] wrote {COMBINED.name}: {n_rows} rows, "
+          f"{size_mb:.2f} MB, columns={out_header}", flush=True)
+    return COMBINED
 
 
 def detect_encoding(path):
@@ -331,6 +388,7 @@ def main():
         logf.flush()
         sys.exit(1)
 
+    combine_5k()
     status("[DONE] fetch all ok")
     print(f"\n===== fetch done {now()} =====", flush=True)
     logf.flush()

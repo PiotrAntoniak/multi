@@ -1,37 +1,40 @@
-"""XGBoost topic inference (lenient labels) — deterministic rebuild from stored params.
+"""XGBoost topic inference (lenient labels) — standalone, no stored artifacts.
 
-Models are NOT persisted: this script deterministically rebuilds the 8 binary tag
-models (and their per-tag thresholds) from the params/thresholds stored in the
-repository artifacts, then predicts and writes a CSV.
+The 8 binary tag models (one per canonical topic) and their per-tag decision
+thresholds are NOT persisted.  This script deterministically rebuilds them from
+the 50-trial lenient Optuna best params embedded below, then predicts and writes
+a CSV.
 
-Two sources:
+Sources:
 
-* ``--source transfer`` (default): the Optuna-best params are parsed from
-  ``xgboost_topic_results_lenient_{mode}.md`` (via
-  ``pertopic_accuracy_transfer.parse_best_params``). The 8 English tag models are
-  retrained on ALL 2009 English rows and the transfer thresholds are re-tuned
-  in-sample exactly like the pipeline (``X.tune_thresholds`` on the all-2009
-  English train probabilities). Target features are the repo embeddings
-  ``load_mode_embeddings(mode)[lang]`` (or a user ``--input`` npy); ``--shift``
-  adds ``D_lang = mean(emb_en - emb_lang)`` over all 2009 rows.
-* ``--source perlang``: params + thresholds are read from
-  ``xgboost_perlang_lenient_{lang}.json``
-  (``modes[mode].tuned.best_params`` and
-  ``modes[mode].tuned.tuned.thresholds.test``). The 8 tag models are trained on
-  the dev+devtest embeddings of ``lang`` and predict the test split (or
-  ``--input``).
+* ``--source transfer`` (default): train the 8 English tag models on ALL 2009
+  English rows using the mode's embedded best params; the per-tag thresholds are
+  re-tuned in-sample (grid 0.05..0.95) unless ``--thresholds`` forces a fixed
+  value.  Target features are the repo embeddings
+  ``load_mode_embeddings(mode)[lang]`` (or a user ``--input`` npy).  ``--shift``
+  adds ``D_lang = mean(emb_en - emb_lang)`` computed over all 2009 rows.
+* ``--source perlang``: train the 8 tag models on the dev+devtest embeddings of
+  ``lang`` using the mode's embedded best params, and tune the thresholds
+  in-sample (dev+devtest) unless ``--thresholds`` forces a fixed value.  Predict
+  the test split (or ``--input``).
+
+The embedded params are the 50-trial lenient Optuna best params used for the
+README results.  ``--params-json FILE`` overrides the mode's params with an
+8-key JSON dict (``max_depth, learning_rate, n_estimators, subsample,
+colsample_bytree, min_child_weight, reg_lambda, gamma``).
 
 Output: ``predictions_{source}_{mode}_{lang}[_shift].csv`` in ``--outdir`` with
 columns ``row_index, id, prob_<tag> x8, tags`` (``id`` only when predicting repo
-embeddings; taken from the FLORES CSV row ids). Console reports the row count and
-the per-tag predicted-positive counts. ``--eval`` additionally prints per-tag
-accuracy + F1 against the gold lenient labels and the overall subset accuracy
-(only possible when predicting repo embeddings: transfer evaluates all 2009 rows,
-perlang evaluates its test split).
+embeddings: taken from the FLORES CSV row ids).  Console reports the row count
+and the per-tag predicted-positive counts.  ``--eval`` additionally prints
+per-tag accuracy + F1 against the gold lenient labels and the overall subset
+accuracy (only possible when predicting repo embeddings: transfer evaluates all
+2009 rows, perlang evaluates its test split).
 
 Usage:
   python xgboost_infer.py --mode {mean,bos,eos,lead} [--source transfer|perlang]
       [--lang {en,it,de,fr}] [--shift] [--input FILE.npy] [--outdir .] [--eval]
+      [--thresholds 0.5] [--params-json FILE]
 """
 import os
 
@@ -48,7 +51,49 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
 import xgboost_topic_optuna as X
-import pertopic_accuracy_transfer as PT
+
+# 50-trial lenient Optuna best params (shared across all 8 labels, one set per
+# pooling mode) used to produce the README results.  These are the values the
+# reports were generated with; nothing is read from disk.
+BEST_PARAMS = {
+    "mean": dict(max_depth=7, learning_rate=0.19081198418161657,
+                 n_estimators=628, subsample=0.7736546560469247,
+                 colsample_bytree=0.6280618526352608, min_child_weight=8,
+                 reg_lambda=0.028953812200939687, gamma=0.2817481092827589),
+    "bos": dict(max_depth=7, learning_rate=0.18524575730482706,
+                n_estimators=618, subsample=0.7310109496863255,
+                colsample_bytree=0.4559809851959609, min_child_weight=10,
+                reg_lambda=0.010003809333198692, gamma=2.390027137593299),
+    "eos": dict(max_depth=5, learning_rate=0.25247341609360224,
+                n_estimators=494, subsample=0.7180369539220692,
+                colsample_bytree=0.32665699233832174, min_child_weight=9,
+                reg_lambda=0.023696324760734095, gamma=2.310292782299694),
+    "lead": dict(max_depth=7, learning_rate=0.19908924391090863,
+                 n_estimators=196, subsample=0.6369671093094386,
+                 colsample_bytree=0.6638217541091802, min_child_weight=10,
+                 reg_lambda=0.002237873237141299, gamma=0.18821319411836626),
+}
+PARAM_KEYS = ["max_depth", "learning_rate", "n_estimators", "subsample",
+              "colsample_bytree", "min_child_weight", "reg_lambda", "gamma"]
+
+
+def resolve_params(args):
+    """Mode's embedded best params, or an 8-key JSON dict from --params-json."""
+    if args.params_json:
+        with open(args.params_json, encoding="utf-8") as f:
+            params = json.load(f)
+        missing = [k for k in PARAM_KEYS if k not in params]
+        if missing:
+            raise SystemExit(f"--params-json missing keys: {missing}")
+        return params
+    return dict(BEST_PARAMS[args.mode])
+
+
+def resolve_thresholds(args, Y_train, train_probs):
+    """Fixed scalar from --thresholds, else per-tag in-sample tuning on train."""
+    if args.thresholds is not None:
+        return np.full(len(X.TAGS), float(args.thresholds), dtype=float)
+    return X.tune_thresholds(Y_train, train_probs)
 
 
 def load_input_npy(path):
@@ -106,18 +151,15 @@ def eval_gold(Y_true, probs, pred, label):
 
 
 def run_transfer(args, df, Y, masks):
-    md_path = os.path.join(args.outdir, f"xgboost_topic_results_lenient_{args.mode}.md")
-    md_text = open(md_path, encoding="utf-8").read()
-    params, best_trial = PT.parse_best_params(md_text)
-    if params is None:
-        raise SystemExit(f"no 'Best Optuna parameters' block in {md_path}")
+    params = resolve_params(args)
     print(f"[infer] source=transfer mode={args.mode} lang={args.lang} shift={args.shift} "
-          f"best_trial={best_trial}", flush=True)
+          f"params={params}", flush=True)
 
     Xd = X.load_mode_embeddings(args.mode)
     models, train_probs = train_models(params, Xd["en"], Y)
-    th = X.tune_thresholds(Y, train_probs)
-    print("[infer] transfer thresholds (all-2009 English in-sample): "
+    th = resolve_thresholds(args, Y, train_probs)
+    how = "fixed" if args.thresholds is not None else "all-2009 English in-sample"
+    print(f"[infer] transfer thresholds ({how}): "
           + " ".join(f"{tag}={th[j]:.2f}" for j, tag in enumerate(X.TAGS)), flush=True)
 
     shift_vec = None
@@ -160,20 +202,17 @@ def run_transfer(args, df, Y, masks):
 
 
 def run_perlang(args, df, Y, masks):
-    path = os.path.join(args.outdir, f"xgboost_perlang_lenient_{args.lang}.json")
-    with open(path, encoding="utf-8") as f:
-        j = json.load(f)
-    if args.mode not in j["modes"]:
-        raise SystemExit(f"mode {args.mode} absent in {path}")
-    mr = j["modes"][args.mode]
-    params = mr["tuned"]["best_params"]
-    th = np.array(mr["tuned"]["tuned"]["thresholds"]["test"], dtype=float)
+    params = resolve_params(args)
     print(f"[infer] source=perlang lang={args.lang} mode={args.mode} shift={args.shift} "
-          f"best_trial={mr['tuned']['best_trial']}", flush=True)
+          f"params={params}", flush=True)
 
     Xf = X.load_one_embedding(args.mode, args.lang)
-    models, _ = train_models(params, Xf[masks["dev_devtest"]], Y[masks["dev_devtest"]])
-    print("[infer] perlang thresholds (stored test): "
+    X_train = Xf[masks["dev_devtest"]]
+    Y_train = Y[masks["dev_devtest"]]
+    models, train_probs = train_models(params, X_train, Y_train)
+    th = resolve_thresholds(args, Y_train, train_probs)
+    how = "fixed" if args.thresholds is not None else "dev+devtest in-sample"
+    print(f"[infer] perlang thresholds ({how}): "
           + " ".join(f"{tag}={th[j]:.2f}" for j, tag in enumerate(X.TAGS)), flush=True)
 
     shift_vec = None
@@ -225,6 +264,10 @@ def main():
     ap.add_argument("--input", default=None)
     ap.add_argument("--outdir", default=".")
     ap.add_argument("--eval", action="store_true")
+    ap.add_argument("--thresholds", type=float, default=None,
+                    help="force this fixed per-tag threshold (default: tune in-sample)")
+    ap.add_argument("--params-json", default=None,
+                    help="JSON file with the 8 hyperparameters to override the mode's best params")
     args = ap.parse_args()
 
     df, Y, masks, counts = X.load_data("lenient")

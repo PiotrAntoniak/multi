@@ -1,16 +1,13 @@
 __pycache__/
 embeddings/
-runs/
-pca_topics/
-pca_abtt/
-research/
-language_score*.png
 *.npy
 *.log
 *.pid
 *_status.json
+predictions_*.csv
 
-# Europarl corpus, samples, embeddings and run files (generated)
+# Europarl corpus, samples, embeddings and run files (generated).
+# europarl_all_5k.csv is the combined data file and IS tracked.
 *.tgz
 europarl_it_en/
 europarl_de_en/
@@ -19,7 +16,12 @@ europarl_fr_en/
 europarl_nl_en/
 europarl_pt_en/
 europarl_it_en.csv
-europarl_*_5k.csv
+europarl_de_en_5k.csv
+europarl_es_en_5k.csv
+europarl_fr_en_5k.csv
+europarl_it_en_5k.csv
+europarl_nl_en_5k.csv
+europarl_pt_en_5k.csv
 europarl_*_embeddings/
 europarl_embeddings/
 europarl_multilang_table1.md
@@ -28,12 +30,15 @@ europarl_*.pid
 europarl_*status*.txt
 europarl_*progress*.json
 
-# XGBoost run files (generated)
+# XGBoost run artifacts (generated; not stored in the repo)
 xgboost_allmodes*
 xgboost_*run.log
-predictions_*.csv
 xgboost_optuna_trials_*.csv
-xgboost_perlang_lenient_trials_*.csv
+xgboost_perlang*
+xgboost_topic_results*
+xgboost_topic_allmodes*
+xgboost_pertopic*
+xgboost_lenient_merge.log
 
 # launchers
 *.cmd

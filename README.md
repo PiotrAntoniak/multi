@@ -1,13 +1,29 @@
-# EuroBERT-210m cross-lingual sentence embeddings & exact-translation retrieval
+# EuroBERT-210m cross-lingual embeddings — retrieval, topic classification, inference
 
 Sentence embeddings of **FLORES-200** (`en`, `it`, `de`, `fr`; 2009 aligned sentences) and of
-**Europarl v7** (six languages against English: de, es, fr, it, nl, pt; 5,000 pairs each) computed
-with **EuroBERT-210m**, plus exact-translation retrieval evaluations (foreign-to-English), an
-XGBoost topic-transfer experiment with a deterministic inference tool, and a token/cosine
-diagnostic.
+**Europarl v7** (six languages against English: de, es, fr, it, nl, pt; 5,000 aligned pairs each)
+computed with **EuroBERT-210m**, plus exact-translation retrieval (foreign-to-English, raw and
+`+D`), an XGBoost topic classifier with cross-lingual transfer and a standalone inference tool,
+and a token/cosine diagnostic.
 
-Retrieval scope is **foreign-to-English only**: FLORES has 3 directions (`it/de/fr -> en`) and
-Europarl `xx -> en`; both report **raw and `+D`** for every pooling mode.
+Retrieval scope is **foreign-to-English only**: FLORES has 3 directions (`it/de/fr -> en`), and
+Europarl `xx -> en` for all six languages; both report **raw and `+D`** for every pooling mode.
+Generated artifacts (training reports, Optuna trials, prediction CSVs) are **not stored** in the
+repo: the scripts write them next to themselves and they are git-ignored.
+
+## Repo contents
+
+| file | what it is |
+|---|---|
+| `flores200_en_it_de_fr.csv` | FLORES-200 data: 2009 rows (997 `dev` / 1012 `devtest`), columns `split, id, en, it, de, fr, URL, domain, topic, has_image, has_hyperlink` |
+| `europarl_all_5k.csv` | all Europarl data in one file: 30,000 rows (6 languages x 5,000 seeded, deduplicated line-aligned pairs), columns `lang, ...` |
+| `extract_embeddings.py` | embeds FLORES in the four pooling modes -> `embeddings/<mode>/emb_<lang>.npy` |
+| `table1.py` | FLORES exact-translation retrieval, foreign-to-English, raw + `+D` |
+| `fetch_europarl_langs.py` | downloads/extracts the six Europarl xx-en pairs and (re)writes `europarl_all_5k.csv` |
+| `table1_europarl_multilang.py` | Europarl retrieval (`xx -> en`, all modes, raw + `+D`); reuses already-computed embeddings |
+| `xgboost_topic_optuna.py` | XGBoost topic training: lenient labels, per-tag tuned thresholds, per-language grid, cross-lingual transfer |
+| `xgboost_infer.py` | standalone inference: embedded per-mode default params, `--shift`, `--eval`, `--input` |
+| `check_tokens_cos_sim.py` | token-norm and cosine-similarity diagnostic |
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading
 special token. We therefore materialize **four pooling modes** over the last hidden state:
@@ -21,12 +37,10 @@ special token. We therefore materialize **four pooling modes** over the last hid
 
 The retrieval protocol uses a **language-shift vector `D`**: for a directed pair `a -> b`,
 `D = mean over dev rows of (emb_a - emb_b)`. Meaning cancels in that difference, leaving the
-cross-lingual shift. Retrieval is evaluated on the `devtest` rows only (1012 queries, 1012
-candidate keys): the query is `emb_a`, the keys are `emb_b` ("raw"); adding `D` to every key
-("+D") should move each key onto the query side. Embeddings are row-normalized so dot products are
-cosine similarities, and the rank of query `i` is `1 + #{keys strictly closer than its exact
-translation key i}` (rank 1 = nearest). `D` is a single closed-form dev-fitted vector — it is not
-trained by gradient descent.
+cross-lingual shift. Retrieval is evaluated on the `devtest` rows: the query is `emb_a`, the
+candidate keys are `emb_b` ("raw"); adding `D` to every key ("+D") moves each key toward the query
+side. Embeddings are row-normalized so dot products are cosine similarities, and the rank of query
+`i` is `1 + #{keys strictly closer than its exact translation key i}` (rank 1 = nearest).
 
 ## The shift vector `D` — derivation
 
@@ -53,36 +67,30 @@ D_ab = (1/997) * sum_i ( emb_a(i) - emb_b(i) )  ~=  lang_a - lang_b
 So `D` is a closed-form estimate of the pure language offset: one 768-dimensional vector,
 independent of the sentence, obtained with two means and a subtraction (no gradients, no training).
 At test time, `key_b + D` moves every language-`b` candidate toward the `a` side, which is why the
-"+D" columns should improve on "raw". The `eps` term is also exactly why `D` cannot be perfect: it
-is a single constant offset while the true per-sentence shift fluctuates, leaving the small
-rank-1 misses visible in the tables.
+"+D" columns improve on "raw". The `eps` term is also exactly why `D` cannot be perfect: it is a
+single constant offset while the true per-sentence shift fluctuates, leaving the small rank-1
+misses visible in the tables.
 
 ## Run end-to-end
 
 ```bash
 pip install -r requirements.txt
-python extract_embeddings.py      # downloads EuroBERT-210m, writes embeddings/<mode>/emb_<lang>.npy
-python table1.py                  # prints Table 1 (FLORES foreign-to-English retrieval ranges)
-python fetch_europarl_langs.py    # downloads + extracts five Europarl pairs (de/es/fr/nl/pt; it-en is shipped as csv)
-python table1_europarl_multilang.py all   # Europarl: 5k pairs/lang, all modes, xx->en raw + D table
-python xgboost_topic_optuna.py --mode all --labels lenient --trials 50   # topic classifier: pooled-mode comparison
-python xgboost_topic_optuna.py --mode perlang --labels lenient --thresholds tuned   # per-language x pooling grid
-python xgboost_infer.py --mode mean --source perlang --lang en --eval   # inference from stored params
-python check_tokens_cos_sim.py    # prints input-embedding norms and per-pooling cosine similarities
+python extract_embeddings.py           # downloads EuroBERT-210m -> embeddings/<mode>/emb_<lang>.npy
+python table1.py                       # FLORES retrieval: foreign->EN, raw vs +D
+python fetch_europarl_langs.py         # downloads the six Europarl xx-en pairs -> europarl_all_5k.csv
+python table1_europarl_multilang.py all   # Europarl retrieval xx->en for all six languages
+python xgboost_topic_optuna.py --mode all --labels lenient --thresholds tuned --trials 50
+python xgboost_topic_optuna.py --mode perlang --langs en,it,de,fr --labels lenient --thresholds tuned --trials 50
+python xgboost_infer.py --mode mean --lang it --shift --eval
+python check_tokens_cos_sim.py         # token norms + cosine diagnostic
 ```
 
-`extract_embeddings.py` writes float32 `(2009, 768)` arrays for the four modes and four languages.
-`table1.py` is standalone (csv + numpy only) and depends only on the produced `.npy` files and the
-CSV. `check_tokens_cos_sim.py` re-loads EuroBERT-210m and inspects the tokenizer/embedding matrix.
+`table1.py` is standalone (csv + numpy only). `check_tokens_cos_sim.py` re-loads EuroBERT-210m and
+inspects the tokenizer/embedding matrix.
 
-Data: `flores200_en_it_de_fr.csv` (2009 rows: 997 `dev`, 1012 `devtest`) with columns
-`split, id, en, it, de, fr, URL, domain, topic, has_image, has_hyperlink`.
+## Table 1 — FLORES retrieval (foreign-to-English)
 
-## What Table 1 shows
-
-Printed by `python table1.py`:
-
-**Table 1 - devtest protocol** | dev=997 | devtest N=1012 | 3 foreign-to-English directions | chance rank 506.5
+Printed by `python table1.py` (dev=997, devtest N=1012, chance rank 506.5):
 
 | mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D | median rank raw | median rank +D |
 |---|---|---|---|---|---|---|---|---|
@@ -91,39 +99,28 @@ Printed by `python table1.py`:
 | bos | 2.5-6.2% | 4.4-10.7% | 0.044-0.098 | 0.075-0.150 | 280.0-364.6 | 257.0-330.0 | 166-291 | 116-224 |
 | eos | 2.0-2.5% | 10.0-15.8% | 0.049-0.068 | 0.165-0.230 | 200.4-259.8 | 154.8-190.3 | 107-164 | 36-62 |
 
-Column by column:
-
 - **top-1** — percentage of the 1012 devtest queries whose exact translation is the single nearest
-  of the 1012 candidate keys.
-- **MRR** — mean of `1 / rank` over queries.
-- **mean rank** — average rank of the exact translation (random chance is `(1012 + 1) / 2 = 506.5`).
-- **median rank** — the median rank; robust to the tail, whereas the arithmetic mean is dominated by
-  a few badly misplaced sentences.
-- **raw vs +D** — before vs after adding the dev-fitted shift `D` to every candidate key.
+  of the 1012 candidate keys; **MRR** — mean of `1 / rank`; **mean/median rank** — rank statistics
+  of the exact translation (random chance `(1012 + 1) / 2 = 506.5`; the median is robust to the
+  tail, the arithmetic mean is dominated by a few badly misplaced sentences).
 - **ranges** — min–max over the three **foreign-to-English** directions (`it->en`, `de->en`, `fr->en`).
 
-## What the experiment shows
+Reading:
 
-- **Mean pooling dominates.** Raw foreign-to-English retrieval is already 38.5–60.6% top-1; after
-  adding `D` it reaches **83.9–90.0% top-1** with MRR **0.882–0.931** and mean rank **1.6–4.4**
-  (from 2.1–8.5 raw). It is the only pooling that produces usable exact-translation retrieval.
-- **Lead / bos / eos fail.**
-  - `bos` position 0 is dominated by the leading special id, whose input embedding is essentially
-    untrained: id `128000` has row norm `0.00280` and is the **313th-smallest of all 128,256
-    embedding rows**, so the bos vector carries almost no sentence signal.
-  - `eos` distances saturate — rows are extremely close to one another regardless of content.
-  - `lead` degenerates; raw retrieval ranks are ~190–266.
-- **`D` works and is not trained.** It is a single closed-form vector (`mean(emb_a - emb_b)` over
-  997 dev rows), yet adding it improves every mode's metrics, most dramatically for `eos`
-  (top-1 1.8–7.5% -> 9.1–21.1%, mean rank 155.7–290.0 -> 105.7–194.9).
+- **Mean pooling dominates.** Raw retrieval is already 38.5–60.6% top-1; after adding `D` it reaches
+  **83.9–90.0% top-1** with MRR **0.882–0.931** and mean rank **1.6–4.4**. It is the only pooling
+  that produces usable exact-translation retrieval.
+- **Lead / bos / eos fail.** `bos` position 0 is dominated by the leading special id, whose input
+  embedding is essentially untrained (id `128000` row norm `0.00280`, the 313th-smallest of all
+  128,256 embedding rows); `eos` distances saturate; `lead` degenerates (raw ranks ~190–266).
+- **`D` works and is not trained.** A single closed-form vector improves every mode's metrics.
 
-## Europarl (parliament corpus) — foreign-to-English
+## Europarl — foreign-to-English
 
-Second corpus: **Europarl v7** (European Parliament proceedings). For each of six pairs against
-English (de, es, fr, it, nl, pt): 5,000 seeded, deduplicated line-aligned pairs, dev = 1,000 /
-devtest = 4,000. All four pooling modes are embedded; `D` is fitted on dev and added to the keys.
-Retrieval is evaluated **foreign-to-English only** (`xx->en`), **raw and `+D`**, 4,000 queries vs
-4,000 keys (chance rank 2,000.5).
+Second corpus: **Europarl v7** (European Parliament proceedings), shipped as one combined file
+(`europarl_all_5k.csv`, `lang` column; dev = 1,000 / devtest = 4,000 per language). All four
+pooling modes are embedded; `D` is fitted on dev and added to the keys. `xx -> en`, raw and `+D`,
+4,000 queries vs 4,000 keys (chance rank 2,000.5):
 
 | pair | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D | median rank raw | median rank +D |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -135,30 +132,27 @@ Retrieval is evaluated **foreign-to-English only** (`xx->en`), **raw and `+D`**,
 | pt-en | 21.5% | 50.6% | 0.324 | 0.577 | 98.7 | 101.8 | 8 | 1 |
 
 Other poolings stay near chance, as on FLORES (`+D` `xx->en` top-1: lead ~7–12%, bos ~1–3%,
-eos ~3–7%). Reading: the same pattern replicates — `D` is the dominant lever (es 23.6% → 66.9%,
-de 4.2% → 41.5%), Romance pairs (es/fr/pt/it) transfer better than Germanic (de/nl), and **the
-median rank collapses (6–54 → 1–3)** even where the arithmetic mean rank ticks up — the mean is
-dominated by a small tail of sentences that the constant shift pushes deep, while the typical
-sentence moves to the very front.
+eos ~3–7%). The same pattern replicates — `D` is the dominant lever (es 23.6% → 66.9%, de 4.2% →
+41.5%), Romance pairs (es/fr/pt/it) transfer better than Germanic (de/nl), and **the median rank
+collapses (6–54 → 1–3)** even where the arithmetic mean rank ticks up: the mean is dominated by a
+small tail of sentences that the constant shift pushes deep, while the typical sentence moves to
+the very front.
 
-## XGBoost topic classifier — English training, cross-lingual transfer
+## XGBoost topic classifier (FLORES)
 
 Multi-label XGBoost over the 8 canonical topic tags, with the pooling embeddings as features.
 Split: dev 997 / devtest 506 / test 506 (seed-0 shuffled halves of the original devtest). Every
-Optuna trial (TPE, 50 trials, one shared search space) trains on dev+devtest (1503 English rows)
-and scores macro-F1 on `test` (506); the best params are then retrained on all 2009 English rows
-and transferred to it/de/fr — raw and shifted (`emb_L + D_L`, `D_L = mean(emb_en − emb_L)`).
+Optuna trial (TPE, 50 trials, one shared search space) trains on dev (997) and scores macro-F1 on
+`devtest`; the best params are retrained on dev+devtest (1503) and evaluated on `test`, and a final
+copy trains on all 2009 English rows for cross-lingual transfer.
 
-### Final results — lenient labels, per-tag tuned thresholds
-
-The headline run maps the raw comma-tags onto the 8 canonical tags with the curated aliases in
-[`audit_labels.md`](audit_labels.md) §1 (**lenient** labels: singular/plural, `crime`/`law` →
-`crime and law`, `science and technology` → `science`, the misspelling `sciece`, `tourism`/
-`accomodation` → `travel`, `disasters and accidents` → `safety`, country/continent tags →
+**Labels: lenient.** Raw comma-tags are mapped onto the 8 canonical tags with curated aliases
+implemented in `xgboost_topic_optuna.py` (`LENIENT_EXACT/PREFIX/CONTAINS`: singular/plural,
+`crime`/`law` → `crime and law`, `science and technology` → `science`, the misspelling `sciece`,
+`tourism`/`accomodation` → `travel`, `disasters and accidents` → `safety`, country/continent tags →
 `geography`). This recovers the large fraction of positives that exact-string matching drops and
-cuts all-zero rows from 1147/2009 (strict) to ~504/2009. It also tunes **one threshold per tag**
-in-sample (grid 0.05..0.95) instead of a global 0.5; the Optuna search itself is unchanged (still
-devtest macro-F1 at the fixed 0.5).
+cuts all-zero rows from 1147/2009 (strict) to ~504/2009. **Thresholds: one per tag**, tuned
+in-sample (grid 0.05..0.95) instead of a global 0.5.
 
 Per-language × pooling grid, tuned `test` macro-F1 (`devtest → test`):
 
@@ -169,32 +163,31 @@ Per-language × pooling grid, tuned `test` macro-F1 (`devtest → test`):
 | de | 0.392 → 0.470 | 0.283 → 0.322 | 0.304 → 0.344 | 0.202 → 0.221 |
 | fr | 0.411 → 0.503 | 0.248 → 0.251 | 0.281 → 0.365 | 0.235 → 0.246 |
 
-`mean` wins every language — tuned `test` macro-F1 **en 0.528 / it 0.464 / de 0.470 / fr 0.503**
-(language mean 0.491) — and is also best on micro-F1 and subset accuracy. Per-language × pooling
-grid: [`xgboost_perlang_lenient.md`](xgboost_perlang_lenient.md); pooled-mode comparison:
-[`xgboost_topic_allmodes_lenient.md`](xgboost_topic_allmodes_lenient.md); per-topic breakdown:
-[`xgboost_perlang_lenient_pertopic.md`](xgboost_perlang_lenient_pertopic.md).
+`mean` wins every language — tuned `test` macro-F1 **en 0.528 / it 0.464 / de 0.470 / fr 0.503** —
+and is also best on micro-F1 and subset accuracy. Per-topic accuracy: `mean` leads on every topic
+in every language except a few ties (e.g. it `health` eos 0.966, de `geography` bos 0.917).
 
-**Transfer takeaway:** `mean` + `D` is best (tuned transfer macro-F1 `mean+D` 0.345 / 0.327 / 0.400
-for it / de / fr, vs `mean` raw 0.278 / 0.298 / 0.381), and the gain concentrates on `travel`
-(+0.187 accuracy fr, +0.081 it, +0.053 de); the other poolings do not transfer
-([`xgboost_pertopic_transfer.md`](xgboost_pertopic_transfer.md)).
+**Transfer (train on all 2009 English rows, evaluate it/de/fr raw and `+D`):** `mean` + `D` is best
+(tuned transfer macro-F1 `mean+D` 0.345 / 0.327 / 0.400 for it / de / fr, vs `mean` raw
+0.278 / 0.298 / 0.381); the shift gain concentrates on `travel` (+0.187 accuracy for fr, +0.081
+it, +0.053 de) and `science` (+0.020/+0.024/+0.006), while `bos` loses on science/safety.
 
 ### Inference
 
-`xgboost_infer.py` rebuilds the 8 tag models deterministically from the stored params/thresholds
-(no serialized model files) and writes a `predictions_*.csv` (git-ignored).
+`xgboost_infer.py` is standalone: it retrains the 8 tag models deterministically with the
+per-mode default params (the 50-trial lenient Optuna best params, embedded in the script) and
+tunes the thresholds in-sample; `--params-json FILE` overrides the params, `--thresholds 0.5`
+forces the fixed threshold. It writes `predictions_*.csv` (git-ignored).
 
 ```bash
-python xgboost_infer.py --mode mean --lang it --shift --eval     # transfer models, it + D
+python xgboost_infer.py --mode mean --lang it --shift --eval     # English transfer models, it + D
 python xgboost_infer.py --source perlang --lang en --mode mean --eval
-python xgboost_infer.py --source perlang --lang de --mode mean --shift --input my_emb.npy   # custom (n, 768) float32 features
+python xgboost_infer.py --mode mean --input my_emb.npy --eval    # custom (n, 768) float32 features
 ```
 
-`--source transfer` (default) retrains the English tag models on all 2009 English rows and
-re-tunes the thresholds in-sample; `--source perlang` uses the per-language models. `--shift` adds
-`D_lang = mean(emb_en − emb_lang)`; `--eval` prints per-tag accuracy/F1 and subset accuracy against
-the gold lenient labels (repo embeddings only).
+`--source transfer` (default) trains on all 2009 English rows; `--source perlang` trains on
+`dev+devtest` of `--lang`; `--shift` adds `D_lang = mean(emb_en − emb_lang)`. `--eval` prints
+per-tag accuracy/F1 and subset accuracy against the gold lenient labels (repo embeddings only).
 
 ### Earlier results — strict labels, global 0.5 threshold
 
@@ -209,15 +202,11 @@ cell is `raw → +D` for that language.
 | bos | 0.607/0.105 → 0.597/0.164 | 0.565/0.080 → 0.579/0.040 | 0.578/0.107 → 0.592/0.094 | 0.568/0.078 → 0.577/0.068 |
 | lead | 0.607/0.097 → 0.615/0.170 | 0.583/0.056 → 0.581/0.026 | 0.580/0.062 → 0.593/0.043 | 0.592/0.067 → 0.588/0.047 |
 
-(The full strict-label per-mode reports were generated as untracked artifacts and are no longer in the repo; the inline table above carries their numbers. Script: `xgboost_topic_optuna.py`.)
-
 Strict-label reading: `mean` leads again — best English test score and best raw transfer — and the
 shift lifts it in every language on **subset accuracy** (it 0.595 → 0.634, de 0.589 → 0.637,
-fr 0.642 → 0.647)
-while macro-F1 is mixed (+0.052 it, +0.013 de, −0.070 fr). The other poolings transfer poorly and
-the shift is mixed for them (only `eos` gains on average). Rare tags (geography, science, safety,
-health) have very few positives, so macro-F1 is noisy and dominated by `travel`/`sports`. Optuna
-selects on the same `test` set it reports (selection-set scores, per protocol).
+fr 0.642 → 0.647) while macro-F1 is mixed (+0.052 it, +0.013 de, −0.070 fr). Rare tags have very
+few positives, so macro-F1 is noisy and dominated by `travel`/`sports`. Optuna selects on the same
+`test` set it reports (selection-set scores, per protocol).
 
 ## `check_tokens_cos_sim.py`
 
@@ -238,8 +227,7 @@ row norm; `<|begin_of_text|>` (`128000`) is nearly zero (untrained), as is the e
 range `128003+`. This is direct evidence for why `bos` pooling (which reads position 0 after
 prepending `128000`) is uninformative.
 
-**2. Per-pooling cosine on example pairs.** Averages over three unrelated and three related pairs
-(the script also prints an identical and a cross-lingual control):
+**2. Per-pooling cosine on example pairs.** Averages over three unrelated and three related pairs:
 
 | pooling | unrelated | related | behavior |
 |---|---|---|---|
@@ -248,5 +236,4 @@ prepending `128000`) is uninformative.
 | `bos`  | +0.379 | +0.310 | inverted |
 | `eos`  | +0.773 | +0.769 | saturated |
 
-Only `mean` separates related from unrelated pairs; `lead` is degenerate, `bos` inverted, `eos`
-saturated. This mirrors the Table 1 result.
+Only `mean` separates related from unrelated pairs; the same picture as Table 1.

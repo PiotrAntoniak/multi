@@ -3,11 +3,15 @@
 For each target language xx in {de,es,fr,nl,pt}, mirroring the group's Table 1
 protocol (dev-fitted language-shift vector D) on the Europarl v7 xx-en corpus:
 
-  sample : seeded rng(0); skip ~1,000,000 line-aligned lines; scan; skip pairs
-           empty on either side; dedupe exact (en, xx) pairs; collect 5,000
-           unique; shuffle; dev = first 1,000 / devtest = last 4,000; write
-           `europarl_{xx}_en_5k.csv` (utf-8; split,id,en,{xx}).
-           If a window yields < 5,000 unique pairs, retry from skip 500k then 0.
+  sample : CSV only, no corpus rescan.  The seeded sampling (rng(0); skip
+           ~1,000,000 line-aligned lines; skip pairs empty on either side;
+           dedupe exact (en, xx) pairs; collect 5,000 unique; shuffle;
+           dev = first 1,000 / devtest = last 4,000) produced these six samples
+           once; they ship concatenated in `europarl_all_5k.csv` (leading
+           `lang` column, per-language columns preserved).  This script filters
+           that file by `lang`, preserving row order and the split column,
+           which reproduces the per-language sample exactly.  The original
+           `sample()` scanner is kept below for provenance only.
   embed  : EuroBERT-210m native fp32.  SINGLE tokenization pass (plain ids,
            truncated to 511); LENGTH-SORTED batch order; batch-local padding
            (pad to the batch max only); batch 128 (fallback 64 on OOM); two
@@ -22,10 +26,12 @@ protocol (dev-fitted language-shift vector D) on the Europarl v7 xx-en corpus:
            `europarl_multilang_table1.md` after each language, including one
            summary line per language (mean-mode +D top-1).
 
-Resumable: stage flags + metrics live in `europarl_multilang_progress.json`; a
-stage whose outputs already exist is skipped.  Logs to
-`europarl_multilang_run.log`; appends stage lines to
-`europarl_multilang_status.txt`; records its PID in `europarl_multilang.pid`.
+Resumable: metrics live in `europarl_multilang_progress.json`, but the embed
+stage skips a language whenever all of its
+`europarl_{xx}_en_5k_embeddings/<mode>/emb_{xx,en}.npy` files exist (independent
+of the progress json).  Logs to `europarl_multilang_run.log`; appends stage
+lines to `europarl_multilang_status.txt`; records its PID in
+`europarl_multilang.pid`.
 
 Usage:
   python table1_europarl_multilang.py smoke      # no model: reproduce it-en 4k
@@ -65,6 +71,7 @@ LEAD_FALLBACK = 128000
 EPS = 1e-12
 
 CSV_FMT = "europarl_{xx}_en_5k.csv"
+COMBINED_CSV = ROOT / "europarl_all_5k.csv"
 EMB_FMT = "europarl_{xx}_en_5k_embeddings"
 PROGRESS_FILE = ROOT / "europarl_multilang_progress.json"
 SUMMARY = ROOT / "europarl_multilang_table1.md"
@@ -220,6 +227,29 @@ def read_rows(path, col):
         return list(reader)
 
 
+def read_combined_lang(xx):
+    """Rows of `europarl_all_5k.csv` for language `xx`, in file order.
+
+    The combined file stores every per-language sample as one contiguous block
+    (leading `lang` column, union of the per-language text columns).  Filtering
+    by `lang` and keeping file order reproduces the per-language sample exactly:
+    same pairs, same `split` column, same row order.
+    """
+    if not COMBINED_CSV.exists():
+        raise FileNotFoundError(
+            f"{COMBINED_CSV.name} not found; build it with "
+            f"fetch_europarl_langs.py combine_5k()")
+    with COMBINED_CSV.open(encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None or "lang" not in reader.fieldnames:
+            raise ValueError(f"{COMBINED_CSV.name}: missing 'lang' column "
+                             f"(have {reader.fieldnames})")
+        rows = [r for r in reader if r.get("lang") == xx]
+    if not rows:
+        raise ValueError(f"{COMBINED_CSV.name}: no rows with lang={xx}")
+    return rows
+
+
 # --------------------------------------------------------------------------- #
 # embedding
 # --------------------------------------------------------------------------- #
@@ -316,8 +346,8 @@ def embed_texts(texts, tokenizer, model, device, lead, batch_size):
     return out
 
 
-def embed_pair(xx, csv_path):
-    rows = read_rows(csv_path, xx)
+def embed_pair(xx):
+    rows = read_combined_lang(xx)
     en_texts = [r["en"] for r in rows]
     xx_texts = [r[xx] for r in rows]
     tokenizer, model, device, lead = get_model()
@@ -373,8 +403,7 @@ def direction_stats(embs, a, b, dev, test):
     return out
 
 
-def evaluate_from(csv_path, embdir, col):
-    rows = read_rows(csv_path, col)
+def evaluate_rows(rows, embdir, col):
     split = np.array([r["split"] for r in rows])
     dev = np.where(split == "dev")[0]
     test = np.where(split == "devtest")[0]
@@ -388,8 +417,12 @@ def evaluate_from(csv_path, embdir, col):
     return metrics, int(len(dev)), int(len(test))
 
 
-def evaluate(xx, embdir, csv_path):
-    return evaluate_from(csv_path, embdir, xx)
+def evaluate_from(csv_path, embdir, col):
+    return evaluate_rows(read_rows(csv_path, col), embdir, col)
+
+
+def evaluate(xx, embdir):
+    return evaluate_rows(read_combined_lang(xx), embdir, xx)
 
 
 def print_metrics(name, metrics):
@@ -493,29 +526,25 @@ def save_progress(p):
 def run_lang(xx, progress, force=False):
     st = progress.setdefault(xx, {})
     name = f"{xx}-en"
-    csv_path = ROOT / CSV_FMT.format(xx=xx)
-    if force or not (st.get("sampled") and csv_path.exists()):
-        print(f"[{name}] stage sample", flush=True)
-        sample(xx)
-        st["sampled"] = True
-        save_progress(progress)
-    else:
-        print(f"[{name}] stage sample: cached", flush=True)
+    rows = read_combined_lang(xx)
+    print(f"[{name}] stage sample: {len(rows)} rows from {COMBINED_CSV.name} "
+          f"(dev={DEV_N}, devtest={TEST_N}; order/split preserved)", flush=True)
+    st["sampled"] = True
 
     embdir = ROOT / EMB_FMT.format(xx=xx)
     emb_ok = all((embdir / m / f"emb_{l}.npy").exists()
                  for m in POOLS for l in (xx, "en"))
-    if force or not (st.get("embedded") and emb_ok):
+    if force or not emb_ok:
         print(f"[{name}] stage embed", flush=True)
-        embed_pair(xx, csv_path)
+        embed_pair(xx)
         st["embedded"] = True
         save_progress(progress)
     else:
-        print(f"[{name}] stage embed: cached", flush=True)
+        print(f"[{name}] stage embed: cached (all npy files present)", flush=True)
 
     if force or not st.get("evaluated_v2"):
         print(f"[{name}] stage eval", flush=True)
-        metrics, ndev, ntest = evaluate(xx, embdir, csv_path)
+        metrics, ndev, ntest = evaluate(xx, embdir)
         st["metrics"] = metrics
         st["dev"], st["test"] = ndev, ntest
         st["evaluated_v2"] = True
