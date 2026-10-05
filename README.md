@@ -39,6 +39,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `xgboost_flores_lang.py` | FLORES en/it per-language reference + language-dim ablation (train en with the top language dims zeroed -> eval it) |
 | `xgboost_flores_combined.py` | FLORES en/it follow-up: combined en+it training and en->it raw vs `+D` transfer (fixed 0.5 and in-sample tuned thresholds) |
 | `xgboost_flores_matrix.py` | FLORES en/it full-row matrix: train full en / full it, cross-evaluate; train en without language dims -> it raw |
+| `xgboost_flores_drop_optuna.py` | per-language Optuna protocol on embeddings with the top-50% language dims zeroed (4 cells: en/it x mean/bos) |
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading
 special token. We therefore materialize **four pooling modes** over the last hidden state:
@@ -99,6 +100,7 @@ python xgboost_topic_optuna.py --mode perlang --langs en,it,de,fr --labels lenie
 python xgboost_infer.py --mode mean --lang it --shift --eval
 python xgboost_sst2.py --modes mean,bos --trials 50       # SST-2 (binary), mean + bos pooling
 python xgboost_emotion.py --modes mean,bos --trials 50    # dair-ai/emotion (6-class)
+python xgboost_flores_drop_optuna.py       # language-dim ablation: top-50% eta^2 dims zeroed (4 cells)
 python check_tokens_cos_sim.py         # token norms + cosine diagnostic
 python check_bos_diagnostics.py        # per-layer BOS/mean stats + BOS ablation
 ```
@@ -188,7 +190,18 @@ in every language except a few ties (e.g. it `health` eos 0.966, de `geography` 
 **Transfer (train on all 2009 English rows, evaluate it/de/fr raw and `+D`):** `mean` + `D` is best
 (tuned transfer macro-F1 `mean+D` 0.345 / 0.327 / 0.400 for it / de / fr, vs `mean` raw
 0.278 / 0.298 / 0.381); the shift gain concentrates on `travel` (+0.187 accuracy for fr, +0.081
-it, +0.053 de) and `science` (+0.020/+0.024/+0.006), while `bos` loses on science/safety.
+  it, +0.053 de) and `science` (+0.020/+0.024/+0.006), while `bos` loses on science/safety.
+
+### Language-dim ablation (Optuna protocol)
+
+Same protocol as the grid above, but the top-k dims carrying 50% of the 4-language eta^2 mass are zeroed in every array (k=237 `mean`, 211 `bos`). Tuned `test` macro-F1:
+
+| language | mean | bos |
+|---|---:|---:|
+| en | 0.5093 | 0.3585 |
+| it | 0.4773 | 0.2911 |
+
+Versus the full-feature grid (en 0.528 / 0.298, it 0.464 / 0.352): deltas -0.019 / +0.061 (en) and +0.013 / -0.061 (it) - no consistent effect. This matches the SHAP result: the language dims carry no topic signal, so removing them is near-neutral.
 
 ### Inference
 
@@ -225,6 +238,26 @@ shift lifts it in every language on **subset accuracy** (it 0.595 → 0.634, de 
 fr 0.642 → 0.647) while macro-F1 is mixed (+0.052 it, +0.013 de, −0.070 fr). Rare tags have very
 few positives, so macro-F1 is noisy and dominated by `travel`/`sports`. Optuna selects on the same
 `test` set it reports (selection-set scores, per protocol).
+
+## SST-2 and emotion (EuroBERT embeddings)
+
+Two more classifiers on the same embeddings (`mean` / `bos`), each tuned with 50 Optuna trials.
+
+SST-2 (binary sentiment, 80/10/10 re-split: 54,577 / 6,822 / 6,822; objective = val accuracy):
+
+| mode | val acc | test acc | test macro-F1 | test AUC |
+|---|---:|---:|---:|---:|
+| mean | 0.8147 | 0.8080 | 0.8052 | 0.8943 |
+| bos | 0.7366 | 0.7382 | 0.7338 | 0.8144 |
+
+dair-ai/emotion (6 classes, 16,000 / 2,000 / 2,000; objective = val AUC, OVR macro):
+
+| mode | val AUC | test acc | test macro-F1 | test AUC |
+|---|---:|---:|---:|---:|
+| mean | 0.8207 | 0.5635 | 0.3740 | 0.8196 |
+| bos | 0.7264 | 0.4780 | 0.2478 | 0.7241 |
+
+`mean` wins both. Emotion is class-imbalanced (surprise 3.6%); the mean model's test per-class AUC stays 0.78-0.85 for all six classes, while rare-class F1 is low (surprise 0.06).
 
 ## `check_tokens_cos_sim.py`
 
