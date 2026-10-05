@@ -15,7 +15,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 
 | file | what it is |
 |---|---|
-| `flores200_en_it_de_fr.csv` | FLORES-200 data: 2009 rows (997 `dev` / 1012 `devtest`), columns `split, id, en, it, de, fr, URL, domain, topic, has_image, has_hyperlink`; topic labels canonicalized (case/duplicate variants merged, one topic per URL) |
+| `flores200_en_it_de_fr.csv` | FLORES-200 data: 2006 rows (997 `dev` / 1009 `devtest`), columns `split, id, en, it, de, fr, URL, domain, topic, has_image, has_hyperlink`; topic labels canonicalized (case/duplicate variants merged, one topic per URL) |
 | `flores_agg.csv` | FLORES aggregated by URL: 562 rows (one per article), merged `en/it/de/fr` texts in article order + canonical topic, `n_sentences` |
 | `europarl_all_5k.csv` | all Europarl data in one file: 30,000 rows (6 languages x 5,000 seeded, deduplicated line-aligned pairs), columns `lang, ...` |
 | `sst2.csv` | SST-2 (GLUE) data: 68,221 rows (67,349 train / 872 validation), columns `sentence, label, split` |
@@ -113,18 +113,19 @@ inspects the tokenizer/embedding matrix.
 
 Printed by `python table1.py` (dev=997, devtest N=1012, chance rank 506.5):
 
-| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | mean rank raw | mean rank +D | median rank raw | median rank +D |
-|---|---|---|---|---|---|---|---|---|
-| mean | 38.5-60.6% | 83.9-90.0% | 0.537-0.763 | 0.882-0.931 | 2.1-8.5 | 1.6-4.4 | 1-2 | 1-1 |
-| lead | 7.3-22.6% | 11.1-25.9% | 0.118-0.285 | 0.155-0.325 | 189.7-265.6 | 189.6-267.1 | 33-139 | 22-128 |
-| bos | 2.5-6.2% | 4.4-10.7% | 0.044-0.098 | 0.075-0.150 | 280.0-364.6 | 257.0-330.0 | 166-291 | 116-224 |
-| eos | 2.0-2.5% | 10.0-15.8% | 0.049-0.068 | 0.165-0.230 | 200.4-259.8 | 154.8-190.3 | 107-164 | 36-62 |
+| mode | top-1 raw | top-1 +D | MRR +D | median rank +D |
+|---|---:|---:|---:|---:|
+| mean | 38.5-60.6% | 83.9-90.0% | 0.882-0.931 | 1 |
+| lead | 7.3-22.6% | 11.1-25.9% | 0.155-0.325 | 22-128 |
+| bos | 2.5-6.2% | 4.4-10.7% | 0.075-0.150 | 116-224 |
+| eos | 2.0-2.5% | 10.0-15.8% | 0.165-0.230 | 36-62 |
 
-- **top-1** — percentage of the 1012 devtest queries whose exact translation is the single nearest
-  of the 1012 candidate keys; **MRR** — mean of `1 / rank`; **mean/median rank** — rank statistics
-  of the exact translation (random chance `(1012 + 1) / 2 = 506.5`; the median is robust to the
-  tail, the arithmetic mean is dominated by a few badly misplaced sentences).
-- **ranges** — min–max over the three **foreign-to-English** directions (`it->en`, `de->en`, `fr->en`).
+Every cell is the min–max over the three foreign-to-English directions (`it->en`, `de->en`,
+`fr->en`). Setup: 997 dev pairs fit the shift vector `D`; 1012 devtest queries are matched
+against the 1012 candidate keys. **top-1** — share of queries whose exact translation is the
+single nearest key (chance 0.1%); **+D** — every key shifted by `D`; **MRR** — mean of `1 / rank`
+of the exact translation; **median rank** — median rank of the exact translation (chance 506.5;
+robust to the tail, unlike the arithmetic mean, which a few badly misplaced sentences dominate).
 
 Reading:
 
