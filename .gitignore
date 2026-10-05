@@ -1,5 +1,7 @@
 __pycache__/
 embeddings/
+sst2_emb/
+emotion_emb/
 *.npy
 *.log
 *.pid
