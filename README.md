@@ -26,7 +26,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `xgboost_topic_optuna.py` | XGBoost topic training: lenient labels, per-tag tuned thresholds, per-language grid, cross-lingual transfer |
 | `xgboost_infer.py` | standalone inference: embedded per-mode default params, `--shift`, `--eval`, `--input` |
 | `xgboost_sst2.py` | XGBoost binary sentiment on EuroBERT embeddings (`mean`/`bos`), Optuna-tuned; reads `sst2.csv`, caches embeddings to `sst2_emb/` |
-| `xgboost_emotion.py` | XGBoost 6-class emotion on EuroBERT embeddings (`mean`/`bos`), Optuna-tuned; reads `emotion.csv`, caches to `emotion_emb/` |
+| `xgboost_emotion.py` | XGBoost 6-class emotion on EuroBERT embeddings (`mean`/`bos`), Optuna-tuned (val AUC objective) with a per-emotion report; reads `emotion.csv`, caches to `emotion_emb/` |
 | `check_tokens_cos_sim.py` | token-norm and cosine-similarity diagnostic |
 | `check_bos_diagnostics.py` | per-layer BOS / mean-pooling stats and the BOS ablation (15 en + 15 it FLORES sentences; full column glossary in the script docstring) |
 | `watch_progress.py` | minute-refresh progress board for the single-mode XGBoost runs (rewrites `progress_live.txt` every 60 s) |

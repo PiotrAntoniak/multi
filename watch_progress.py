@@ -34,7 +34,8 @@ def from_csv(ds, mode):
         with open(p, encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 try:
-                    v = float(row.get("value_accuracy"))
+                    v = row.get("value_auc") or row.get("value_accuracy")
+                    v = float(v)
                 except (TypeError, ValueError):
                     continue
                 n += 1
