@@ -2,6 +2,7 @@ __pycache__/
 # Trained model bundles are local artifacts (never committed).
 models/
 embeddings/
+embeddings_agg/
 sst2_emb/
 emotion_emb/
 *.npy

@@ -22,6 +22,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `emotion.csv` | dair-ai/emotion data: 18,000 rows (16,000 train / 2,000 validation), columns `text, label, split` |
 | `extract_embeddings.py` | embeds FLORES in the four pooling modes -> `embeddings/<mode>/emb_<lang>.npy` |
 | `table1.py` | FLORES exact-translation retrieval, foreign-to-English, raw + `+D` |
+| `table1_agg.py` | the same retrieval protocol on the aggregated URLs (`flores_agg.csv`) |
 | `fetch_europarl_langs.py` | downloads/extracts the six Europarl xx-en pairs and (re)writes `europarl_all_5k.csv` |
 | `table1_europarl_multilang.py` | Europarl retrieval (`xx -> en`, all modes, raw + `+D`); reuses already-computed embeddings |
 | `xgboost_topic_optuna.py` | XGBoost topic training: lenient labels, per-tag tuned thresholds, per-language grid, cross-lingual transfer |
@@ -136,6 +137,20 @@ Reading:
   embedding is essentially untrained (id `128000` row norm `0.00280`, the 313th-smallest of all
   128,256 embedding rows); `eos` distances saturate; `lead` degenerates (raw ranks ~190–266).
 - **`D` works and is not trained.** A single closed-form vector improves every mode's metrics.
+
+### Table 1-agg — the same protocol on the aggregated URLs
+
+`table1_agg.py` reruns the retrieval on the merged per-URL texts (`flores_agg.csv`, 562 rows;
+dev = 281, devtest N = 280, chance rank 140.5; the empty orphan row is excluded). Longer texts
+sharpen the embeddings:
+
+| mode | top-1 raw | top-1 +D | MRR raw | MRR +D | median rank +D |
+|---|---:|---:|---:|---:|---:|
+| mean | 92.9-98.9% | 98.2-100.0% | 0.962-0.994 | 0.989-1.000 | 1 |
+| bos | 4.3-13.2% | 11.4-21.1% | 0.076-0.201 | 0.158-0.298 | 11-60 |
+
+`mean` reaches near-perfect retrieval even raw (92.9-98.9% top-1) and saturates with `+D`
+(de->en 100.0% top-1, MRR 1.000); `bos` stays weak. Cells are min-max over it/de/fr -> en.
 
 ## Europarl — foreign-to-English
 
