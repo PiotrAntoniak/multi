@@ -101,12 +101,15 @@ def load_sst2(limit_train):
     if os.path.exists(local):
         import pandas as pd
         df = pd.read_csv(local)
-        train, val = df[df["split"] == "train"], df[df["split"] == "validation"]
+        train = df[df["split"] == "train"]
+        val = df[df["split"] == "validation"]
+        test = df[df["split"] == "test"]
         if limit_train and limit_train > 0:
             train = train.head(limit_train)
-        log(f"loaded {local}: train={len(train)} val={len(val)}")
+        log(f"loaded {local}: train={len(train)} val={len(val)} test={len(test)}")
         return (list(train["sentence"]), np.asarray(train["label"], dtype=np.int64),
-                list(val["sentence"]), np.asarray(val["label"], dtype=np.int64))
+                list(val["sentence"]), np.asarray(val["label"], dtype=np.int64),
+                list(test["sentence"]), np.asarray(test["label"], dtype=np.int64))
     # fallback: Hub (datasets 4.x dropped script datasets; `glue` alias 404s -> nyu-mll/glue)
     try:
         ds = load_dataset("glue", "sst2")
@@ -117,7 +120,7 @@ def load_sst2(limit_train):
     if limit_train and limit_train > 0:
         train = train.select(range(min(limit_train, len(train))))
     return (list(train["sentence"]), np.asarray(train["label"], dtype=np.int64),
-            list(val["sentence"]), np.asarray(val["label"], dtype=np.int64))
+            list(val["sentence"]), np.asarray(val["label"], dtype=np.int64), None, None)
 
 
 def embed_split(mode, texts, tokenizer, model, device, out_path, split, status_path):
@@ -174,15 +177,18 @@ def metrics(y, probs):
 # ---------------------------------------------------------------------------
 # One mode
 # ---------------------------------------------------------------------------
-def run_mode(mode, X_train, y_train, X_val, y_val, trials, threads, outdir, status_path):
+def run_mode(mode, X_train, y_train, X_val, y_val, X_test, y_test, trials, threads, outdir,
+             status_path):
     log(f"===== MODE {mode}: baseline + Optuna TPE {trials} trials =====")
 
     t0 = time.time()
     base = xgb.XGBClassifier(**make_params(threads, BASELINE_PARAMS))
     base.fit(X_train, y_train)
     base_m = metrics(y_val, base.predict_proba(X_val)[:, 1])
-    log(f"[{mode}] baseline acc={base_m['accuracy']:.4f} macro_f1={base_m['macro_f1']:.4f} "
-        f"auc={base_m['auc']:.4f} ({time.time() - t0:.1f}s)")
+    base_tm = metrics(y_test, base.predict_proba(X_test)[:, 1])
+    log(f"[{mode}] baseline val acc={base_m['accuracy']:.4f} macro_f1={base_m['macro_f1']:.4f} "
+        f"auc={base_m['auc']:.4f} | test acc={base_tm['accuracy']:.4f} "
+        f"macro_f1={base_tm['macro_f1']:.4f} auc={base_tm['auc']:.4f} ({time.time() - t0:.1f}s)")
 
     trials_csv = os.path.join(outdir, f"xgboost_sst2_trials_{mode}.csv")
 
@@ -226,9 +232,12 @@ def run_mode(mode, X_train, y_train, X_val, y_val, trials, threads, outdir, stat
     tuned = xgb.XGBClassifier(**make_params(threads, best_params))
     tuned.fit(X_train, y_train)
     tuned_m = metrics(y_val, tuned.predict_proba(X_val)[:, 1])
-    log(f"[{mode}] tuned acc={tuned_m['accuracy']:.4f} macro_f1={tuned_m['macro_f1']:.4f} "
-        f"auc={tuned_m['auc']:.4f}")
-    return dict(mode=mode, baseline=base_m, tuned=tuned_m, best_params=best_params,
+    tuned_tm = metrics(y_test, tuned.predict_proba(X_test)[:, 1])
+    log(f"[{mode}] tuned val acc={tuned_m['accuracy']:.4f} macro_f1={tuned_m['macro_f1']:.4f} "
+        f"auc={tuned_m['auc']:.4f} | test acc={tuned_tm['accuracy']:.4f} "
+        f"macro_f1={tuned_tm['macro_f1']:.4f} auc={tuned_tm['auc']:.4f}")
+    return dict(mode=mode, baseline=base_m, baseline_test=base_tm, tuned=tuned_m,
+                tuned_test=tuned_tm, best_params=best_params,
                 best_trial=study.best_trial.number, best_value=float(study.best_value),
                 n_trials=len([t for t in study.trials if t.value is not None]),
                 trials_csv=os.path.basename(trials_csv))
@@ -245,14 +254,21 @@ def write_md(results, cfg, path):
                  "`bos` = position 0 after prepending special id 128000. "
                  "Optuna TPE seed 0, objective = validation accuracy at threshold 0.5. "
                  f"Baseline = max_depth=6, learning_rate=0.1, n_estimators=300.\n")
-    lines.append("## Validation (872 rows unless --limit-train)\n")
-    lines.append("| mode | model | accuracy | macro-F1 | AUC | trial count |")
-    lines.append("|---|---|---:|---:|---:|---:|")
+    lines.append(f"## Validation ({cfg['n_val']} rows) and test ({cfg['n_test']} rows)\n")
+    lines.append("| mode | model | val acc | val macro-F1 | val AUC | test acc | test macro-F1 "
+                 "| test AUC | trial count |")
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|")
+
+    def cells(mm):
+        return (f"{mm['accuracy']:.4f} | {mm['macro_f1']:.4f} | {mm['auc']:.4f}"
+                if mm else "- | - | -")
+
     for res in results:
         m = res["mode"]
-        b, t = res["baseline"], res["tuned"]
-        lines.append(f"| {m} | baseline | {b['accuracy']:.4f} | {b['macro_f1']:.4f} | {b['auc']:.4f} | - |")
-        lines.append(f"| {m} | tuned | {t['accuracy']:.4f} | {t['macro_f1']:.4f} | {t['auc']:.4f} | {res['n_trials']} |")
+        lines.append(f"| {m} | baseline | {cells(res['baseline'])} | "
+                     f"{cells(res['baseline_test'])} | - |")
+        lines.append(f"| {m} | tuned | {cells(res['tuned'])} | "
+                     f"{cells(res['tuned_test'])} | {res['n_trials']} |")
     lines.append("")
     for res in results:
         lines.append(f"### Best Optuna parameters — {res['mode']}\n")
@@ -292,8 +308,11 @@ def main():
     torch.set_num_threads(args.threads)
 
     t_data = time.time()
-    train_txt, y_train, val_txt, y_val = load_sst2(args.limit_train)
-    log(f"SST-2 train={len(train_txt)} val={len(val_txt)} ({time.time() - t_data:.1f}s)")
+    train_txt, y_train, val_txt, y_val, test_txt, y_test = load_sst2(args.limit_train)
+    if y_test is None:
+        raise RuntimeError("SST-2 test split not found in sst2.csv")
+    log(f"SST-2 train={len(train_txt)} val={len(val_txt)} test={len(test_txt)} "
+        f"({time.time() - t_data:.1f}s)")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     from transformers import AutoModel, AutoTokenizer
@@ -306,21 +325,28 @@ def main():
     for mode in modes:
         train_path = os.path.join(emb_dir, f"{mode}_train.npy")
         val_path = os.path.join(emb_dir, f"{mode}_val.npy")
+        test_path = os.path.join(emb_dir, f"{mode}_test.npy")
         X_train = embed_split(mode, train_txt, tokenizer, model, device, train_path,
                               "train", status_path)
         X_val = embed_split(mode, val_txt, tokenizer, model, device, val_path,
                             "val", status_path)
-        if X_train.shape[0] != len(y_train) or X_val.shape[0] != len(y_val):
-            raise RuntimeError(f"embedding/row mismatch for {mode}: {X_train.shape} vs {len(y_train)}")
+        X_test = embed_split(mode, test_txt, tokenizer, model, device, test_path,
+                             "test", status_path)
+        if (X_train.shape[0] != len(y_train) or X_val.shape[0] != len(y_val)
+                or X_test.shape[0] != len(y_test)):
+            raise RuntimeError(f"embedding/row mismatch for {mode}: "
+                               f"{X_train.shape} / {X_val.shape} / {X_test.shape}")
         write_json(status_path, dict(stage="embedding_done", mode=mode,
                                      updated=datetime.now().isoformat(timespec="seconds")))
-        results.append(run_mode(mode, X_train, y_train, X_val, y_val, args.trials,
-                                args.threads, outdir, status_path))
+        results.append(run_mode(mode, X_train, y_train, X_val, y_val, X_test, y_test,
+                                args.trials, args.threads, outdir, status_path))
         write_json(os.path.join(outdir, f"xgboost_sst2_results_{tag}.json"),
                    dict(config=dict(modes=modes, trials=args.trials, limit_train=args.limit_train,
-                                    n_train=len(y_train), n_val=len(y_val), threads=args.threads,
-                                    model=MODEL_ID, max_bin=MAX_BIN), results=results))
-        write_md(results, dict(threads=args.threads, n_train=len(y_train), n_val=len(y_val)),
+                                    n_train=len(y_train), n_val=len(y_val), n_test=len(y_test),
+                                    threads=args.threads, model=MODEL_ID, max_bin=MAX_BIN),
+                        results=results))
+        write_md(results, dict(threads=args.threads, n_train=len(y_train), n_val=len(y_val),
+                               n_test=len(y_test)),
                  os.path.join(outdir, f"xgboost_sst2_results_{tag}.md"))
     write_json(status_path, dict(stage="done", updated=datetime.now().isoformat(timespec="seconds")))
     log("DONE")
