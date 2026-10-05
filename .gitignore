@@ -48,3 +48,7 @@ progress_live.txt
 # launchers
 *.cmd
 *.vbs
+
+# local analysis (not pushed)
+pca_plots.py
+pca_plots/
