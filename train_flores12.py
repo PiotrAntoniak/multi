@@ -32,12 +32,13 @@ Conditions
 Protocol (16 cells = dataset {sent,agg} x mode {mean,bos} x condition {full,prune50} x train
 language {en,it})
 --------------------------------------------------------------------------------------------------
-* ``XGBClassifier(objective="multi:softprob", num_class=12, tree_method="hist", n_jobs=2)`` +
-  ``xgboost_topic_optuna._optuna_search_space`` params.
-* Optuna TPE seed 0, 10 trials; objective = validation macro-F1 (argmax predictions).
+* ``XGBClassifier(objective="multi:softprob", num_class=12, tree_method="hist", device="cuda",
+  n_jobs=2)`` + ``xgboost_topic_optuna._optuna_search_space`` params (the search space does not
+  set ``device``, so every Optuna trial inherits ``device="cuda"`` from ``BASE_PARAMS``).
+* Optuna TPE seed 0, 10 trials; objective = validation AUC (OVR macro).
 * Best params retrained on train+val; evaluated on the model's own language test (self) and on
-  the OTHER language test (transfer), same condition/pruning.  Metrics: accuracy, macro-F1 and
-  per-class F1.
+  the OTHER language test (transfer), same condition/pruning.  Metrics: accuracy, macro-F1,
+  per-class F1 and OVR AUC (macro + per-class).
 * Each final model is saved with ``model_store.save_bundle`` as
   ``flores12_{sent|agg}_{lang}_{mode}_{full|prune50}_optuna10`` and appended to the tracked
   ``models_registry.json`` at the repo root (``models/`` stays git-ignored).
@@ -51,6 +52,21 @@ Launch detached with the repo's hidden launcher::
     python train_flores12.py --launch                 # spawns itself via launch_hidden.vbs
     # or explicitly:
     wscript //B //Nologo launch_hidden.vbs "python train_flores12.py"
+
+Sharding
+--------
+Optuna search space does not set ``device``, so every Optuna trial inherits ``device="cuda"`` from
+``BASE_PARAMS`` (see the smoke-tested GPU support in the Protocol section above).
+
+``--shard I/N`` (default ``0/1``) takes the 16 cells round-robin, so N parallel shards split the
+work evenly (``--shard 0/4 .. 3/4`` => 4 cells each).  With GPU execution, run ONE process (the
+default ``0/1``): multiple shards would contend for the single GPU.  Each shard keeps 2 threads
+(``n_jobs=2`` and OMP/MKL/OPENBLAS=2).  For ``N > 1`` a shard writes
+``train_flores12_shard{i}.log`` / ``.pid`` / ``_status.json`` and its own
+``models_registry_shard{i}.json`` (the shared ``models_registry.json`` is NOT touched).  ``0/1``
+keeps the legacy shared filenames/registry.  Merge the shard registries afterwards with::
+
+    python train_flores12.py --merge-registry 4
 """
 import os
 
@@ -71,7 +87,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import optuna
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 from lang_metrics import eta2, top_dims
 from model_store import save_bundle
@@ -110,6 +126,8 @@ BASE_PARAMS = dict(
     objective="multi:softprob",
     num_class=N_CLASSES,
     tree_method="hist",
+    device="cuda",
+    max_bin=64,
     n_jobs=2,
     seed=SEED,
 )
@@ -176,6 +194,43 @@ def update_registry(entry):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2)
     os.replace(tmp, REGISTRY_PATH)
+
+
+def set_shard_paths(shard_i, shard_n):
+    """Point the log/pid/status/registry globals at this shard's files.
+
+    A single shard (``n == 1``) keeps the original shared paths, so ``--shard 0/1`` behaves
+    exactly like the legacy single-process run.  ``n > 1`` uses ``train_flores12_shard{i}.*``
+    files and a per-shard registry, so parallel shards never write the shared
+    ``models_registry.json`` (merge them later with ``--merge-registry N``).
+    """
+    global LOG_PATH, PID_PATH, STATUS_PATH, REGISTRY_PATH
+    if shard_n <= 1:
+        return
+    stem = os.path.join(REPO, f"train_flores12_shard{shard_i}")
+    LOG_PATH = stem + ".log"
+    PID_PATH = stem + ".pid"
+    STATUS_PATH = stem + "_status.json"
+    REGISTRY_PATH = os.path.join(REPO, f"models_registry_shard{shard_i}.json")
+
+
+def merge_registries(shard_n):
+    """Merge the per-shard registries into the shared models_registry.json (dedup by name)."""
+    merged = {}
+    for i in range(shard_n):
+        path = os.path.join(REPO, f"models_registry_shard{i}.json")
+        if not os.path.isfile(path):
+            continue
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for e in (data if isinstance(data, list) else [data]):
+            merged[e["name"]] = e
+    entries = sorted(merged.values(), key=lambda e: e.get("name", ""))
+    tmp = REGISTRY_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2)
+    os.replace(tmp, REGISTRY_PATH)
+    return len(entries)
 
 
 # ----------------------------------------------------------------------------
@@ -370,15 +425,24 @@ def _macro_f1(y, pred):
                           labels=np.arange(N_CLASSES)))
 
 
-def metrics(model, X, y):
-    pred = model.predict(X)
+def metrics(y, probs):
+    """Multiclass metrics from class probabilities: argmax accuracy/F1 + OVR AUC."""
+    pred = probs.argmax(1)
     labels = np.arange(N_CLASSES)
-    return {
+    out = {
         "accuracy": float(accuracy_score(y, pred)),
         "macro_f1": _macro_f1(y, pred),
         "per_class_f1": [float(v) for v in
                          f1_score(y, pred, average=None, zero_division=0, labels=labels)],
     }
+    try:
+        out["auc_ovr_macro"] = float(roc_auc_score(y, probs, multi_class="ovr", average="macro"))
+        out["per_class_auc_ovr"] = roc_auc_score(
+            y, probs, multi_class="ovr", average=None).tolist()
+    except ValueError:  # noqa: BLE001
+        out["auc_ovr_macro"] = float("nan")
+        out["per_class_auc_ovr"] = [float("nan")] * N_CLASSES
+    return out
 
 
 # ----------------------------------------------------------------------------
@@ -426,7 +490,13 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
         params = dict(BASE_PARAMS)
         params.update(_optuna_search_space(trial))
         model = fit_model(params, X[train_idx], y_arr[train_idx])
-        return _macro_f1(y_arr[val_idx], model.predict(X[val_idx]))
+        m = metrics(y_arr[val_idx], model.predict_proba(X[val_idx]))
+        trial.set_user_attr("auc_ovr_macro", m["auc_ovr_macro"])
+        trial.set_user_attr("accuracy", m["accuracy"])
+        trial.set_user_attr("macro_f1", m["macro_f1"])
+        log(f"[{name}] trial {trial.number + 1}/{N_TRIALS} auc={m['auc_ovr_macro']:.4f} "
+            f"acc={m['accuracy']:.4f} macro_f1={m['macro_f1']:.4f}")
+        return m["auc_ovr_macro"]
 
     def callback(study, trial):
         state["trial"] = int(trial.number)
@@ -436,25 +506,23 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
                                 "trial": int(trial.number),
                                 "best_so_far": float(study.best_value)}
         write_status(state)
-        v = trial.value if trial.value is not None else float("nan")
-        log(f"[{name}] trial {trial.number + 1}/{N_TRIALS} val_macro_f1={v:.4f} "
-            f"best={study.best_value:.4f}")
 
     study = optuna.create_study(
         direction="maximize", sampler=optuna.samplers.TPESampler(seed=SEED))
     study.optimize(objective, n_trials=N_TRIALS, callbacks=[callback])
     best_params = dict(study.best_params)
-    log(f"[{name}] optuna best #{study.best_trial.number} val_macro_f1={study.best_value:.4f} "
+    log(f"[{name}] optuna best #{study.best_trial.number} val_auc={study.best_value:.4f} "
         f"params={best_params}")
 
     final_params = dict(BASE_PARAMS)
     final_params.update(best_params)
     final = fit_model(final_params, X[tr], y_arr[tr])
 
-    self_m = metrics(final, X[test_idx], y_arr[test_idx])
-    trans_m = metrics(final, X_other[test_idx], y_arr[test_idx])
-    log(f"[{name}] test self: acc={self_m['accuracy']:.4f} macro={self_m['macro_f1']:.4f} | "
-        f"transfer({other}): acc={trans_m['accuracy']:.4f} macro={trans_m['macro_f1']:.4f}")
+    self_m = metrics(y_arr[test_idx], final.predict_proba(X[test_idx]))
+    trans_m = metrics(y_arr[test_idx], final.predict_proba(X_other[test_idx]))
+    log(f"[{name}] test self: acc={self_m['accuracy']:.4f} macro={self_m['macro_f1']:.4f} "
+        f"auc={self_m['auc_ovr_macro']:.4f} | transfer({other}): acc={trans_m['accuracy']:.4f} "
+        f"macro={trans_m['macro_f1']:.4f} auc={trans_m['auc_ovr_macro']:.4f}")
 
     created = time.strftime("%Y-%m-%dT%H:%M:%S")
     meta = {
@@ -465,7 +533,10 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
         "best_params": best_params,
         "best_trial": int(study.best_trial.number),
         "best_value": float(study.best_value),
-        "val_macro_f1": float(study.best_value),
+        "val_auc": float(study.best_value),
+        "val_macro_f1": float(study.best_trial.user_attrs.get("macro_f1", float("nan"))),
+        "test_self_auc": self_m["auc_ovr_macro"],
+        "test_transfer_auc": trans_m["auc_ovr_macro"],
         "test_self": self_m,
         "test_transfer": trans_m,
         "transfer_lang": other,
@@ -480,8 +551,11 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
     update_registry({
         "name": name, "dataset": dataset, "lang": lang, "mode": mode,
         "condition": condition, "k": int(k), "n_trials": N_TRIALS,
-        "val_macro_f1": float(study.best_value),
+        "val_auc": float(study.best_value),
+        "val_macro_f1": float(study.best_trial.user_attrs.get("macro_f1", float("nan"))),
+        "test_self_auc": self_m["auc_ovr_macro"],
         "test_self_macro_f1": self_m["macro_f1"],
+        "test_transfer_auc": trans_m["auc_ovr_macro"],
         "test_transfer_macro_f1": trans_m["macro_f1"],
         "created": created,
     })
@@ -495,7 +569,9 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
                             "mode": mode, "condition": condition, "k": int(k),
                             "trial": N_TRIALS, "best_so_far": float(study.best_value),
                             "best_trial": int(study.best_trial.number),
+                            "test_self_auc": self_m["auc_ovr_macro"],
                             "test_self_macro_f1": self_m["macro_f1"],
+                            "test_transfer_auc": trans_m["auc_ovr_macro"],
                             "test_transfer_macro_f1": trans_m["macro_f1"]}
     state.setdefault("results", {})[name] = res
     write_status(state)
@@ -514,22 +590,45 @@ def launch_detached(passthrough):
 # ----------------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------------
+def parse_shard(spec):
+    """Parse an ``I/N`` shard spec; return ``(i, n)`` with ``0 <= i < n`` and ``n >= 1``."""
+    try:
+        i_s, n_s = str(spec).split("/")
+        i, n = int(i_s), int(n_s)
+    except Exception:
+        raise SystemExit("--shard must be I/N (e.g. 0/4), got %r" % (spec,))
+    if n < 1 or not (0 <= i < n):
+        raise SystemExit("--shard out of range: %r (need 0 <= I < N, N >= 1)" % (spec,))
+    return i, n
+
+
 def parse_args(argv):
     ap = argparse.ArgumentParser(description="12-class FLORES topic driver (sentence + agg)")
     ap.add_argument("--launch", action="store_true",
                     help="spawn a detached copy via launch_hidden.vbs and exit")
     ap.add_argument("--trials", type=int, default=N_TRIALS,
                     help="Optuna trials per cell (default %d)" % N_TRIALS)
+    ap.add_argument("--shard", default="0/1", metavar="I/N",
+                    help="handle cells I of N round-robin; 0/1 (default) runs all 16 cells")
+    ap.add_argument("--merge-registry", type=int, default=None, metavar="N",
+                    help="merge models_registry_shard0..N-1.json into models_registry.json and exit")
     return ap.parse_args(argv)
 
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     args = parse_args(argv)
+    if args.merge_registry is not None:
+        n = merge_registries(args.merge_registry)
+        print("merged %d entries into %s" % (n, REGISTRY_PATH))
+        return 0
     if args.launch:
         launch_detached([a for a in argv if a != "--launch"])
         print("launched detached via launch_hidden.vbs")
         return 0
+
+    shard_i, shard_n = parse_shard(args.shard)
+    set_shard_paths(shard_i, shard_n)
 
     global N_TRIALS
     N_TRIALS = args.trials
@@ -538,12 +637,13 @@ def main(argv=None):
     write_pid()
     t0 = time.time()
     log("train_flores12 starting")
-    log(f"python pid={os.getpid()} trials={N_TRIALS} "
+    log(f"python pid={os.getpid()} trials={N_TRIALS} shard={shard_i}/{shard_n} "
         f"xgboost={xgb.__version__} optuna={optuna.__version__}")
 
     state = {
         "pid": os.getpid(), "started": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "n_trials": N_TRIALS, "cell": None, "trial": None, "best_so_far": None,
+        "n_trials": N_TRIALS, "shard": [shard_i, shard_n],
+        "cell": None, "trial": None, "best_so_far": None,
         "cells": {}, "results": {},
     }
     write_status(state)
@@ -586,9 +686,12 @@ def main(argv=None):
         ctx = {"classes": classes, "sent": sent, "agg": agg, "sent_emb": sent_emb,
                "agg_emb": agg_emb, "sent_dims": sent_dims, "agg_dims": agg_dims}
 
-        cells = [(d, m, c, l) for d in DATASETS for m in MODES
-                 for c in CONDITIONS for l in TRAIN_LANGS]
+        all_cells = [(d, m, c, l) for d in DATASETS for m in MODES
+                     for c in CONDITIONS for l in TRAIN_LANGS]
+        cells = [cell for j, cell in enumerate(all_cells) if j % shard_n == shard_i]
         state["cells_order"] = [cell_name(d, l, m, c) for (d, m, c, l) in cells]
+        log(f"shard {shard_i}/{shard_n}: {len(cells)}/{len(all_cells)} cells "
+            f"{state['cells_order']}")
         write_status(state)
 
         for dataset, mode, condition, lang in cells:
