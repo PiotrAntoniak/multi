@@ -26,7 +26,7 @@ MODES = ["mean", "bos"]
 
 def main():
     t0 = time.time()
-    df, Y, masks, counts = X.load_data("lenient")
+    _, Y, masks, counts = X.load_data("lenient")
     pos = counts["all"]
     dev_dt, test = masks["dev_devtest"], masks["test"]
     params = X.make_params(X.BASELINE_PARAMS)

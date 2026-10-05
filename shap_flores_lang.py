@@ -25,28 +25,15 @@ from scipy.stats import spearmanr
 
 import shap
 import xgboost_topic_optuna as X
+from lang_metrics import eta2_lang
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(BASE, "pca_plots")
 MODES = ["mean", "bos"]
 
 
-def eta2_lang(mode):
-    """Per-dimension eta^2 of a one-way ANOVA over the 4 FLORES languages."""
-    E = {l: X.load_one_embedding(mode, l) for l in X.LANGS}
-    Xall = np.vstack([E[l] for l in X.LANGS])
-    y = np.repeat(X.LANGS, len(E["en"]))
-    overall = Xall.mean(0)
-    ss_tot = ((Xall - overall) ** 2).sum(0)
-    ss_bet = np.zeros(Xall.shape[1])
-    for l in set(y):
-        m = y == l
-        ss_bet += m.sum() * (Xall[m].mean(0) - overall) ** 2
-    return ss_bet / ss_tot
-
-
 def main():
-    df, Y, masks, counts = X.load_data("lenient")
+    _, Y, masks, _ = X.load_data("lenient")
     dev_dt, test = masks["dev_devtest"], masks["test"]
     params = X.make_params(X.BASELINE_PARAMS)
     rows = []

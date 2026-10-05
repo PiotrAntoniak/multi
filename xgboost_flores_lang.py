@@ -20,6 +20,7 @@ import time
 import numpy as np
 
 import xgboost_topic_optuna as X
+from lang_metrics import top_dims
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 LANGS = ["en", "it"]
@@ -27,32 +28,9 @@ MODES = ["mean", "bos"]
 DROPS = [0.0, 0.25, 0.5]
 
 
-def eta2_lang(mode):
-    """Per-dimension eta^2 of a one-way ANOVA over the 4 FLORES languages."""
-    E = {l: X.load_one_embedding(mode, l) for l in X.LANGS}
-    Xall = np.vstack([E[l] for l in X.LANGS])
-    y = np.repeat(X.LANGS, len(E["en"]))
-    overall = Xall.mean(0)
-    ss_tot = ((Xall - overall) ** 2).sum(0)
-    ss_bet = np.zeros(Xall.shape[1])
-    for l in set(y):
-        m = y == l
-        ss_bet += m.sum() * (Xall[m].mean(0) - overall) ** 2
-    return ss_bet / ss_tot
-
-
-def top_dims(mode, frac):
-    """Dims covering `frac` of the language eta^2 mass, ranked by separability."""
-    e2 = eta2_lang(mode)
-    order = np.argsort(-e2)
-    cum = np.cumsum(e2[order]) / e2.sum()
-    k = int(np.searchsorted(cum, frac) + 1)
-    return order[:k], k
-
-
 def main():
     t0 = time.time()
-    df, Y, masks, counts = X.load_data("lenient")
+    _, Y, masks, counts = X.load_data("lenient")
     pos = counts["all"]
     allm = np.ones(len(Y), dtype=bool)
     dev_dt, test = masks["dev_devtest"], masks["test"]

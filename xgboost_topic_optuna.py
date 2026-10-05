@@ -94,7 +94,6 @@ MIN_POS_FOR_MACRO = 50
 BASELINE_PARAMS = dict(max_depth=6, learning_rate=0.1, n_estimators=300)
 
 STATUS_PATH = os.path.join(BASE, "xgboost_allmodes_status.json")
-PID_PATH = os.path.join(BASE, "xgboost_allmodes.pid")
 
 
 def log(msg):
@@ -1240,11 +1239,10 @@ def write_perlang_md(data, outdir):
         en_test = {m: data["en"]["modes"][m]["tuned"]["test_macro"] for m in modes}
         oth_test = {m: np.mean([data[l]["modes"][m]["tuned"]["test_macro"] for l in others])
                     for m in modes}
-        best_en = f"`{best_overall}`" if best_overall in modes else "n/a"
         lines.append(f"- **en vs it/de/fr:** mean tuned `test` macro-F1 across {others} is " +
                      ", ".join(f"{m} {oth_test[m]:.4f}" for m in modes) +
                      f"; for `en` it is " + ", ".join(f"{m} {en_test[m]:.4f}" for m in modes) +
-                     (" (no cross-lingual transfer in this experiment)." if True else ""))
+                     " (no cross-lingual transfer in this experiment).")
 
     # 4. devtest -> test shift (per language, mean over modes)
     shifts = {l: np.mean([data[l]["modes"][m]["tuned"]["test_macro"]

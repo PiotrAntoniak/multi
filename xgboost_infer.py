@@ -133,7 +133,7 @@ def write_predictions(path, probs, pred, row_index, ids):
     pd.DataFrame(data).to_csv(path, index=False)
 
 
-def report_predicted(probs, pred):
+def report_predicted(pred):
     pos = pred.sum(axis=0)
     print(f"[infer] predicted positives: "
           + " ".join(f"{tag}={int(pos[j])}" for j, tag in enumerate(X.TAGS)), flush=True)
@@ -150,7 +150,7 @@ def eval_gold(Y_true, probs, pred, label):
           + " ".join(f"{tag}={f1[j]:.3f}" for j, tag in enumerate(X.TAGS)), flush=True)
 
 
-def run_transfer(args, df, Y, masks):
+def run_transfer(args, df, Y):
     params = resolve_params(args)
     print(f"[infer] source=transfer mode={args.mode} lang={args.lang} shift={args.shift} "
           f"params={params}", flush=True)
@@ -187,7 +187,7 @@ def run_transfer(args, df, Y, masks):
     probs = predict(models, Xt)
     pred = (probs >= th[None, :]).astype(int)
     print(f"[infer] rows={len(pred)}", flush=True)
-    report_predicted(probs, pred)
+    report_predicted(pred)
 
     name = f"predictions_transfer_{args.mode}_{args.lang}" + ("_shift" if args.shift else "") + ".csv"
     path = os.path.join(args.outdir, name)
@@ -241,7 +241,7 @@ def run_perlang(args, df, Y, masks):
     probs = predict(models, Xt)
     pred = (probs >= th[None, :]).astype(int)
     print(f"[infer] rows={len(pred)}", flush=True)
-    report_predicted(probs, pred)
+    report_predicted(pred)
 
     name = f"predictions_perlang_{args.mode}_{args.lang}" + ("_shift" if args.shift else "") + ".csv"
     out_path = os.path.join(args.outdir, name)
@@ -270,9 +270,9 @@ def main():
                     help="JSON file with the 8 hyperparameters to override the mode's best params")
     args = ap.parse_args()
 
-    df, Y, masks, counts = X.load_data("lenient")
+    df, Y, masks, _ = X.load_data("lenient")
     if args.source == "transfer":
-        run_transfer(args, df, Y, masks)
+        run_transfer(args, df, Y)
     else:
         run_perlang(args, df, Y, masks)
 

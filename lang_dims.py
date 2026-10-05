@@ -9,21 +9,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from lang_metrics import eta2
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 LANGS = ["en", "it", "de", "fr"]
 OUT = os.path.join(BASE, "pca_plots")
 os.makedirs(OUT, exist_ok=True)
-
-
-def eta2(X, y):
-    """Per-dimension eta^2 of a one-way ANOVA over languages."""
-    overall = X.mean(0)
-    ss_tot = ((X - overall) ** 2).sum(0)
-    ss_bet = np.zeros(X.shape[1])
-    for l in set(y):
-        m = y == l
-        ss_bet += m.sum() * (X[m].mean(0) - overall) ** 2
-    return ss_bet / ss_tot
 
 
 def main():

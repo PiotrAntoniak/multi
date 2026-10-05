@@ -44,6 +44,10 @@ xgboost_lenient_merge.log
 xgboost_sst2_*
 xgboost_emotion_*
 progress_live.txt
+xgboost_flores_*.json
+xgboost_flores_*.md
+shap_flores_*.json
+shap_flores_*.md
 
 # launchers
 *.cmd
