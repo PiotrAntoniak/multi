@@ -35,6 +35,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `shap_flores_lang.py` | SHAP on the unrestricted FLORES baseline: does the topic model use the language-separable dims? (Spearman, top-50 overlap, SHAP mass vs random) -> `pca_plots/shap_vs_langdims_*.png` |
 | `xgboost_flores_lang.py` | FLORES en/it per-language reference + language-dim ablation (train en with the top language dims zeroed -> eval it) |
 | `xgboost_flores_combined.py` | FLORES en/it follow-up: combined en+it training and en->it raw vs `+D` transfer (fixed 0.5 and in-sample tuned thresholds) |
+| `xgboost_flores_matrix.py` | FLORES en/it full-row matrix: train full en / full it, cross-evaluate; train en without language dims -> it raw |
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading
 special token. We therefore materialize **four pooling modes** over the last hidden state:
