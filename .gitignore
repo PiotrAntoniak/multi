@@ -49,6 +49,3 @@ progress_live.txt
 *.cmd
 *.vbs
 
-# local analysis (not pushed)
-pca_plots.py
-pca_plots/
