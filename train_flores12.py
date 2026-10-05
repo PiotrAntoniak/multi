@@ -8,10 +8,14 @@ Datasets
 * agg      : ``flores_agg.csv`` (562 URL-aggregated rows, one 12-way ``topic`` per URL).
   train = URLs whose sentence rows are ``dev``; the remaining URLs (incl. the one orphan
   whose sentence rows were deleted, hence no ``dev`` rows -> treated as devtest) are
-  permuted with seed 0 and split into val (first 140) / test (last 141).
+  permuted with seed 0 and split into val / test.  Rows labelled ``business and economy``
+  (class 0) are then dropped from every split at runtime (CSV/embeddings untouched) and
+  the remaining 11 classes are remapped to 0..10, so agg is a genuine 11-class problem
+  with all 11 classes present in every split (see ``EXCLUDE_AGG_CLASS``).
 
-Labels are the 12 sorted topic strings -> class indices 0..11; the class list is stored in
-every manifest and registry entry.
+Labels are the 12 sorted topic strings -> class indices 0..11 for ``sent``; ``agg`` uses
+the 11 kept classes remapped to 0..10.  The per-cell class list is stored in every manifest
+and registry entry.
 
 Embeddings and alignment
 ------------------------
@@ -120,6 +124,10 @@ N_TRIALS = 10
 SEED = 0
 PRUNE_FRAC = 0.50
 GIT_REF = "196bbd3:flores200_en_it_de_fr.csv"
+# Agg-only: drop this class from every split so agg is a genuine 11-class problem
+# (its val split had zero class-0 rows).  Rows are filtered at runtime; CSV/embeddings
+# are never modified.  ``sent`` keeps all 12 classes.
+EXCLUDE_AGG_CLASS = "business and economy"
 
 # Fixed multiclass base params (Optuna supplies the tuned ones on top).
 BASE_PARAMS = dict(
@@ -318,10 +326,17 @@ def prepare_sentence():
     }
 
 
-def prepare_agg(sent_cur, classes):
+def prepare_agg(sent_cur, classes, exclude=EXCLUDE_AGG_CLASS):
     """Load the URL-aggregated CSV; a URL is train iff its sentence rows are dev.
 
     The one orphan (no sentence rows at all) has no dev rows, so it falls into devtest.
+
+    Agg-only exclusion: rows labelled ``exclude`` (class 0, "business and economy") are
+    dropped from train, val and test, and the remaining 11 classes are remapped compactly
+    to 0..10.  This makes agg a genuine 11-class problem with all 11 classes present in
+    every split (the agg val split had zero class-0 rows, which made OVR AUC non-finite).
+    Only split *indices* are filtered at runtime -- ``flores_agg.csv`` and the embedding
+    ``.npy`` files are never modified.  ``sent`` keeps all 12 classes.
     """
     agg = pd.read_csv(AGG_CSV)
     url_split = {}
@@ -334,16 +349,42 @@ def prepare_agg(sent_cur, classes):
     split = agg["URL"].map(url_split).fillna("devtest")
     if set(agg["topic"].astype(str)) - set(classes):
         raise ValueError("agg labels not a subset of the sentence classes")
-    y = class_indices(agg, classes)
+    y_full = class_indices(agg, classes)
 
-    train_idx = np.where((split == "dev").values)[0]
-    dt_idx = np.where((split == "devtest").values)[0]
+    excl_idx = list(classes).index(exclude)
+
+    # Original seed-0 split first, then drop the excluded class from each subset
+    # independently, so the remaining val/test rows keep their original assignment.
+    train_raw = np.where((split == "dev").values)[0]
+    dt_raw = np.where((split == "devtest").values)[0]
     rng = np.random.default_rng(SEED)
-    perm = rng.permutation(dt_idx)
+    perm = rng.permutation(dt_raw)
     n_val = len(perm) // 2
+    val_raw, test_raw = perm[:n_val], perm[n_val:]
+
+    def _drop(idx):
+        keep = y_full[idx] != excl_idx
+        return idx[keep], int((~keep).sum())
+
+    train_idx, d_train = _drop(train_raw)
+    val_idx, d_val = _drop(val_raw)
+    test_idx, d_test = _drop(test_raw)
+
+    # Compact remap of the kept classes to 0..n-1 (excluded class is gone entirely).
+    # Excluded rows keep -1 and are never referenced (they are absent from every split).
+    kept_old = [i for i in range(len(classes)) if i != excl_idx]
+    remap = {old: new for new, old in enumerate(kept_old)}
+    kept_mask = y_full != excl_idx
+    y = np.full(len(y_full), -1, dtype=int)
+    y[kept_mask] = [remap[int(v)] for v in y_full[kept_mask]]
+    agg_classes = [classes[i] for i in kept_old]
+
     return {
-        "agg": agg, "y": y, "split": split.values,
-        "train_idx": train_idx, "val_idx": perm[:n_val], "test_idx": perm[n_val:],
+        "agg": agg, "y": y, "y_full": y_full, "split": split.values,
+        "train_idx": train_idx, "val_idx": val_idx, "test_idx": test_idx,
+        "classes": agg_classes, "n_classes": len(agg_classes),
+        "excluded_class": exclude, "excluded_index": int(excl_idx),
+        "dropped": {"train": d_train, "val": d_val, "test": d_test},
     }
 
 
@@ -420,29 +461,54 @@ def fit_model(params, X, y):
     return model
 
 
-def _macro_f1(y, pred):
+def _macro_f1(y, pred, n_classes=N_CLASSES):
     return float(f1_score(y, pred, average="macro", zero_division=0,
-                          labels=np.arange(N_CLASSES)))
+                          labels=np.arange(n_classes)))
 
 
-def metrics(y, probs):
-    """Multiclass metrics from class probabilities: argmax accuracy/F1 + OVR AUC."""
+def metrics(y, probs, n_classes=N_CLASSES):
+    """Multiclass metrics from class probabilities: argmax accuracy/F1 + macro OVR AUC.
+
+    ``n_classes`` is the label-space size of this cell: 12 for ``sent``, 11 for ``agg``
+    (class 0 "business and economy" is dropped from every agg split and the kept labels
+    are remapped to 0..10).  With all classes present in ``y`` the standard sklearn
+    ``multi_class="ovr"`` macro AUC is finite; a defensive fallback still returns NaN
+    rather than raising if a split ever degenerates unexpectedly.
+    """
     pred = probs.argmax(1)
-    labels = np.arange(N_CLASSES)
+    labels = np.arange(n_classes)
     out = {
         "accuracy": float(accuracy_score(y, pred)),
-        "macro_f1": _macro_f1(y, pred),
+        "macro_f1": _macro_f1(y, pred, n_classes),
         "per_class_f1": [float(v) for v in
                          f1_score(y, pred, average=None, zero_division=0, labels=labels)],
     }
     try:
-        out["auc_ovr_macro"] = float(roc_auc_score(y, probs, multi_class="ovr", average="macro"))
+        out["auc_ovr_macro"] = float(roc_auc_score(
+            y, probs, multi_class="ovr", average="macro", labels=labels))
         out["per_class_auc_ovr"] = roc_auc_score(
-            y, probs, multi_class="ovr", average=None).tolist()
+            y, probs, multi_class="ovr", average=None, labels=labels).tolist()
     except ValueError:  # noqa: BLE001
         out["auc_ovr_macro"] = float("nan")
-        out["per_class_auc_ovr"] = [float("nan")] * N_CLASSES
+        out["per_class_auc_ovr"] = [float("nan")] * n_classes
     return out
+
+
+def _best_finite(study):
+    """Return ``(trial, value)`` for the best FINITE completed trial, or ``(None, None)``.
+
+    ``study.best_value`` raises ``ValueError('No trials are completed yet.')`` while every
+    completed trial has a NaN value (which is what all-NaN val AUC produced).  This helper
+    ignores non-finite trials instead of raising, so status writes and the final summary
+    stay safe even before a finite trial exists.
+    """
+    trials = [t for t in study.trials
+              if t.state == optuna.trial.TrialState.COMPLETE
+              and t.value is not None and np.isfinite(t.value)]
+    if not trials:
+        return None, None
+    best = max(trials, key=lambda t: t.value)
+    return best, float(best.value)
 
 
 # ----------------------------------------------------------------------------
@@ -453,12 +519,15 @@ def cell_name(dataset, lang, mode, condition):
 
 
 def run_cell(dataset, mode, condition, lang, ctx, state):
-    classes = ctx["classes"]
     if dataset == "sent":
+        classes = ctx["classes"]
+        n_classes = N_CLASSES
         src = ctx["sent_emb"][mode]
         idx = (ctx["sent"]["train_idx"], ctx["sent"]["val_idx"], ctx["sent"]["test_idx"])
         dims, k = (ctx["sent_dims"][mode] if condition == "prune50" else (None, 0))
     else:
+        classes = ctx["agg"]["classes"]
+        n_classes = ctx["agg"]["n_classes"]
         src = ctx["agg_emb"][mode]
         idx = (ctx["agg"]["train_idx"], ctx["agg"]["val_idx"], ctx["agg"]["test_idx"])
         dims, k = (ctx["agg_dims"][mode] if condition == "prune50" else (None, 0))
@@ -474,9 +543,9 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
 
     log(f"===== CELL {name} (k={k}) train={len(train_idx)} val={len(val_idx)} "
         f"test={len(test_idx)} =====")
-    log(f"[{name}] split labels: train={np.bincount(y_arr[train_idx], minlength=N_CLASSES).tolist()} "
-        f"val={np.bincount(y_arr[val_idx], minlength=N_CLASSES).tolist()} "
-        f"test={np.bincount(y_arr[test_idx], minlength=N_CLASSES).tolist()}")
+    log(f"[{name}] split labels: train={np.bincount(y_arr[train_idx], minlength=n_classes).tolist()} "
+        f"val={np.bincount(y_arr[val_idx], minlength=n_classes).tolist()} "
+        f"test={np.bincount(y_arr[test_idx], minlength=n_classes).tolist()}")
 
     state["cell"] = name
     state["trial"] = None
@@ -488,38 +557,52 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
 
     def objective(trial):
         params = dict(BASE_PARAMS)
+        params["num_class"] = n_classes
         params.update(_optuna_search_space(trial))
         model = fit_model(params, X[train_idx], y_arr[train_idx])
-        m = metrics(y_arr[val_idx], model.predict_proba(X[val_idx]))
+        m = metrics(y_arr[val_idx], model.predict_proba(X[val_idx]), n_classes)
+        center = m["auc_ovr_macro"]
+        fallback = False
+        if not np.isfinite(center):
+            # Degenerate val split made the AUC non-finite: optimise macro-F1 instead.
+            center = m["macro_f1"]
+            fallback = True
         trial.set_user_attr("auc_ovr_macro", m["auc_ovr_macro"])
         trial.set_user_attr("accuracy", m["accuracy"])
         trial.set_user_attr("macro_f1", m["macro_f1"])
-        log(f"[{name}] trial {trial.number + 1}/{N_TRIALS} auc={m['auc_ovr_macro']:.4f} "
-            f"acc={m['accuracy']:.4f} macro_f1={m['macro_f1']:.4f}")
-        return m["auc_ovr_macro"]
+        trial.set_user_attr("value_fallback_f1", fallback)
+        trial.set_user_attr("value", center)
+        tag = " fallback=f1" if fallback else ""
+        log(f"[{name}] trial {trial.number + 1}/{N_TRIALS} auc={m['auc_ovr_macro']:.4f}{tag} "
+            f"value={center:.4f} acc={m['accuracy']:.4f} macro_f1={m['macro_f1']:.4f}")
+        return center
 
     def callback(study, trial):
+        _, best = _best_finite(study)
         state["trial"] = int(trial.number)
-        state["best_so_far"] = float(study.best_value)
+        state["best_so_far"] = best
         state["cells"][name] = {"state": "running", "dataset": dataset, "lang": lang,
                                 "mode": mode, "condition": condition, "k": k,
-                                "trial": int(trial.number),
-                                "best_so_far": float(study.best_value)}
+                                "trial": int(trial.number), "best_so_far": best}
         write_status(state)
 
     study = optuna.create_study(
         direction="maximize", sampler=optuna.samplers.TPESampler(seed=SEED))
     study.optimize(objective, n_trials=N_TRIALS, callbacks=[callback])
-    best_params = dict(study.best_params)
-    log(f"[{name}] optuna best #{study.best_trial.number} val_auc={study.best_value:.4f} "
+    best_trial, best_value = _best_finite(study)
+    if best_trial is None:
+        raise ValueError("%s produced no finite trial value" % name)
+    best_params = dict(best_trial.params)
+    log(f"[{name}] optuna best #{best_trial.number} val_auc={best_value:.4f} "
         f"params={best_params}")
 
     final_params = dict(BASE_PARAMS)
+    final_params["num_class"] = n_classes
     final_params.update(best_params)
     final = fit_model(final_params, X[tr], y_arr[tr])
 
-    self_m = metrics(y_arr[test_idx], final.predict_proba(X[test_idx]))
-    trans_m = metrics(y_arr[test_idx], final.predict_proba(X_other[test_idx]))
+    self_m = metrics(y_arr[test_idx], final.predict_proba(X[test_idx]), n_classes)
+    trans_m = metrics(y_arr[test_idx], final.predict_proba(X_other[test_idx]), n_classes)
     log(f"[{name}] test self: acc={self_m['accuracy']:.4f} macro={self_m['macro_f1']:.4f} "
         f"auc={self_m['auc_ovr_macro']:.4f} | transfer({other}): acc={trans_m['accuracy']:.4f} "
         f"macro={trans_m['macro_f1']:.4f} auc={trans_m['auc_ovr_macro']:.4f}")
@@ -530,11 +613,14 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
         "k": int(k),
         "zeroed_dims": (dims.tolist() if dims is not None else []),
         "classes": classes,
+        "n_classes": int(n_classes),
+        "excluded_class": (ctx["agg"]["excluded_class"] if dataset == "agg" else None),
+        "dropped_rows": (dict(ctx["agg"]["dropped"]) if dataset == "agg" else None),
         "best_params": best_params,
-        "best_trial": int(study.best_trial.number),
-        "best_value": float(study.best_value),
-        "val_auc": float(study.best_value),
-        "val_macro_f1": float(study.best_trial.user_attrs.get("macro_f1", float("nan"))),
+        "best_trial": int(best_trial.number),
+        "best_value": float(best_value),
+        "val_auc": float(best_value),
+        "val_macro_f1": float(best_trial.user_attrs.get("macro_f1", float("nan"))),
         "test_self_auc": self_m["auc_ovr_macro"],
         "test_transfer_auc": trans_m["auc_ovr_macro"],
         "test_self": self_m,
@@ -551,8 +637,8 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
     update_registry({
         "name": name, "dataset": dataset, "lang": lang, "mode": mode,
         "condition": condition, "k": int(k), "n_trials": N_TRIALS,
-        "val_auc": float(study.best_value),
-        "val_macro_f1": float(study.best_trial.user_attrs.get("macro_f1", float("nan"))),
+        "val_auc": float(best_value),
+        "val_macro_f1": float(best_trial.user_attrs.get("macro_f1", float("nan"))),
         "test_self_auc": self_m["auc_ovr_macro"],
         "test_self_macro_f1": self_m["macro_f1"],
         "test_transfer_auc": trans_m["auc_ovr_macro"],
@@ -560,15 +646,15 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
         "created": created,
     })
 
-    res = {"name": name, "k": int(k), "best_trial": int(study.best_trial.number),
-           "best_value": float(study.best_value), "best_params": best_params,
+    res = {"name": name, "k": int(k), "best_trial": int(best_trial.number),
+           "best_value": float(best_value), "best_params": best_params,
            "self": self_m, "transfer": trans_m, "transfer_lang": other,
            "sizes": {"train": int(len(train_idx)), "val": int(len(val_idx)),
                      "test": int(len(test_idx))}}
     state["cells"][name] = {"state": "done", "dataset": dataset, "lang": lang,
                             "mode": mode, "condition": condition, "k": int(k),
-                            "trial": N_TRIALS, "best_so_far": float(study.best_value),
-                            "best_trial": int(study.best_trial.number),
+                            "trial": N_TRIALS, "best_so_far": float(best_value),
+                            "best_trial": int(best_trial.number),
                             "test_self_auc": self_m["auc_ovr_macro"],
                             "test_self_macro_f1": self_m["macro_f1"],
                             "test_transfer_auc": trans_m["auc_ovr_macro"],
@@ -610,6 +696,8 @@ def parse_args(argv):
                     help="Optuna trials per cell (default %d)" % N_TRIALS)
     ap.add_argument("--shard", default="0/1", metavar="I/N",
                     help="handle cells I of N round-robin; 0/1 (default) runs all 16 cells")
+    ap.add_argument("--datasets", choices=["sent", "agg", "both"], default="both",
+                    help="restrict the cell list to one dataset or both (default both)")
     ap.add_argument("--merge-registry", type=int, default=None, metavar="N",
                     help="merge models_registry_shard0..N-1.json into models_registry.json and exit")
     return ap.parse_args(argv)
@@ -658,7 +746,10 @@ def main(argv=None):
             f"test={len(sent['test_idx'])}")
 
         agg = prepare_agg(sent["cur"], classes)
-        log(f"agg: {len(agg['agg'])} rows; train={len(agg['train_idx'])} "
+        log(f"agg: {len(agg['agg'])} rows -> {agg['n_classes']} classes "
+            f"(excluded '{agg['excluded_class']}' idx={agg['excluded_index']}); "
+            f"dropped rows train={agg['dropped']['train']} val={agg['dropped']['val']} "
+            f"test={agg['dropped']['test']}; split train={len(agg['train_idx'])} "
             f"val={len(agg['val_idx'])} test={len(agg['test_idx'])}")
 
         state["data"] = {
@@ -668,7 +759,11 @@ def main(argv=None):
                          "train": int(len(sent["train_idx"])),
                          "val": int(len(sent["val_idx"])),
                          "test": int(len(sent["test_idx"]))},
-            "agg": {"rows": int(len(agg["agg"])), "train": int(len(agg["train_idx"])),
+            "agg": {"rows": int(len(agg["agg"])), "n_classes": int(agg["n_classes"]),
+                    "excluded_class": agg["excluded_class"],
+                    "excluded_index": int(agg["excluded_index"]),
+                    "dropped_rows": dict(agg["dropped"]),
+                    "train": int(len(agg["train_idx"])),
                     "val": int(len(agg["val_idx"])), "test": int(len(agg["test_idx"]))},
             "prune_dims": {},
         }
@@ -686,11 +781,13 @@ def main(argv=None):
         ctx = {"classes": classes, "sent": sent, "agg": agg, "sent_emb": sent_emb,
                "agg_emb": agg_emb, "sent_dims": sent_dims, "agg_dims": agg_dims}
 
-        all_cells = [(d, m, c, l) for d in DATASETS for m in MODES
+        datasets = DATASETS if args.datasets == "both" else [args.datasets]
+        all_cells = [(d, m, c, l) for d in datasets for m in MODES
                      for c in CONDITIONS for l in TRAIN_LANGS]
         cells = [cell for j, cell in enumerate(all_cells) if j % shard_n == shard_i]
+        state["datasets"] = datasets
         state["cells_order"] = [cell_name(d, l, m, c) for (d, m, c, l) in cells]
-        log(f"shard {shard_i}/{shard_n}: {len(cells)}/{len(all_cells)} cells "
+        log(f"shard {shard_i}/{shard_n}: datasets={datasets} {len(cells)}/{len(all_cells)} cells "
             f"{state['cells_order']}")
         write_status(state)
 
