@@ -34,6 +34,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `pca_plots.py` | PCA plots of the FLORES embeddings (raw/+D per pooling mode, all-but-the-top variants, topic view) -> `pca_plots/*.png` |
 | `lang_dims.py` | per-dimension language separability (eta^2) and the cumulative "how many dims carry the language" curve |
 | `lang_metrics.py` | shared helpers: per-dim language eta^2 and top-k dim selection (used by the analysis scripts) |
+| `model_store.py` | save/load trained model bundles (`save_bundle`/`load_bundle`/`list_bundles`): native `.ubj` per tag + `manifest.json`; bundles live in `models/`, which is git-ignored |
 | `shap_flores_lang.py` | SHAP on the unrestricted FLORES baseline: does the topic model use the language-separable dims? (Spearman, top-50 overlap, SHAP mass vs random) -> `pca_plots/shap_vs_langdims_*.png` |
 | `shap_flores_dropped.py` | held-out en/it models: sum |SHAP| of the dropped eta^2 dims vs kept dims (share vs random), on en-test and it-test inputs -> `pca_plots/shap_dropped_vs_kept_*.png` |
 | `xgboost_flores_lang.py` | FLORES en/it per-language reference + language-dim ablation (train en with the top language dims zeroed -> eval it) |
@@ -194,7 +195,7 @@ in every language except a few ties (e.g. it `health` eos 0.966, de `geography` 
 
 ### Language-dim ablation (Optuna protocol)
 
-Same protocol as the grid above, but the top-k dims carrying 50% of the 4-language eta^2 mass are zeroed in every array (k=237 `mean`, 211 `bos`). Tuned `test` macro-F1:
+Same protocol as the grid above, but the top-k dims carrying 50% of the 4-language eta^2 mass are zeroed in every array (k=237 `mean`, 211 `bos`). After each cell's retrain the driver saves that cell's 8 tag models as a bundle under `models/` (via `model_store.py`, git-ignored) so transfer/SHAP/inference evaluations can load them instead of retraining. Tuned `test` macro-F1:
 
 | language | mean | bos |
 |---|---:|---:|

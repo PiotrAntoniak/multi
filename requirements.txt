@@ -1,3 +1,11 @@
 numpy
 torch
 transformers
+xgboost
+optuna
+pandas
+scikit-learn
+matplotlib
+scipy
+shap
+datasets

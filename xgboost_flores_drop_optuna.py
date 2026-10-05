@@ -65,6 +65,7 @@ sys.path.insert(0, REPO)
 import numpy as np  # noqa: E402
 import optuna  # noqa: E402
 
+import model_store  # noqa: E402
 import xgboost_topic_optuna as X  # noqa: E402
 from lang_metrics import top_dims  # noqa: E402
 
@@ -133,7 +134,7 @@ def run_cell(lang, mode, zero_dims, k, Y, masks, pos, state):
         f"params={best_params}")
 
     # 3. RETRAIN best params on dev+devtest -> test (fixed + in-sample tuned thresholds).
-    tp_btest, (probs_btest,), _ = X.fit_predict_with_train(
+    tp_btest, (probs_btest,), models = X.fit_predict_with_train(
         best_params, Xl[dev_devtest], Y[dev_devtest], [Xl[test]])
     t_test_fixed = X.score(Y[test], probs_btest, pos_counts=pos)
     t_test_th = X.tune_thresholds(Y[dev_devtest], tp_btest)
@@ -142,6 +143,25 @@ def run_cell(lang, mode, zero_dims, k, Y, masks, pos, state):
         f"micro={t_test_fixed['micro_f1']:.4f} subset={t_test_fixed['subset_acc']:.4f} | "
         f"tuned macro={t_test_tuned['macro_f1']:.4f} micro={t_test_tuned['micro_f1']:.4f} "
         f"subset={t_test_tuned['subset_acc']:.4f}")
+
+    # 3b. Persist the retrained tag models so evaluations can load instead of retrain.
+    bundle_name = f"flores_{lang}_{mode}_drop{int(FRACTION * 100)}_optuna"
+    bundle_meta = {
+        "lang": lang, "mode": mode, "fraction": FRACTION, "k": k,
+        "zeroed_dims_note": "zeroed dims recomputable via "
+                            "lang_metrics.top_dims(mode, FRACTION)",
+        "best_params": best_params,
+        "best_trial": int(study.best_trial.number),
+        "best_value": float(study.best_value),
+        "n_trials": N_TRIALS,
+        "thresholds": t_test_th.tolist(),
+        "train_rows": "dev+devtest",
+        "test_fixed": t_test_fixed,
+        "test_tuned": t_test_tuned,
+    }
+    model_store.save_bundle(bundle_name, models, bundle_meta,
+                            root=os.path.join(REPO, "models"))
+    log(f"[{cell}] saved bundle '{bundle_name}' ({len(models)} tag models)")
 
     res = {
         "lang": lang, "mode": mode, "k": k, "n_trials": N_TRIALS,
