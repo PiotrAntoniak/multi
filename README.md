@@ -15,7 +15,8 @@ repo: the scripts write them next to themselves and they are git-ignored.
 
 | file | what it is |
 |---|---|
-| `flores200_en_it_de_fr.csv` | FLORES-200 data: 2009 rows (997 `dev` / 1012 `devtest`), columns `split, id, en, it, de, fr, URL, domain, topic, has_image, has_hyperlink` |
+| `flores200_en_it_de_fr.csv` | FLORES-200 data: 2009 rows (997 `dev` / 1012 `devtest`), columns `split, id, en, it, de, fr, URL, domain, topic, has_image, has_hyperlink`; topic labels canonicalized (case/duplicate variants merged, one topic per URL) |
+| `flores_agg.csv` | FLORES aggregated by URL: 562 rows (one per article), merged `en/it/de/fr` texts in article order + canonical topic, `n_sentences` |
 | `europarl_all_5k.csv` | all Europarl data in one file: 30,000 rows (6 languages x 5,000 seeded, deduplicated line-aligned pairs), columns `lang, ...` |
 | `sst2.csv` | SST-2 (GLUE) data: 68,221 rows (67,349 train / 872 validation), columns `sentence, label, split` |
 | `emotion.csv` | dair-ai/emotion data: 18,000 rows (16,000 train / 2,000 validation), columns `text, label, split` |
