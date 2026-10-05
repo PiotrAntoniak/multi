@@ -24,6 +24,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `xgboost_topic_optuna.py` | XGBoost topic training: lenient labels, per-tag tuned thresholds, per-language grid, cross-lingual transfer |
 | `xgboost_infer.py` | standalone inference: embedded per-mode default params, `--shift`, `--eval`, `--input` |
 | `check_tokens_cos_sim.py` | token-norm and cosine-similarity diagnostic |
+| `check_bos_diagnostics.py` | per-layer BOS / mean-pooling stats and the BOS ablation (15 en + 15 it FLORES sentences; full column glossary in the script docstring) |
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading
 special token. We therefore materialize **four pooling modes** over the last hidden state:
@@ -83,6 +84,7 @@ python xgboost_topic_optuna.py --mode all --labels lenient --thresholds tuned --
 python xgboost_topic_optuna.py --mode perlang --langs en,it,de,fr --labels lenient --thresholds tuned --trials 50
 python xgboost_infer.py --mode mean --lang it --shift --eval
 python check_tokens_cos_sim.py         # token norms + cosine diagnostic
+python check_bos_diagnostics.py        # per-layer BOS/mean stats + BOS ablation
 ```
 
 `table1.py` is standalone (csv + numpy only). `check_tokens_cos_sim.py` re-loads EuroBERT-210m and
