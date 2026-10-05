@@ -1,7 +1,8 @@
 """PCA plots of the FLORES-200 EuroBERT embeddings (local analysis; script + outputs are
 gitignored). Per pooling mode: all 4 languages on one figure, raw (PCA fit on all languages
-pooled) vs +D (PCA fit on the English embeddings only), plus a PC1-removed variant (PC2 vs PC3).
-For `mean` additionally: colored by primary lenient topic."""
+pooled) vs +D (PCA fit on the English embeddings only), plus an all-but-the-top variant
+(Mu & Viswanath 2018: fit mean + top-k PCs removed, k=1). For `mean` additionally: colored by
+primary lenient topic."""
 import os
 
 import numpy as np
@@ -35,9 +36,22 @@ def scatter(ax, pts, labels, colors, title, legend=True):
         ax.legend(markerscale=3, fontsize=6, loc="best")
 
 
-def pca23(Xfit, Xplot):
-    """Project onto PC2/PC3 (PC1 removed) of a PCA fitted on Xfit."""
-    return PCA(3, random_state=0).fit(Xfit).transform(Xplot)[:, 1:3]
+K = 1   # "all-but-the-top": number of top principal directions removed (plus the mean)
+
+
+def all_but_top(Xfit, Xplot, k=K):
+    """All-but-the-top (Mu & Viswanath 2018): remove the fit-set mean and the top-k principal
+    directions of Xfit from Xplot; returns the residual (same dimension as the input)."""
+    mu = Xfit.mean(0, keepdims=True)
+    comp = PCA(k, random_state=0).fit(Xfit).components_
+    R = Xplot - mu
+    return R - (R @ comp.T) @ comp
+
+
+def all_but_top_coords(Xfit, Xplot, k=K):
+    """All-but-the-top residual, then 2D PCA coordinates fitted on the fit-set residual."""
+    ref = all_but_top(Xfit, Xfit, k)
+    return PCA(2, random_state=0).fit(ref).transform(all_but_top(Xfit, Xplot, k))
 
 
 def main():
@@ -54,16 +68,20 @@ def main():
         fig, axes = plt.subplots(1, 2, figsize=(11.5, 5.5))
         scatter(axes[0], Praw, labels, LANG_COLORS, "raw — PCA fit on all languages")
         scatter(axes[1], Pshift, labels, LANG_COLORS, "+D — PCA fit on English only")
-        fig.suptitle(f"FLORES {mode} — all languages", fontsize=10)
+        fig.suptitle(f"FLORES {mode} — all languages | raw: PCA fit on all langs; "
+                     f"+D: PCA fit on en", fontsize=10)
         fig.tight_layout()
         fig.savefig(os.path.join(OUT, f"pca_lang_{mode}.png"), dpi=150)
         plt.close(fig)
-        Praw23 = pca23(Xraw, Xraw)
-        Pshift23 = pca23(E["en"], Xshift)
+        Praw23 = all_but_top_coords(Xraw, Xraw)
+        Pshift23 = all_but_top_coords(E["en"], Xshift)
         fig, axes = plt.subplots(1, 2, figsize=(11.5, 5.5))
-        scatter(axes[0], Praw23, labels, LANG_COLORS, "raw — no PC1 (fit on all languages)")
-        scatter(axes[1], Pshift23, labels, LANG_COLORS, "+D — no PC1 (fit on en)")
-        fig.suptitle(f"FLORES {mode} — all languages, PC1 removed (PC2 vs PC3)", fontsize=10)
+        scatter(axes[0], Praw23, labels, LANG_COLORS,
+                f"raw — all-but-the-top (k={K}), fit on all languages")
+        scatter(axes[1], Pshift23, labels, LANG_COLORS,
+                f"+D — all-but-the-top (k={K}), fit on en")
+        fig.suptitle(f"FLORES {mode} — all languages, all-but-the-top "
+                     f"(mean + top-{K} PC removed)", fontsize=10)
         fig.tight_layout()
         fig.savefig(os.path.join(OUT, f"pca_lang_{mode}_noPC1.png"), dpi=150)
         plt.close(fig)
@@ -89,11 +107,13 @@ def main():
     fig.tight_layout()
     fig.savefig(os.path.join(OUT, "pca_mean_lang_topic.png"), dpi=150)
     plt.close(fig)
-    P23 = pca23(Xall, Xall)
+    P23 = all_but_top_coords(Xall, Xall)
     fig, axes = plt.subplots(1, 2, figsize=(11, 5))
-    scatter(axes[0], P23, labels_l, LANG_COLORS, "by language — no PC1")
-    scatter(axes[1], P23, prim4, tag_colors, "by primary topic (lenient) — no PC1")
-    fig.suptitle("FLORES mean — PC1 removed (PC2 vs PC3), all 4 languages pooled", fontsize=10)
+    scatter(axes[0], P23, labels_l, LANG_COLORS, f"by language — all-but-the-top (k={K})")
+    scatter(axes[1], P23, prim4, tag_colors,
+            f"by primary topic (lenient) — all-but-the-top (k={K})")
+    fig.suptitle(f"FLORES mean — all-but-the-top (mean + top-{K} PC removed), "
+                 "all 4 languages pooled", fontsize=10)
     fig.tight_layout()
     fig.savefig(os.path.join(OUT, "pca_mean_lang_topic_noPC1.png"), dpi=150)
     plt.close(fig)
