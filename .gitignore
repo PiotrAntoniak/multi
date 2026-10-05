@@ -39,6 +39,9 @@ xgboost_topic_results*
 xgboost_topic_allmodes*
 xgboost_pertopic*
 xgboost_lenient_merge.log
+xgboost_sst2_*
+xgboost_emotion_*
+progress_live.txt
 
 # launchers
 *.cmd

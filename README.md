@@ -17,12 +17,16 @@ repo: the scripts write them next to themselves and they are git-ignored.
 |---|---|
 | `flores200_en_it_de_fr.csv` | FLORES-200 data: 2009 rows (997 `dev` / 1012 `devtest`), columns `split, id, en, it, de, fr, URL, domain, topic, has_image, has_hyperlink` |
 | `europarl_all_5k.csv` | all Europarl data in one file: 30,000 rows (6 languages x 5,000 seeded, deduplicated line-aligned pairs), columns `lang, ...` |
+| `sst2.csv` | SST-2 (GLUE) data: 68,221 rows (67,349 train / 872 validation), columns `sentence, label, split` |
+| `emotion.csv` | dair-ai/emotion data: 18,000 rows (16,000 train / 2,000 validation), columns `text, label, split` |
 | `extract_embeddings.py` | embeds FLORES in the four pooling modes -> `embeddings/<mode>/emb_<lang>.npy` |
 | `table1.py` | FLORES exact-translation retrieval, foreign-to-English, raw + `+D` |
 | `fetch_europarl_langs.py` | downloads/extracts the six Europarl xx-en pairs and (re)writes `europarl_all_5k.csv` |
 | `table1_europarl_multilang.py` | Europarl retrieval (`xx -> en`, all modes, raw + `+D`); reuses already-computed embeddings |
 | `xgboost_topic_optuna.py` | XGBoost topic training: lenient labels, per-tag tuned thresholds, per-language grid, cross-lingual transfer |
 | `xgboost_infer.py` | standalone inference: embedded per-mode default params, `--shift`, `--eval`, `--input` |
+| `xgboost_sst2.py` | XGBoost binary sentiment on EuroBERT embeddings (`mean`/`bos`), Optuna-tuned; reads `sst2.csv`, caches embeddings to `sst2_emb/` |
+| `xgboost_emotion.py` | XGBoost 6-class emotion on EuroBERT embeddings (`mean`/`bos`), Optuna-tuned; reads `emotion.csv`, caches to `emotion_emb/` |
 | `check_tokens_cos_sim.py` | token-norm and cosine-similarity diagnostic |
 | `check_bos_diagnostics.py` | per-layer BOS / mean-pooling stats and the BOS ablation (15 en + 15 it FLORES sentences; full column glossary in the script docstring) |
 
@@ -83,6 +87,8 @@ python table1_europarl_multilang.py all   # Europarl retrieval xx->en for all si
 python xgboost_topic_optuna.py --mode all --labels lenient --thresholds tuned --trials 50
 python xgboost_topic_optuna.py --mode perlang --langs en,it,de,fr --labels lenient --thresholds tuned --trials 50
 python xgboost_infer.py --mode mean --lang it --shift --eval
+python xgboost_sst2.py --modes mean,bos --trials 50       # SST-2 (binary), mean + bos pooling
+python xgboost_emotion.py --modes mean,bos --trials 50    # dair-ai/emotion (6-class)
 python check_tokens_cos_sim.py         # token norms + cosine diagnostic
 python check_bos_diagnostics.py        # per-layer BOS/mean stats + BOS ablation
 ```
