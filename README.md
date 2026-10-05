@@ -30,6 +30,8 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `check_tokens_cos_sim.py` | token-norm and cosine-similarity diagnostic |
 | `check_bos_diagnostics.py` | per-layer BOS / mean-pooling stats and the BOS ablation (15 en + 15 it FLORES sentences; full column glossary in the script docstring) |
 | `watch_progress.py` | minute-refresh progress board for the single-mode XGBoost runs (rewrites `progress_live.txt` every 60 s) |
+| `pca_plots.py` | PCA plots of the FLORES embeddings (raw/+D per pooling mode, all-but-the-top variants, topic view) -> `pca_plots/*.png` |
+| `lang_dims.py` | per-dimension language separability (eta^2) and the cumulative "how many dims carry the language" curve |
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading
 special token. We therefore materialize **four pooling modes** over the last hidden state:
