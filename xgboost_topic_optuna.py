@@ -268,7 +268,8 @@ def load_data(scheme="strict"):
 def load_mode_embeddings(mode):
     X = {l: np.load(os.path.join(BASE, "embeddings", mode, f"emb_{l}.npy")) for l in LANGS}
     for l in LANGS:
-        assert X[l].shape == (2009, 768) and X[l].dtype == np.float32, (mode, l, X[l].shape)
+        # Row count is fixed (2009); hidden size may differ per backbone (768/1152/...).
+        assert X[l].ndim == 2 and X[l].shape[0] == 2009, (mode, l, X[l].shape)
     return X
 
 
@@ -927,7 +928,8 @@ def write_allmodes_md(results, outdir, elapsed):
 # ----------------------------------------------------------------------------
 def load_one_embedding(mode, lang):
     X = np.load(os.path.join(BASE, "embeddings", mode, f"emb_{lang}.npy"))
-    assert X.shape == (2009, 768) and X.dtype == np.float32, (mode, lang, X.shape)
+    # Row count is fixed (2009); hidden size may differ per backbone (768/1152/...).
+    assert X.ndim == 2 and X.shape[0] == 2009, (mode, lang, X.shape)
     return X
 
 

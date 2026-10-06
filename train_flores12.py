@@ -27,13 +27,20 @@ from ``embeddings_agg/{mode}/emb_{lang}.npy``.
 
 Conditions
 ----------
-``full``    : all 768 dims.
-``prune50`` : zero the top-k dims carrying 50% of the 4-language eta^2 mass, per dataset+mode.
-              Sentence k comes from ``lang_metrics.top_dims(mode, 0.5)``; agg k is computed
-              with ``lang_metrics.eta2`` on the agg embeddings.  The same dims are zeroed in
-              train/val/test arrays for self and transfer evaluation.
+``full`` : all dims unchanged.
+``abtt`` : All-but-the-Top postprocessing (Mu & Viswanath, ICLR 2018, arXiv:1702.01417,
+           Algorithm 1), fitted per (dataset, mode) on the TRAINING language only.  Centre
+           the training language's embedding matrix by its mean ``mu``, take the top-D right
+           singular vectors ``u_1..u_D`` of the centred matrix (numpy SVD; no sklearn), and
+           project them out: ``v' = (v - mu) - ((v - mu) @ U.T) @ U`` with
+           ``D = max(1, round(hidden/100))`` -> 8 for 768-dim (210m), 12 for 1152-dim (610m).
+           ``mu`` and ``U`` are fitted on the training language's full matrix (sentence: the
+           2006-row aligned matrix; agg: the 562-row matrix -- the 11-class filter is only
+           about labels) and the SAME projection is applied to that language's train/val/test
+           rows and to the transfer language's test rows.  Hidden-size agnostic, so a
+           different backbone fits its own D and components.
 
-Protocol (16 cells = dataset {sent,agg} x mode {mean,bos} x condition {full,prune50} x train
+Protocol (16 cells = dataset {sent,agg} x mode {mean,bos} x condition {full,abtt} x train
 language {en,it})
 --------------------------------------------------------------------------------------------------
 * ``XGBClassifier(objective="multi:softprob", num_class=12, tree_method="hist", device="cuda",
@@ -44,7 +51,7 @@ language {en,it})
   the OTHER language test (transfer), same condition/pruning.  Metrics: accuracy, macro-F1,
   per-class F1 and OVR AUC (macro + per-class).
 * Each final model is saved with ``model_store.save_bundle`` as
-  ``flores12_{sent|agg}_{lang}_{mode}_{full|prune50}_optuna10`` and appended to the tracked
+  ``flores12_{sent|agg}_{lang}_{mode}_{full|abtt}_optuna10`` and appended to the tracked
   ``models_registry.json`` at the repo root (``models/`` stays git-ignored).
 
 Driver
@@ -56,6 +63,15 @@ Launch detached with the repo's hidden launcher::
     python train_flores12.py --launch                 # spawns itself via launch_hidden.vbs
     # or explicitly:
     wscript //B //Nologo launch_hidden.vbs "python train_flores12.py"
+
+Second backbone
+---------------
+``--emb-sent-dir`` / ``--emb-agg-dir`` point the run at different embedding roots and
+``--tag <name>`` appends ``_<name>`` to every cell/bundle/registry name AND switches the
+log/pid/status files to ``train_flores12_<name>.*`` (shard variants
+``train_flores12_<name>_shard{i}.*``), so a second backbone (e.g. EuroBERT-610m, 1152 dims)
+writes separate artifacts.  With all three args omitted the behaviour is byte-identical to
+the legacy 210m run.
 
 Sharding
 --------
@@ -93,7 +109,6 @@ import xgboost as xgb
 import optuna
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
-from lang_metrics import eta2, top_dims
 from model_store import save_bundle
 from xgboost_topic_optuna import _optuna_search_space
 
@@ -112,17 +127,18 @@ REGISTRY_PATH = os.path.join(REPO, "models_registry.json")
 LOG_PATH = os.path.join(REPO, "train_flores12.log")
 PID_PATH = os.path.join(REPO, "train_flores12.pid")
 STATUS_PATH = os.path.join(REPO, "train_flores12_status.json")
+# Optional backbone tag (--tag).  Empty => exact legacy 210m names/paths.
+TAG = ""
 
 LANGS = ["en", "it", "de", "fr"]          # all four, for the language eta^2
 TRAIN_LANGS = ["en", "it"]                # the two train/eval languages
 MODES = ["mean", "bos"]
-CONDITIONS = ["full", "prune50"]
+CONDITIONS = ["full", "abtt"]
 DATASETS = ["sent", "agg"]
 
 N_CLASSES = 12
 N_TRIALS = 10
 SEED = 0
-PRUNE_FRAC = 0.50
 GIT_REF = "196bbd3:flores200_en_it_de_fr.csv"
 # Agg-only: drop this class from every split so agg is a genuine 11-class problem
 # (its val split had zero class-0 rows).  Rows are filtered at runtime; CSV/embeddings
@@ -204,18 +220,27 @@ def update_registry(entry):
     os.replace(tmp, REGISTRY_PATH)
 
 
-def set_shard_paths(shard_i, shard_n):
+def set_shard_paths(shard_i, shard_n, tag=""):
     """Point the log/pid/status/registry globals at this shard's files.
 
     A single shard (``n == 1``) keeps the original shared paths, so ``--shard 0/1`` behaves
     exactly like the legacy single-process run.  ``n > 1`` uses ``train_flores12_shard{i}.*``
     files and a per-shard registry, so parallel shards never write the shared
     ``models_registry.json`` (merge them later with ``--merge-registry N``).
+
+    A non-empty ``tag`` (--tag) prefixes every log/pid/status basename with
+    ``train_flores12_<tag>`` (shard variants become ``train_flores12_<tag>_shard{i}.*``)
+    so a second backbone never clobbers the 210m artifacts.
     """
     global LOG_PATH, PID_PATH, STATUS_PATH, REGISTRY_PATH
+    base = f"train_flores12_{tag}" if tag else "train_flores12"
     if shard_n <= 1:
+        LOG_PATH = os.path.join(REPO, base + ".log")
+        PID_PATH = os.path.join(REPO, base + ".pid")
+        STATUS_PATH = os.path.join(REPO, base + "_status.json")
+        REGISTRY_PATH = os.path.join(REPO, "models_registry.json")
         return
-    stem = os.path.join(REPO, f"train_flores12_shard{shard_i}")
+    stem = os.path.join(REPO, f"{base}_shard{shard_i}")
     LOG_PATH = stem + ".log"
     PID_PATH = stem + ".pid"
     STATUS_PATH = stem + "_status.json"
@@ -389,7 +414,7 @@ def prepare_agg(sent_cur, classes, exclude=EXCLUDE_AGG_CLASS):
 
 
 # ----------------------------------------------------------------------------
-# Embeddings + pruning
+# Embeddings + All-but-the-Top (ABTT)
 # ----------------------------------------------------------------------------
 def load_sent_embeddings(mode, kept, n_source):
     """Load the sentence embeddings and slice the historical rows down to the current CSV.
@@ -427,29 +452,37 @@ def load_agg_embeddings(mode, n_rows):
     return out
 
 
-def sent_prune_dims(mode):
-    """Sentence prune50 dims from the shared language-mass helper (all 2009 embedding rows)."""
-    dims, k = top_dims(mode, PRUNE_FRAC)
-    return np.asarray(dims, dtype=int), int(k)
+def abtt_fit(mat):
+    """Fit All-but-the-Top (Mu & Viswanath, ICLR 2018, arXiv:1702.01417, Algorithm 1).
+
+    Returns ``(mu, U)`` where ``mu`` is the (hidden,) column mean of ``mat`` and ``U`` holds
+    the top-D right singular vectors of the centred matrix as rows, shape ``(D, hidden)``
+    with ``D = max(1, round(hidden / 100))`` (8 for a 768-dim backbone, 12 for 1152-dim).
+
+    The PCA is a plain numpy SVD of the centred matrix (no sklearn dependency); the right
+    singular vectors of the centred matrix are exactly its principal components.
+    """
+    mat = np.asarray(mat, dtype=np.float64)
+    mu = mat.mean(axis=0)
+    centered = mat - mu
+    # full_matrices=False => vt is (min(n, hidden), hidden); its rows are the components.
+    _, _, vt = np.linalg.svd(centered, full_matrices=False)
+    d = max(1, int(round(mat.shape[1] / 100.0)))
+    d = min(d, vt.shape[0])
+    return mu, vt[:d]
 
 
-def agg_prune_dims(mode, agg_emb):
-    """Agg prune50 dims: eta^2 over the four agg languages, top dims covering PRUNE_FRAC."""
-    x_all = np.vstack([agg_emb[l] for l in LANGS])
-    y_lang = np.repeat(LANGS, agg_emb["en"].shape[0])
-    e2 = np.nan_to_num(eta2(x_all, y_lang))
-    order = np.argsort(-e2)
-    cum = np.cumsum(e2[order]) / e2.sum()
-    k = int(np.searchsorted(cum, PRUNE_FRAC) + 1)
-    return order[:k].astype(int), k
+def apply_abtt(arr, mu, U):
+    """Remove the fitted top-D components from ``arr``.
 
-
-def apply_prune(arr, dims):
-    if dims is None or len(dims) == 0:
-        return arr
-    out = arr.copy()
-    out[:, dims] = 0.0
-    return out
+    Paper-faithful form of Algorithm 1: centre by ``mu``, but compute the projection with the
+    ORIGINAL vectors, ``v' = (v - mu) - (v @ U.T) @ U``.  The paper writes
+    ``v'(w) = v~(w) - sum_i (u_i^T v(w)) u_i`` (arXiv:1702.01417, Algorithm 1), i.e. the raw
+    ``v(w)`` in the projection term.  This differs from the centred-projection variant only by
+    the per-feature constant ``(U.T @ U) @ mu``, so tree models are identical either way.
+    """
+    arr = np.asarray(arr, dtype=np.float64)
+    return (arr - mu) - (arr @ U.T) @ U
 
 
 # ----------------------------------------------------------------------------
@@ -515,7 +548,10 @@ def _best_finite(study):
 # One cell
 # ----------------------------------------------------------------------------
 def cell_name(dataset, lang, mode, condition):
-    return f"flores12_{dataset}_{lang}_{mode}_{condition}_optuna10"
+    name = f"flores12_{dataset}_{lang}_{mode}_{condition}_optuna10"
+    if TAG:
+        name += f"_{TAG}"
+    return name
 
 
 def run_cell(dataset, mode, condition, lang, ctx, state):
@@ -523,26 +559,38 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
         classes = ctx["classes"]
         n_classes = N_CLASSES
         src = ctx["sent_emb"][mode]
+        abtt_by_lang = ctx["sent_abtt"][mode]
         idx = (ctx["sent"]["train_idx"], ctx["sent"]["val_idx"], ctx["sent"]["test_idx"])
-        dims, k = (ctx["sent_dims"][mode] if condition == "prune50" else (None, 0))
     else:
         classes = ctx["agg"]["classes"]
         n_classes = ctx["agg"]["n_classes"]
         src = ctx["agg_emb"][mode]
+        abtt_by_lang = ctx["agg_abtt"][mode]
         idx = (ctx["agg"]["train_idx"], ctx["agg"]["val_idx"], ctx["agg"]["test_idx"])
-        dims, k = (ctx["agg_dims"][mode] if condition == "prune50" else (None, 0))
     train_idx, val_idx, test_idx = idx
     other = "it" if lang == "en" else "en"
     y = ctx["sent"]["y"] if dataset == "sent" else ctx["agg"]["y"]
     y_arr = y
 
-    X = apply_prune(src[lang], dims)
-    X_other = apply_prune(src[other], dims)
+    if condition == "abtt":
+        # Fit scope = training language only: mu/U come from ``lang``'s full matrix and the
+        # same projection is applied to that language's rows and to the transfer language's.
+        mu, U = abtt_by_lang[lang]
+        fit_lang = lang
+        D = int(U.shape[0])
+        X = apply_abtt(src[lang], mu, U)
+        X_other = apply_abtt(src[other], mu, U)
+    else:  # full: leave the embeddings untouched
+        fit_lang = None
+        D = 0
+        X = src[lang]
+        X_other = src[other]
+    k = D
     tr = np.concatenate([train_idx, val_idx])
     name = cell_name(dataset, lang, mode, condition)
 
-    log(f"===== CELL {name} (k={k}) train={len(train_idx)} val={len(val_idx)} "
-        f"test={len(test_idx)} =====")
+    log(f"===== CELL {name} (D={D} fit_lang={fit_lang}) train={len(train_idx)} "
+        f"val={len(val_idx)} test={len(test_idx)} =====")
     log(f"[{name}] split labels: train={np.bincount(y_arr[train_idx], minlength=n_classes).tolist()} "
         f"val={np.bincount(y_arr[val_idx], minlength=n_classes).tolist()} "
         f"test={np.bincount(y_arr[test_idx], minlength=n_classes).tolist()}")
@@ -611,7 +659,7 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
     meta = {
         "dataset": dataset, "lang": lang, "mode": mode, "condition": condition,
         "k": int(k),
-        "zeroed_dims": (dims.tolist() if dims is not None else []),
+        "zeroed_dims": [],
         "classes": classes,
         "n_classes": int(n_classes),
         "excluded_class": (ctx["agg"]["excluded_class"] if dataset == "agg" else None),
@@ -631,10 +679,15 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
         "n_trials": N_TRIALS,
         "created": created,
     }
+    if condition == "abtt":
+        # Provenance for the ABTT postprocessing (absent for ``full``; extra keys only).
+        meta["method"] = "abtt"
+        meta["D"] = int(D)
+        meta["fit_lang"] = fit_lang
     save_bundle(name, [final], meta, root=MODELS_ROOT)
     log(f"[{name}] saved bundle '{name}'")
 
-    update_registry({
+    registry_entry = {
         "name": name, "dataset": dataset, "lang": lang, "mode": mode,
         "condition": condition, "k": int(k), "n_trials": N_TRIALS,
         "val_auc": float(best_value),
@@ -644,7 +697,12 @@ def run_cell(dataset, mode, condition, lang, ctx, state):
         "test_transfer_auc": trans_m["auc_ovr_macro"],
         "test_transfer_macro_f1": trans_m["macro_f1"],
         "created": created,
-    })
+    }
+    if condition == "abtt":
+        registry_entry["method"] = "abtt"
+        registry_entry["D"] = int(D)
+        registry_entry["fit_lang"] = fit_lang
+    update_registry(registry_entry)
 
     res = {"name": name, "k": int(k), "best_trial": int(best_trial.number),
            "best_value": float(best_value), "best_params": best_params,
@@ -698,6 +756,16 @@ def parse_args(argv):
                     help="handle cells I of N round-robin; 0/1 (default) runs all 16 cells")
     ap.add_argument("--datasets", choices=["sent", "agg", "both"], default="both",
                     help="restrict the cell list to one dataset or both (default both)")
+    ap.add_argument("--conditions", default=",".join(CONDITIONS),
+                    help="comma-separated subset of {%s} (default %s)"
+                         % (",".join(CONDITIONS), ",".join(CONDITIONS)))
+    ap.add_argument("--emb-sent-dir", default="embeddings",
+                    help="sentence embedding root (default embeddings)")
+    ap.add_argument("--emb-agg-dir", default="embeddings_agg",
+                    help="agg embedding root (default embeddings_agg)")
+    ap.add_argument("--tag", default="",
+                    help="suffix for cell/bundle/registry names and log/pid/status files "
+                         "(e.g. --tag 610m); empty (default) keeps exact 210m names")
     ap.add_argument("--merge-registry", type=int, default=None, metavar="N",
                     help="merge models_registry_shard0..N-1.json into models_registry.json and exit")
     return ap.parse_args(argv)
@@ -715,17 +783,32 @@ def main(argv=None):
         print("launched detached via launch_hidden.vbs")
         return 0
 
-    shard_i, shard_n = parse_shard(args.shard)
-    set_shard_paths(shard_i, shard_n)
+    conditions = [c.strip() for c in args.conditions.split(",") if c.strip()]
+    unknown = [c for c in conditions if c not in CONDITIONS]
+    if unknown:
+        raise SystemExit("unknown condition(s) %s; known: {%s}"
+                         % (unknown, ", ".join(CONDITIONS)))
+    if not conditions:
+        raise SystemExit("--conditions must select at least one of {%s}"
+                         % ", ".join(CONDITIONS))
 
-    global N_TRIALS
+    shard_i, shard_n = parse_shard(args.shard)
+    set_shard_paths(shard_i, shard_n, args.tag)
+
+    global N_TRIALS, EMB_SENT_DIR, EMB_AGG_DIR, TAG
     N_TRIALS = args.trials
+    TAG = args.tag or ""
+    EMB_SENT_DIR = (args.emb_sent_dir if os.path.isabs(args.emb_sent_dir)
+                    else os.path.join(REPO, args.emb_sent_dir))
+    EMB_AGG_DIR = (args.emb_agg_dir if os.path.isabs(args.emb_agg_dir)
+                   else os.path.join(REPO, args.emb_agg_dir))
 
     logf = _open_log()
     write_pid()
     t0 = time.time()
     log("train_flores12 starting")
     log(f"python pid={os.getpid()} trials={N_TRIALS} shard={shard_i}/{shard_n} "
+        f"tag={TAG!r} emb_sent_dir={EMB_SENT_DIR} emb_agg_dir={EMB_AGG_DIR} "
         f"xgboost={xgb.__version__} optuna={optuna.__version__}")
 
     state = {
@@ -765,25 +848,33 @@ def main(argv=None):
                     "dropped_rows": dict(agg["dropped"]),
                     "train": int(len(agg["train_idx"])),
                     "val": int(len(agg["val_idx"])), "test": int(len(agg["test_idx"]))},
-            "prune_dims": {},
+            "abtt_dims": {},
         }
 
         sent_emb = {m: load_sent_embeddings(m, sent["kept"], len(sent["git"]))
                     for m in MODES}
         agg_emb = {m: load_agg_embeddings(m, len(agg["agg"])) for m in MODES}
-        sent_dims = {m: sent_prune_dims(m) for m in MODES}
-        agg_dims = {m: agg_prune_dims(m, agg_emb[m]) for m in MODES}
+        # ABTT fit scope = training language only, per (dataset, mode): fit mu/top-D on that
+        # language's full matrix (sentence 2006 rows aligned; agg 562 rows, labels untouched).
+        sent_abtt = {m: {l: abtt_fit(sent_emb[m][l]) for l in TRAIN_LANGS} for m in MODES}
+        agg_abtt = {m: {l: abtt_fit(agg_emb[m][l]) for l in TRAIN_LANGS} for m in MODES}
         for m in MODES:
-            state["data"]["prune_dims"][m] = {"sent_k": sent_dims[m][1], "agg_k": agg_dims[m][1]}
-            log(f"prune50 {m}: sentence k={sent_dims[m][1]} dims, agg k={agg_dims[m][1]} dims")
+            state["data"]["abtt_dims"][m] = {}
+            parts = []
+            for l in TRAIN_LANGS:
+                sd = int(sent_abtt[m][l][1].shape[0])
+                ad = int(agg_abtt[m][l][1].shape[0])
+                state["data"]["abtt_dims"][m][l] = {"sent_D": sd, "agg_D": ad}
+                parts.append(f"fit={l} sent_D={sd} agg_D={ad}")
+            log(f"abtt {m}: " + ", ".join(parts))
         write_status(state)
 
         ctx = {"classes": classes, "sent": sent, "agg": agg, "sent_emb": sent_emb,
-               "agg_emb": agg_emb, "sent_dims": sent_dims, "agg_dims": agg_dims}
+               "agg_emb": agg_emb, "sent_abtt": sent_abtt, "agg_abtt": agg_abtt}
 
         datasets = DATASETS if args.datasets == "both" else [args.datasets]
         all_cells = [(d, m, c, l) for d in datasets for m in MODES
-                     for c in CONDITIONS for l in TRAIN_LANGS]
+                     for c in conditions for l in TRAIN_LANGS]
         cells = [cell for j, cell in enumerate(all_cells) if j % shard_n == shard_i]
         state["datasets"] = datasets
         state["cells_order"] = [cell_name(d, l, m, c) for (d, m, c, l) in cells]

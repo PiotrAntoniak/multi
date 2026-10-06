@@ -28,7 +28,9 @@ meaning.npy is left untouched).  Otherwise the script STOPS and moves nothing.
 fp32 GPU (CPU fallback), inference_mode, OMP/MKL/OpenBLAS/NumExpr threads=2,
 batch 64, no detached processes / no windows.
 
-Usage: python extract_embeddings.py
+Usage: python extract_embeddings.py [--model-id ID] [--data CSV] [--out-dir DIR]
+                                    [--pools mean,lead,bos,eos] [--dtype float32|bfloat16]
+                                    [--no-migrate-bos]
 """
 import os
 
@@ -38,6 +40,7 @@ os.environ.setdefault("OPENBLAS_NUM_THREADS", "2")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "2")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
+import argparse
 import csv
 import sys
 import time
@@ -55,7 +58,8 @@ DATA = ROOT / "flores200_en_it_de_fr.csv"
 OUT_DIR = ROOT / "embeddings"
 MODEL_ID = "EuroBERT/EuroBERT-210m"
 LANGS = ["en", "it", "de", "fr"]
-POOLS = ["mean", "lead", "bos", "eos"]
+ALL_POOLS = ["mean", "lead", "bos", "eos"]
+POOLS = list(ALL_POOLS)
 BATCH, MAX_LEN = 64, 512
 LEAD_FALLBACK = 128000
 
@@ -79,15 +83,19 @@ def leading_id(tokenizer):
 
 
 @torch.inference_mode()
-def forward_pools(texts, tokenizer, model, device, lead):
-    """Return {pool: (n, 768) float32 array} for one list of texts.
+def forward_pools(texts, tokenizer, model, device, lead, pools):
+    """Return {pool: (n, hidden) float32 array} for one list of texts.
 
     Two forwards per batch: the PLAIN forward (content + appended end token,
     truncated to MAX_LEN-1) yields mean/lead/eos; a PREPENDED forward over the
     same ids with `lead` prepended yields bos.  lead is taken from the plain
     forward, never approximated from the prepended one.
+
+    Only the requested `pools` are computed and returned (e.g. ``["mean", "bos"]``
+    skips the plain-forward lead/eos slices), and the extra prepended forward runs
+    only when ``bos`` is requested.
     """
-    acc = {k: [] for k in POOLS}
+    acc = {k: [] for k in pools}
     for i in range(0, len(texts), BATCH):
         # PLAIN tokenization: content plus the tokenizer's appended end token.
         batch = tokenizer(texts[i:i + BATCH], padding=True, truncation=True,
@@ -97,21 +105,25 @@ def forward_pools(texts, tokenizer, model, device, lead):
         h = model(input_ids=ids.to(device),
                   attention_mask=mask.to(device)).last_hidden_state
         m = mask.to(h.device).unsqueeze(-1)
-        acc["mean"].append(((h * m).sum(1) / m.sum(1).clamp(min=1)).float().cpu().numpy())
-        acc["lead"].append(h[:, 0, :].float().cpu().numpy())
-        last = (mask.sum(1) - 1).to(h.device)
-        acc["eos"].append(h[torch.arange(h.shape[0], device=h.device), last]
-                          .float().cpu().numpy())
+        if "mean" in acc:
+            acc["mean"].append(((h * m).sum(1) / m.sum(1).clamp(min=1)).float().cpu().numpy())
+        if "lead" in acc:
+            acc["lead"].append(h[:, 0, :].float().cpu().numpy())
+        if "eos" in acc:
+            last = (mask.sum(1) - 1).to(h.device)
+            acc["eos"].append(h[torch.arange(h.shape[0], device=h.device), last]
+                              .float().cpu().numpy())
 
         # PREPENDED forward for bos: leading id 128000 then the content tokens.
-        lead_col = torch.full((ids.shape[0], 1), lead, dtype=ids.dtype)
-        p_ids = torch.cat([lead_col, ids], dim=1)
-        p_mask = torch.cat([torch.ones_like(lead_col), mask], dim=1).to(torch.long)
-        assert int(p_ids[:, 0].min()) == lead and int(p_ids[:, 0].max()) == lead, \
-            "position 0 does not hold the leading id for every row"
-        hb = model(input_ids=p_ids.to(device),
-                   attention_mask=p_mask.to(device)).last_hidden_state
-        acc["bos"].append(hb[:, 0, :].float().cpu().numpy())
+        if "bos" in acc:
+            lead_col = torch.full((ids.shape[0], 1), lead, dtype=ids.dtype)
+            p_ids = torch.cat([lead_col, ids], dim=1)
+            p_mask = torch.cat([torch.ones_like(lead_col), mask], dim=1).to(torch.long)
+            assert int(p_ids[:, 0].min()) == lead and int(p_ids[:, 0].max()) == lead, \
+                "position 0 does not hold the leading id for every row"
+            hb = model(input_ids=p_ids.to(device),
+                       attention_mask=p_mask.to(device)).last_hidden_state
+            acc["bos"].append(hb[:, 0, :].float().cpu().numpy())
 
     return {k: np.concatenate(v, 0).astype(np.float32) for k, v in acc.items()}
 
@@ -161,12 +173,53 @@ def verify_and_migrate_bos(worst_limit=1e-3):
     return worst, per_lang, moved
 
 
-def main():
+def parse_args(argv=None):
+    """CLI with defaults identical to the pre-argparse behavior."""
+    ap = argparse.ArgumentParser(
+        description="EuroBERT sentence-embedding pooling extractor.")
+    ap.add_argument("--model-id", default="EuroBERT/EuroBERT-210m",
+                    help="HF model id (default EuroBERT/EuroBERT-210m)")
+    ap.add_argument("--data", default="flores200_en_it_de_fr.csv",
+                    help="aligned input CSV (default flores200_en_it_de_fr.csv)")
+    ap.add_argument("--out-dir", default="embeddings",
+                    help="output root; writes <out>/<mode>/emb_<lang>.npy (default embeddings)")
+    ap.add_argument("--pools", default="mean,lead,bos,eos",
+                    help="comma-separated poolings to compute (default mean,lead,bos,eos)")
+    ap.add_argument("--dtype", choices=["float32", "bfloat16"], default="float32",
+                    help="model dtype; bfloat16 needs CUDA, else falls back to float32")
+    ap.add_argument("--no-migrate-bos", action="store_true",
+                    help="skip verify_and_migrate_bos() after extraction")
+    return ap.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+    global DATA, OUT_DIR, MODEL_ID, POOLS
+    DATA = Path(args.data)
+    if not DATA.is_absolute():
+        DATA = ROOT / DATA
+    OUT_DIR = Path(args.out_dir)
+    if not OUT_DIR.is_absolute():
+        OUT_DIR = ROOT / OUT_DIR
+    MODEL_ID = args.model_id
+    pools = [p.strip() for p in args.pools.split(",") if p.strip()]
+    unknown = [p for p in pools if p not in ALL_POOLS]
+    if unknown:
+        raise SystemExit("unknown pools %r (choose from %r)" % (unknown, ALL_POOLS))
+    POOLS = pools
+
     t0 = time.time()
     texts, n = read_texts(DATA)
     print(f"{DATA.name}: {n} rows x {LANGS}")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float32
+    if args.dtype == "bfloat16":
+        if torch.cuda.is_available():
+            torch_dtype = torch.bfloat16
+        else:
+            print("WARNING: --dtype bfloat16 requested but CUDA is unavailable; "
+                  "falling back to float32", file=sys.stderr)
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
     lead = leading_id(tokenizer)
     example = tokenizer(texts[LANGS[0]][0], add_special_tokens=True)["input_ids"]
@@ -176,8 +229,9 @@ def main():
           f"({tokenizer.convert_ids_to_tokens(lead)!r}); "
           f"len={len(example)} -> {len(example) + 1}")
 
-    model = AutoModel.from_pretrained(MODEL_ID).to(device).to(torch.float32).eval()
-    print(f"{MODEL_ID} on {device}, fp32, hidden_size = {model.config.hidden_size}, "
+    model = AutoModel.from_pretrained(MODEL_ID).to(device).to(torch_dtype).eval()
+    print(f"{MODEL_ID} on {device}, dtype={torch_dtype}, "
+          f"hidden_size = {model.config.hidden_size}, "
           f"batch={BATCH}, max_length={MAX_LEN} (plain tokenize to {MAX_LEN - 1}, "
           f"prepend +1), pools={POOLS}")
 
@@ -187,9 +241,9 @@ def main():
 
     norms = {mode: {} for mode in POOLS}
     for lang in LANGS:
-        pools = forward_pools(texts[lang], tokenizer, model, device, lead)
+        pools_out = forward_pools(texts[lang], tokenizer, model, device, lead, POOLS)
         for mode in POOLS:
-            arr = pools[mode].astype(np.float32)
+            arr = pools_out[mode].astype(np.float32)
             path = OUT_DIR / mode / f"emb_{lang}.npy"
             np.save(path, arr)
             finite = bool(np.isfinite(arr).all())
@@ -206,7 +260,10 @@ def main():
         pretty = " ".join(f"{lang}={norms[mode][lang]:.3f}" for lang in LANGS)
         print(f"{mode}: mean over langs={np.mean(vals):.3f}  |  {pretty}")
 
-    verify_and_migrate_bos()
+    if "bos" in POOLS and not args.no_migrate_bos:
+        verify_and_migrate_bos()
+    elif "bos" not in POOLS:
+        print("bos not requested; skipping verify_and_migrate_bos()")
     print(f"\ndone in {time.time() - t0:.1f}s")
 
 

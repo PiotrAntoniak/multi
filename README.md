@@ -42,7 +42,7 @@ repo: the scripts write them next to themselves and they are git-ignored.
 | `xgboost_flores_combined.py` | FLORES en/it follow-up: combined en+it training and en->it raw vs `+D` transfer (fixed 0.5 and in-sample tuned thresholds) |
 | `xgboost_flores_matrix.py` | FLORES en/it full-row matrix: train full en / full it, cross-evaluate; train en without language dims -> it raw |
 | `xgboost_flores_drop_optuna.py` | per-language Optuna protocol on embeddings with the top-50% language dims zeroed (4 cells: en/it x mean/bos) |
-| `train_flores12.py` | 12-class single-label FLORES topic driver over BOTH datasets (`flores200_en_it_de_fr.csv` sentence + `flores_agg.csv` URL-agg): full and prune50 embeddings, per-language (en/it) Optuna (10 trials), cross-language transfer, 16 cells; saves bundles to `models/` and updates the tracked `models_registry.json` |
+| `train_flores12.py` | 12-class single-label FLORES topic driver over BOTH datasets (`flores200_en_it_de_fr.csv` sentence + `flores_agg.csv` URL-agg): full and ABTT (All-but-the-Top, Mu & Viswanath ICLR 2018, arXiv:1702.01417; D=round(d/100), fitted on the training language) embeddings, per-language (en/it) Optuna (10 trials), cross-language transfer, 16 cells; saves bundles to `models/` and updates the tracked `models_registry.json` |
 | `models_registry.json` | tracked registry of `train_flores12.py` models (one entry per bundle: dataset, language, mode, condition, k, val/test macro-F1); the `models/` bundles themselves stay git-ignored |
 
 EuroBERT-210m has no dedicated classification token and its tokenizer does not prepend a leading

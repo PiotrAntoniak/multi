@@ -3,6 +3,9 @@ __pycache__/
 models/
 embeddings/
 embeddings_agg/
+embeddings_610/
+embeddings_agg_610/
+flores200_2009.csv
 sst2_emb/
 emotion_emb/
 *.npy
