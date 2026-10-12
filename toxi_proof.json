@@ -1,0 +1,253 @@
+{
+  "config": {
+    "dataset": "FredZhang7/toxi-text-3M",
+    "emb_model": "EuroBERT/EuroBERT-210m",
+    "pooling": "mean",
+    "max_len": 512,
+    "batch": 64,
+    "dtype": "float32",
+    "transform": "perlang_z (L2-normalize then per-language z-score from own TRAIN text)",
+    "xgb_params": {
+      "objective": "binary:logistic",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "langs": [
+      "en",
+      "it",
+      "de",
+      "fr",
+      "es"
+    ],
+    "targets": [
+      "it",
+      "de",
+      "fr",
+      "es"
+    ],
+    "n_train_sampled": 20000,
+    "test_cap": 5000,
+    "seed": 0,
+    "smoke": false,
+    "dedup_test": true,
+    "leak_removed": {
+      "en": 3,
+      "it": 4847,
+      "de": 161,
+      "fr": 3807,
+      "es": 3755
+    },
+    "val_note": "validation/multilingual-validation(new).csv was DELETED from the HF repo; per-language z stats are fit on each language's OWN TRAIN text (unlabeled for the transform).",
+    "leak_note": "non-English train/test splits share exact texts; every eval-test text is removed from that language's train pool before training (dedup_test).",
+    "fpr_grid": [
+      0.01,
+      0.05,
+      0.1
+    ],
+    "fa_grid": [
+      5,
+      20,
+      50,
+      100
+    ],
+    "recall_target": 0.9,
+    "avail_train_rows": {
+      "en": 20000,
+      "it": 20000,
+      "de": 12255,
+      "fr": 20000,
+      "es": 20000
+    }
+  },
+  "auc_en_ref": 0.7860437043456729,
+  "results": {
+    "en": {
+      "en": {
+        "n_pos": 328,
+        "n_neg": 197,
+        "prevalence": 0.6247619047619047,
+        "auc": 0.7860437043456729,
+        "average_precision": 0.8182434874389191,
+        "threshold": 0.14849567413330078,
+        "accuracy": 0.7333333333333333,
+        "f1": 0.7904191616766467,
+        "recall_at_fpr_1": 0.04878048780487805,
+        "recall_at_fpr_5": 0.10060975609756098,
+        "recall_at_fpr_10": 0.36890243902439024,
+        "recall_at_fa_5": 0.08536585365853659,
+        "recall_at_fa_20": 0.375,
+        "recall_at_fa_50": 0.6798780487804879,
+        "recall_at_fa_100": 0.9451219512195121,
+        "fpr_for_recall_90": 0.43147208121827413,
+        "val_f1_opt": 0.6107921928817451
+      }
+    },
+    "it": {
+      "en": {
+        "n_pos": 927,
+        "n_neg": 4073,
+        "prevalence": 0.1854,
+        "auc": 0.7625929271909548,
+        "average_precision": 0.45365540574693375,
+        "threshold": 0.14849567413330078,
+        "accuracy": 0.8264,
+        "f1": 0.20947176684881602,
+        "recall_at_fpr_1": 0.09816612729234088,
+        "recall_at_fpr_5": 0.26105717367853293,
+        "recall_at_fpr_10": 0.389428263214671,
+        "recall_at_fa_5": 0.03559870550161812,
+        "recall_at_fa_20": 0.07011866235167206,
+        "recall_at_fa_50": 0.10355987055016182,
+        "recall_at_fa_100": 0.17475728155339806,
+        "fpr_for_recall_90": 0.5968573533022342,
+        "val_f1_opt": 0.6107921928817451
+      },
+      "native": {
+        "n_pos": 927,
+        "n_neg": 4073,
+        "prevalence": 0.1854,
+        "auc": 0.8153321621507806,
+        "average_precision": 0.5518632931758731,
+        "threshold": 0.2663686275482178,
+        "accuracy": 0.8222,
+        "f1": 0.5112699285321606,
+        "recall_at_fpr_1": 0.16073354908306364,
+        "recall_at_fpr_5": 0.35490830636461707,
+        "recall_at_fpr_10": 0.4919093851132686,
+        "recall_at_fa_5": 0.06040992448759439,
+        "recall_at_fa_20": 0.1272923408845739,
+        "recall_at_fa_50": 0.17367853290183388,
+        "recall_at_fa_100": 0.26105717367853293,
+        "fpr_for_recall_90": 0.512889761846305,
+        "val_f1_opt": 0.6797202797202797
+      }
+    },
+    "de": {
+      "en": {
+        "n_pos": 136,
+        "n_neg": 54,
+        "prevalence": 0.7157894736842105,
+        "auc": 0.6254084967320261,
+        "average_precision": 0.8261602542375422,
+        "threshold": 0.14849567413330078,
+        "accuracy": 0.29473684210526313,
+        "f1": 0.028985507246376812,
+        "recall_at_fpr_1": 0.125,
+        "recall_at_fpr_5": 0.17647058823529413,
+        "recall_at_fpr_10": 0.25735294117647056,
+        "recall_at_fa_5": 0.25735294117647056,
+        "recall_at_fa_20": 0.5735294117647058,
+        "recall_at_fa_50": 0.9852941176470589,
+        "recall_at_fa_100": 1.0,
+        "fpr_for_recall_90": 0.8148148148148148,
+        "val_f1_opt": 0.6107921928817451
+      },
+      "native": {
+        "n_pos": 136,
+        "n_neg": 54,
+        "prevalence": 0.7157894736842105,
+        "auc": 0.5887799564270152,
+        "average_precision": 0.7793229145425195,
+        "threshold": 0.29703420400619507,
+        "accuracy": 0.6473684210526316,
+        "f1": 0.7545787545787546,
+        "recall_at_fpr_1": 0.03676470588235294,
+        "recall_at_fpr_5": 0.08088235294117647,
+        "recall_at_fpr_10": 0.20588235294117646,
+        "recall_at_fa_5": 0.20588235294117646,
+        "recall_at_fa_20": 0.45588235294117646,
+        "recall_at_fa_50": 0.9926470588235294,
+        "recall_at_fa_100": 1.0,
+        "fpr_for_recall_90": 0.7592592592592593,
+        "val_f1_opt": 0.7008310249307479
+      }
+    },
+    "fr": {
+      "en": {
+        "n_pos": 1488,
+        "n_neg": 3512,
+        "prevalence": 0.2976,
+        "auc": 0.749762335586744,
+        "average_precision": 0.5541706856191353,
+        "threshold": 0.14849567413330078,
+        "accuracy": 0.7174,
+        "f1": 0.13998782714546562,
+        "recall_at_fpr_1": 0.07123655913978495,
+        "recall_at_fpr_5": 0.2211021505376344,
+        "recall_at_fpr_10": 0.364247311827957,
+        "recall_at_fa_5": 0.025537634408602152,
+        "recall_at_fa_20": 0.049059139784946235,
+        "recall_at_fa_50": 0.09408602150537634,
+        "recall_at_fa_100": 0.14180107526881722,
+        "fpr_for_recall_90": 0.6193052391799544,
+        "val_f1_opt": 0.6107921928817451
+      },
+      "native": {
+        "n_pos": 1488,
+        "n_neg": 3512,
+        "prevalence": 0.2976,
+        "auc": 0.8211532235101772,
+        "average_precision": 0.650291132275176,
+        "threshold": 0.21514107286930084,
+        "accuracy": 0.737,
+        "f1": 0.618730066685996,
+        "recall_at_fpr_1": 0.13978494623655913,
+        "recall_at_fpr_5": 0.3077956989247312,
+        "recall_at_fpr_10": 0.4422043010752688,
+        "recall_at_fa_5": 0.049059139784946235,
+        "recall_at_fa_20": 0.1081989247311828,
+        "recall_at_fa_50": 0.17473118279569894,
+        "recall_at_fa_100": 0.2325268817204301,
+        "fpr_for_recall_90": 0.4447608200455581,
+        "val_f1_opt": 0.7558940877765687
+      }
+    },
+    "es": {
+      "en": {
+        "n_pos": 1868,
+        "n_neg": 3132,
+        "prevalence": 0.3736,
+        "auc": 0.7751925622366072,
+        "average_precision": 0.683048134949736,
+        "threshold": 0.14849567413330078,
+        "accuracy": 0.6638,
+        "f1": 0.2029397818871503,
+        "recall_at_fpr_1": 0.1284796573875803,
+        "recall_at_fpr_5": 0.29336188436830835,
+        "recall_at_fpr_10": 0.4229122055674518,
+        "recall_at_fa_5": 0.05513918629550321,
+        "recall_at_fa_20": 0.09957173447537473,
+        "recall_at_fa_50": 0.15845824411134904,
+        "recall_at_fa_100": 0.22002141327623126,
+        "fpr_for_recall_90": 0.5708812260536399,
+        "val_f1_opt": 0.6107921928817451
+      },
+      "native": {
+        "n_pos": 1868,
+        "n_neg": 3132,
+        "prevalence": 0.3736,
+        "auc": 0.8342120502323191,
+        "average_precision": 0.7275174581835515,
+        "threshold": 0.16152606904506683,
+        "accuracy": 0.7532,
+        "f1": 0.6918081918081919,
+        "recall_at_fpr_1": 0.1183083511777302,
+        "recall_at_fpr_5": 0.31905781584582443,
+        "recall_at_fpr_10": 0.48394004282655245,
+        "recall_at_fa_5": 0.03747323340471092,
+        "recall_at_fa_20": 0.09903640256959315,
+        "recall_at_fa_50": 0.16541755888650964,
+        "recall_at_fa_100": 0.24785867237687367,
+        "fpr_for_recall_90": 0.415389527458493,
+        "val_f1_opt": 0.6239813736903376
+      }
+    }
+  }
+}
