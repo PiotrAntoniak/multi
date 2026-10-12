@@ -1,0 +1,1752 @@
+{
+  "datasets": {
+    "xnli": {
+      "name": "xnli",
+      "kind": "mc",
+      "n_classes": 3,
+      "classes": [
+        "entailment",
+        "neutral",
+        "contradiction"
+      ],
+      "langs": [
+        "en",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "de",
+        "fr",
+        "es"
+      ],
+      "spec": "facebook/xnli per-language parquet; text = premise + ' </s> ' + hypothesis; label = {0:entailment,1:neutral,2:contradiction}; en train -> de/fr/es.",
+      "configs": {
+        "perlang_z": {
+          "en_self": {
+            "accuracy": 0.4406,
+            "macro_f1": 0.4397494022298716,
+            "auc": 0.624219659413196
+          },
+          "targets": {
+            "de": {
+              "en_trained": {
+                "accuracy": 0.396,
+                "macro_f1": 0.394736749228178,
+                "auc": 0.5738633081634394
+              },
+              "native": {
+                "accuracy": 0.4168,
+                "macro_f1": 0.4148108141885832,
+                "auc": 0.604383296662739
+              }
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.4194,
+                "macro_f1": 0.41695474287449324,
+                "auc": 0.5992345438898569
+              },
+              "native": {
+                "accuracy": 0.444,
+                "macro_f1": 0.44053719100481686,
+                "auc": 0.6268665436569782
+              }
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.418,
+                "macro_f1": 0.41746768515708804,
+                "auc": 0.6003438932033908
+              },
+              "native": {
+                "accuracy": 0.4422,
+                "macro_f1": 0.4412725862950408,
+                "auc": 0.6252235103595526
+              }
+            }
+          }
+        },
+        "global_z": {
+          "en_self": {
+            "accuracy": 0.4406,
+            "macro_f1": 0.4397494022298716,
+            "auc": 0.624219659413196
+          },
+          "targets": {
+            "de": {
+              "en_trained": {
+                "accuracy": 0.3486,
+                "macro_f1": 0.23922825073830087,
+                "auc": 0.5558236240905482
+              },
+              "native": null
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.3872,
+                "macro_f1": 0.3520192085489984,
+                "auc": 0.5628720122225953
+              },
+              "native": null
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.3934,
+                "macro_f1": 0.327924516524505,
+                "auc": 0.575167614983864
+              },
+              "native": null
+            }
+          }
+        }
+      },
+      "n": {
+        "en": {
+          "train": 20000,
+          "test": 5000
+        },
+        "de": {
+          "train": 20000,
+          "test": 5000
+        },
+        "fr": {
+          "train": 20000,
+          "test": 5000
+        },
+        "es": {
+          "train": 20000,
+          "test": 5000
+        }
+      },
+      "summary": {
+        "headline": "macro_f1",
+        "metrics": {
+          "perlang_z": {
+            "accuracy": {
+              "en_self": 0.4406,
+              "targets": {
+                "de": {
+                  "en_trained": 0.396,
+                  "native": 0.4168,
+                  "ratio": 0.8987743985474353,
+                  "native_ratio": 0.9459827507943713
+                },
+                "fr": {
+                  "en_trained": 0.4194,
+                  "native": 0.444,
+                  "ratio": 0.9518837948252383,
+                  "native_ratio": 1.0077167498865185
+                },
+                "es": {
+                  "en_trained": 0.418,
+                  "native": 0.4422,
+                  "ratio": 0.9487063095778484,
+                  "native_ratio": 1.0036314117113028
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.4397494022298716,
+              "targets": {
+                "de": {
+                  "en_trained": 0.394736749228178,
+                  "native": 0.4148108141885832,
+                  "ratio": 0.8976402178753525,
+                  "native_ratio": 0.9432890916625916
+                },
+                "fr": {
+                  "en_trained": 0.41695474287449324,
+                  "native": 0.44053719100481686,
+                  "ratio": 0.9481644335619521,
+                  "native_ratio": 1.0017914493367144
+                },
+                "es": {
+                  "en_trained": 0.41746768515708804,
+                  "native": 0.4412725862950408,
+                  "ratio": 0.949330875812911,
+                  "native_ratio": 1.0034637547144931
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.624219659413196,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5738633081634394,
+                  "native": 0.604383296662739,
+                  "ratio": 0.9193291167774265,
+                  "native_ratio": 0.9682221435173888
+                },
+                "fr": {
+                  "en_trained": 0.5992345438898569,
+                  "native": 0.6268665436569782,
+                  "ratio": 0.9599738407040453,
+                  "native_ratio": 1.004240309006401
+                },
+                "es": {
+                  "en_trained": 0.6003438932033908,
+                  "native": 0.6252235103595526,
+                  "ratio": 0.9617510184920323,
+                  "native_ratio": 1.0016081693859182
+                }
+              }
+            }
+          },
+          "global_z": {
+            "accuracy": {
+              "en_self": 0.4406,
+              "targets": {
+                "de": {
+                  "en_trained": 0.3486,
+                  "native": null,
+                  "ratio": 0.7911938266000909,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.3872,
+                  "native": null,
+                  "ratio": 0.8788016341352701,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.3934,
+                  "native": null,
+                  "ratio": 0.8928733545165684,
+                  "native_ratio": null
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.4397494022298716,
+              "targets": {
+                "de": {
+                  "en_trained": 0.23922825073830087,
+                  "native": null,
+                  "ratio": 0.544010405756614,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.3520192085489984,
+                  "native": null,
+                  "ratio": 0.800499572629291,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.327924516524505,
+                  "native": null,
+                  "ratio": 0.7457077027545065,
+                  "native_ratio": null
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.624219659413196,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5558236240905482,
+                  "native": null,
+                  "ratio": 0.8904295398402796,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.5628720122225953,
+                  "native": null,
+                  "ratio": 0.90172105882043,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.575167614983864,
+                  "native": null,
+                  "ratio": 0.9214186165244398,
+                  "native_ratio": null
+                }
+              }
+            }
+          }
+        },
+        "per_target": {
+          "perlang_z": {
+            "de": {
+              "en_trained": 0.394736749228178,
+              "native": 0.4148108141885832,
+              "ratio": 0.8976402178753525,
+              "native_ratio": 0.9432890916625916
+            },
+            "fr": {
+              "en_trained": 0.41695474287449324,
+              "native": 0.44053719100481686,
+              "ratio": 0.9481644335619521,
+              "native_ratio": 1.0017914493367144
+            },
+            "es": {
+              "en_trained": 0.41746768515708804,
+              "native": 0.4412725862950408,
+              "ratio": 0.949330875812911,
+              "native_ratio": 1.0034637547144931
+            }
+          },
+          "global_z": {
+            "de": {
+              "en_trained": 0.23922825073830087,
+              "native": null,
+              "ratio": 0.544010405756614,
+              "native_ratio": null
+            },
+            "fr": {
+              "en_trained": 0.3520192085489984,
+              "native": null,
+              "ratio": 0.800499572629291,
+              "native_ratio": null
+            },
+            "es": {
+              "en_trained": 0.327924516524505,
+              "native": null,
+              "ratio": 0.7457077027545065,
+              "native_ratio": null
+            }
+          }
+        },
+        "comparable": {
+          "perlang_z": false,
+          "global_z": false
+        }
+      }
+    },
+    "pawsx": {
+      "name": "pawsx",
+      "kind": "binary",
+      "n_classes": 2,
+      "classes": [
+        "not_paraphrase",
+        "paraphrase"
+      ],
+      "langs": [
+        "en",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "de",
+        "fr",
+        "es"
+      ],
+      "spec": "google-research-datasets/paws-x dirs en,de,es,fr; text = sentence1 + ' </s> ' + sentence2; label {0,1}; en train -> de/fr/es.",
+      "configs": {
+        "perlang_z": {
+          "en_self": {
+            "accuracy": 0.5725,
+            "macro_f1": 0.5595452343180717,
+            "auc": 0.6021610912784674,
+            "recall_at_fpr5": 0.12238147739801543,
+            "recall_at_fpr10": 0.1874310915104741,
+            "fpr_at_recall90": 0.8005489478499542
+          },
+          "targets": {
+            "de": {
+              "en_trained": {
+                "accuracy": 0.5645,
+                "macro_f1": 0.5287305293611431,
+                "auc": 0.5639323542051113,
+                "recall_at_fpr5": 0.07039106145251396,
+                "recall_at_fpr10": 0.13854748603351955,
+                "fpr_at_recall90": 0.8615384615384616
+              },
+              "native": {
+                "accuracy": 0.575,
+                "macro_f1": 0.5278533212463783,
+                "auc": 0.5838074774387623,
+                "recall_at_fpr5": 0.10167597765363129,
+                "recall_at_fpr10": 0.16871508379888267,
+                "fpr_at_recall90": 0.8479638009049774
+              }
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.567,
+                "macro_f1": 0.539588968849419,
+                "auc": 0.5695337429877719,
+                "recall_at_fpr5": 0.0664451827242525,
+                "recall_at_fpr10": 0.132890365448505,
+                "fpr_at_recall90": 0.845031905195989
+              },
+              "native": {
+                "accuracy": 0.5805,
+                "macro_f1": 0.5435552476321588,
+                "auc": 0.5865831609614865,
+                "recall_at_fpr5": 0.10520487264673312,
+                "recall_at_fpr10": 0.17718715393134,
+                "fpr_at_recall90": 0.8413855970829535
+              }
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.566,
+                "macro_f1": 0.5296494262590006,
+                "auc": 0.5526327203987286,
+                "recall_at_fpr5": 0.08158765159867695,
+                "recall_at_fpr10": 0.15766262403528114,
+                "fpr_at_recall90": 0.898444647758463
+              },
+              "native": {
+                "accuracy": 0.585,
+                "macro_f1": 0.549421902872734,
+                "auc": 0.5991419789761648,
+                "recall_at_fpr5": 0.09040793825799338,
+                "recall_at_fpr10": 0.17640573318632854,
+                "fpr_at_recall90": 0.8106129917657823
+              }
+            }
+          }
+        },
+        "global_z": {
+          "en_self": {
+            "accuracy": 0.5725,
+            "macro_f1": 0.5595452343180717,
+            "auc": 0.6021610912784674,
+            "recall_at_fpr5": 0.12238147739801543,
+            "recall_at_fpr10": 0.1874310915104741,
+            "fpr_at_recall90": 0.8005489478499542
+          },
+          "targets": {
+            "de": {
+              "en_trained": {
+                "accuracy": 0.551,
+                "macro_f1": 0.5412206595795988,
+                "auc": 0.5574792082711899,
+                "recall_at_fpr5": 0.07932960893854749,
+                "recall_at_fpr10": 0.14078212290502792,
+                "fpr_at_recall90": 0.865158371040724
+              },
+              "native": null
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.5505,
+                "macro_f1": 0.5169615538471004,
+                "auc": 0.55017459274312,
+                "recall_at_fpr5": 0.06866002214839424,
+                "recall_at_fpr10": 0.1406423034330011,
+                "fpr_at_recall90": 0.8678213309024613
+              },
+              "native": null
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.546,
+                "macro_f1": 0.5260836660664423,
+                "auc": 0.5434906506373626,
+                "recall_at_fpr5": 0.07607497243660419,
+                "recall_at_fpr10": 0.14112458654906285,
+                "fpr_at_recall90": 0.879231473010064
+              },
+              "native": null
+            }
+          }
+        }
+      },
+      "n": {
+        "en": {
+          "train": 20000,
+          "test": 2000
+        },
+        "de": {
+          "train": 20000,
+          "test": 2000
+        },
+        "fr": {
+          "train": 20000,
+          "test": 2000
+        },
+        "es": {
+          "train": 20000,
+          "test": 2000
+        }
+      },
+      "summary": {
+        "headline": "auc",
+        "metrics": {
+          "perlang_z": {
+            "accuracy": {
+              "en_self": 0.5725,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5645,
+                  "native": 0.575,
+                  "ratio": 0.9860262008733625,
+                  "native_ratio": 1.0043668122270741
+                },
+                "fr": {
+                  "en_trained": 0.567,
+                  "native": 0.5805,
+                  "ratio": 0.9903930131004366,
+                  "native_ratio": 1.0139737991266375
+                },
+                "es": {
+                  "en_trained": 0.566,
+                  "native": 0.585,
+                  "ratio": 0.9886462882096069,
+                  "native_ratio": 1.0218340611353711
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.5595452343180717,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5287305293611431,
+                  "native": 0.5278533212463783,
+                  "ratio": 0.9449290190193773,
+                  "native_ratio": 0.9433613028438765
+                },
+                "fr": {
+                  "en_trained": 0.539588968849419,
+                  "native": 0.5435552476321588,
+                  "ratio": 0.9643348486508445,
+                  "native_ratio": 0.9714232456909401
+                },
+                "es": {
+                  "en_trained": 0.5296494262590006,
+                  "native": 0.549421902872734,
+                  "ratio": 0.9465712399543431,
+                  "native_ratio": 0.9819079301824897
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.6021610912784674,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5639323542051113,
+                  "native": 0.5838074774387623,
+                  "ratio": 0.9365141029085898,
+                  "native_ratio": 0.9695204255048463
+                },
+                "fr": {
+                  "en_trained": 0.5695337429877719,
+                  "native": 0.5865831609614865,
+                  "ratio": 0.9458162462449653,
+                  "native_ratio": 0.9741299619942118
+                },
+                "es": {
+                  "en_trained": 0.5526327203987286,
+                  "native": 0.5991419789761648,
+                  "ratio": 0.9177489685117589,
+                  "native_ratio": 0.9949862049441079
+                }
+              }
+            },
+            "recall_at_fpr5": {
+              "en_self": 0.12238147739801543,
+              "targets": {
+                "de": {
+                  "en_trained": 0.07039106145251396,
+                  "native": 0.10167597765363129,
+                  "ratio": 0.5751774120489204,
+                  "native_ratio": 0.8308118174039962
+                },
+                "fr": {
+                  "en_trained": 0.0664451827242525,
+                  "native": 0.10520487264673312,
+                  "ratio": 0.5429349615396127,
+                  "native_ratio": 0.8596470224377202
+                },
+                "es": {
+                  "en_trained": 0.08158765159867695,
+                  "native": 0.09040793825799338,
+                  "ratio": 0.6666666666666666,
+                  "native_ratio": 0.7387387387387387
+                }
+              }
+            },
+            "recall_at_fpr10": {
+              "en_self": 0.1874310915104741,
+              "targets": {
+                "de": {
+                  "en_trained": 0.13854748603351955,
+                  "native": 0.16871508379888267,
+                  "ratio": 0.7391915872494248,
+                  "native_ratio": 0.9001445941505093
+                },
+                "fr": {
+                  "en_trained": 0.132890365448505,
+                  "native": 0.17718715393134,
+                  "ratio": 0.7090091850693766,
+                  "native_ratio": 0.9453455800925021
+                },
+                "es": {
+                  "en_trained": 0.15766262403528114,
+                  "native": 0.17640573318632854,
+                  "ratio": 0.8411764705882352,
+                  "native_ratio": 0.9411764705882352
+                }
+              }
+            },
+            "fpr_at_recall90": {
+              "en_self": 0.8005489478499542,
+              "targets": {
+                "de": {
+                  "en_trained": 0.8615384615384616,
+                  "native": 0.8479638009049774,
+                  "ratio": 1.0761846153846155,
+                  "native_ratio": 1.0592279250161603
+                },
+                "fr": {
+                  "en_trained": 0.845031905195989,
+                  "native": 0.8413855970829535,
+                  "ratio": 1.0555655684333898,
+                  "native_ratio": 1.0510108086990493
+                },
+                "es": {
+                  "en_trained": 0.898444647758463,
+                  "native": 0.8106129917657823,
+                  "ratio": 1.1222857142857143,
+                  "native_ratio": 1.0125714285714287
+                }
+              }
+            }
+          },
+          "global_z": {
+            "accuracy": {
+              "en_self": 0.5725,
+              "targets": {
+                "de": {
+                  "en_trained": 0.551,
+                  "native": null,
+                  "ratio": 0.9624454148471616,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.5505,
+                  "native": null,
+                  "ratio": 0.9615720524017467,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.546,
+                  "native": null,
+                  "ratio": 0.9537117903930131,
+                  "native_ratio": null
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.5595452343180717,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5412206595795988,
+                  "native": null,
+                  "ratio": 0.9672509502099407,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.5169615538471004,
+                  "native": null,
+                  "ratio": 0.9238959107160142,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.5260836660664423,
+                  "native": null,
+                  "ratio": 0.9401986359647766,
+                  "native_ratio": null
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.6021610912784674,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5574792082711899,
+                  "native": null,
+                  "ratio": 0.9257974590945224,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.55017459274312,
+                  "native": null,
+                  "ratio": 0.9136667923445979,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.5434906506373626,
+                  "native": null,
+                  "ratio": 0.902566868748461,
+                  "native_ratio": null
+                }
+              }
+            },
+            "recall_at_fpr5": {
+              "en_self": 0.12238147739801543,
+              "targets": {
+                "de": {
+                  "en_trained": 0.07932960893854749,
+                  "native": null,
+                  "ratio": 0.6482158135789421,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.06866002214839424,
+                  "native": null,
+                  "ratio": 0.5610327935909332,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.07607497243660419,
+                  "native": null,
+                  "ratio": 0.6216216216216216,
+                  "native_ratio": null
+                }
+              }
+            },
+            "recall_at_fpr10": {
+              "en_self": 0.1874310915104741,
+              "targets": {
+                "de": {
+                  "en_trained": 0.14078212290502792,
+                  "native": null,
+                  "ratio": 0.7511140322050607,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.1406423034330011,
+                  "native": null,
+                  "ratio": 0.7503680541984235,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.14112458654906285,
+                  "native": null,
+                  "ratio": 0.7529411764705882,
+                  "native_ratio": null
+                }
+              }
+            },
+            "fpr_at_recall90": {
+              "en_self": 0.8005489478499542,
+              "targets": {
+                "de": {
+                  "en_trained": 0.865158371040724,
+                  "native": null,
+                  "ratio": 1.08070639948287,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.8678213309024613,
+                  "native": null,
+                  "ratio": 1.0840328167730173,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.879231473010064,
+                  "native": null,
+                  "ratio": 1.0982857142857143,
+                  "native_ratio": null
+                }
+              }
+            }
+          }
+        },
+        "per_target": {
+          "perlang_z": {
+            "de": {
+              "en_trained": 0.5639323542051113,
+              "native": 0.5838074774387623,
+              "ratio": 0.9365141029085898,
+              "native_ratio": 0.9695204255048463
+            },
+            "fr": {
+              "en_trained": 0.5695337429877719,
+              "native": 0.5865831609614865,
+              "ratio": 0.9458162462449653,
+              "native_ratio": 0.9741299619942118
+            },
+            "es": {
+              "en_trained": 0.5526327203987286,
+              "native": 0.5991419789761648,
+              "ratio": 0.9177489685117589,
+              "native_ratio": 0.9949862049441079
+            }
+          },
+          "global_z": {
+            "de": {
+              "en_trained": 0.5574792082711899,
+              "native": null,
+              "ratio": 0.9257974590945224,
+              "native_ratio": null
+            },
+            "fr": {
+              "en_trained": 0.55017459274312,
+              "native": null,
+              "ratio": 0.9136667923445979,
+              "native_ratio": null
+            },
+            "es": {
+              "en_trained": 0.5434906506373626,
+              "native": null,
+              "ratio": 0.902566868748461,
+              "native_ratio": null
+            }
+          }
+        },
+        "comparable": {
+          "perlang_z": true,
+          "global_z": true
+        }
+      }
+    },
+    "textdetox": {
+      "name": "textdetox",
+      "kind": "binary",
+      "n_classes": 2,
+      "classes": [
+        "non_toxic",
+        "toxic"
+      ],
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "spec": "textdetox/multilingual_toxicity_dataset default config; SPLIT NAMES are langs (columns text/toxic); stratified 80/20 train/test per language; en -> it/de/fr/es.",
+      "configs": {
+        "perlang_z": {
+          "en_self": {
+            "accuracy": 0.911,
+            "macro_f1": 0.910999910999911,
+            "auc": 0.9726760000000001,
+            "recall_at_fpr5": 0.852,
+            "recall_at_fpr10": 0.912,
+            "fpr_at_recall90": 0.08
+          },
+          "targets": {
+            "it": {
+              "en_trained": {
+                "accuracy": 0.562,
+                "macro_f1": 0.5618580420056098,
+                "auc": 0.604232,
+                "recall_at_fpr5": 0.154,
+                "recall_at_fpr10": 0.216,
+                "fpr_at_recall90": 0.81
+              },
+              "native": {
+                "accuracy": 0.767,
+                "macro_f1": 0.7669718035882342,
+                "auc": 0.8584959999999999,
+                "recall_at_fpr5": 0.554,
+                "recall_at_fpr10": 0.64,
+                "fpr_at_recall90": 0.466
+              }
+            },
+            "de": {
+              "en_trained": {
+                "accuracy": 0.643,
+                "macro_f1": 0.6427767354596623,
+                "auc": 0.67882,
+                "recall_at_fpr5": 0.12,
+                "recall_at_fpr10": 0.234,
+                "fpr_at_recall90": 0.744
+              },
+              "native": {
+                "accuracy": 0.877,
+                "macro_f1": 0.8769644427239471,
+                "auc": 0.9464039999999999,
+                "recall_at_fpr5": 0.77,
+                "recall_at_fpr10": 0.852,
+                "fpr_at_recall90": 0.162
+              }
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.702,
+                "macro_f1": 0.7013118224388992,
+                "auc": 0.759676,
+                "recall_at_fpr5": 0.292,
+                "recall_at_fpr10": 0.384,
+                "fpr_at_recall90": 0.684
+              },
+              "native": {
+                "accuracy": 0.873,
+                "macro_f1": 0.872996824920623,
+                "auc": 0.9485999999999999,
+                "recall_at_fpr5": 0.764,
+                "recall_at_fpr10": 0.862,
+                "fpr_at_recall90": 0.168
+              }
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.711,
+                "macro_f1": 0.7109765891037174,
+                "auc": 0.785312,
+                "recall_at_fpr5": 0.348,
+                "recall_at_fpr10": 0.454,
+                "fpr_at_recall90": 0.56
+              },
+              "native": {
+                "accuracy": 0.84,
+                "macro_f1": 0.8399942397926325,
+                "auc": 0.9251659999999999,
+                "recall_at_fpr5": 0.68,
+                "recall_at_fpr10": 0.772,
+                "fpr_at_recall90": 0.23
+              }
+            }
+          }
+        },
+        "global_z": {
+          "en_self": {
+            "accuracy": 0.911,
+            "macro_f1": 0.910999910999911,
+            "auc": 0.9726760000000001,
+            "recall_at_fpr5": 0.852,
+            "recall_at_fpr10": 0.912,
+            "fpr_at_recall90": 0.08
+          },
+          "targets": {
+            "it": {
+              "en_trained": {
+                "accuracy": 0.568,
+                "macro_f1": 0.5644722250226837,
+                "auc": 0.5807640000000001,
+                "recall_at_fpr5": 0.092,
+                "recall_at_fpr10": 0.164,
+                "fpr_at_recall90": 0.838
+              },
+              "native": null
+            },
+            "de": {
+              "en_trained": {
+                "accuracy": 0.582,
+                "macro_f1": 0.548603911811459,
+                "auc": 0.6685800000000002,
+                "recall_at_fpr5": 0.134,
+                "recall_at_fpr10": 0.226,
+                "fpr_at_recall90": 0.77
+              },
+              "native": null
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.67,
+                "macro_f1": 0.66999867999472,
+                "auc": 0.70304,
+                "recall_at_fpr5": 0.176,
+                "recall_at_fpr10": 0.27,
+                "fpr_at_recall90": 0.758
+              },
+              "native": null
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.674,
+                "macro_f1": 0.668569848396122,
+                "auc": 0.745196,
+                "recall_at_fpr5": 0.218,
+                "recall_at_fpr10": 0.348,
+                "fpr_at_recall90": 0.612
+              },
+              "native": null
+            }
+          }
+        }
+      },
+      "n": {
+        "en": {
+          "train": 4000,
+          "test": 1000
+        },
+        "it": {
+          "train": 4000,
+          "test": 1000
+        },
+        "de": {
+          "train": 4000,
+          "test": 1000
+        },
+        "fr": {
+          "train": 4000,
+          "test": 1000
+        },
+        "es": {
+          "train": 4000,
+          "test": 1000
+        }
+      },
+      "summary": {
+        "headline": "auc",
+        "metrics": {
+          "perlang_z": {
+            "accuracy": {
+              "en_self": 0.911,
+              "targets": {
+                "it": {
+                  "en_trained": 0.562,
+                  "native": 0.767,
+                  "ratio": 0.6169045005488475,
+                  "native_ratio": 0.8419319429198683
+                },
+                "de": {
+                  "en_trained": 0.643,
+                  "native": 0.877,
+                  "ratio": 0.7058177826564215,
+                  "native_ratio": 0.9626783754116355
+                },
+                "fr": {
+                  "en_trained": 0.702,
+                  "native": 0.873,
+                  "ratio": 0.7705817782656421,
+                  "native_ratio": 0.9582875960482985
+                },
+                "es": {
+                  "en_trained": 0.711,
+                  "native": 0.84,
+                  "ratio": 0.7804610318331503,
+                  "native_ratio": 0.9220636663007683
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.910999910999911,
+              "targets": {
+                "it": {
+                  "en_trained": 0.5618580420056098,
+                  "native": 0.7669718035882342,
+                  "ratio": 0.6167487342440199,
+                  "native_ratio": 0.8419010741136167
+                },
+                "de": {
+                  "en_trained": 0.6427767354596623,
+                  "native": 0.8769644427239471,
+                  "ratio": 0.7055727752532406,
+                  "native_ratio": 0.962639438418159
+                },
+                "fr": {
+                  "en_trained": 0.7013118224388992,
+                  "native": 0.872996824920623,
+                  "ratio": 0.7698264445153912,
+                  "native_ratio": 0.9582842043995637
+                },
+                "es": {
+                  "en_trained": 0.7109765891037174,
+                  "native": 0.8399942397926325,
+                  "ratio": 0.7804354100576711,
+                  "native_ratio": 0.9220574334312033
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.9726760000000001,
+              "targets": {
+                "it": {
+                  "en_trained": 0.604232,
+                  "native": 0.8584959999999999,
+                  "ratio": 0.6212058280455156,
+                  "native_ratio": 0.8826125040609616
+                },
+                "de": {
+                  "en_trained": 0.67882,
+                  "native": 0.9464039999999999,
+                  "ratio": 0.6978891223799085,
+                  "native_ratio": 0.9729899781633348
+                },
+                "fr": {
+                  "en_trained": 0.759676,
+                  "native": 0.9485999999999999,
+                  "ratio": 0.7810164947012159,
+                  "native_ratio": 0.9752476672602179
+                },
+                "es": {
+                  "en_trained": 0.785312,
+                  "native": 0.9251659999999999,
+                  "ratio": 0.8073726502967071,
+                  "native_ratio": 0.9511553693110552
+                }
+              }
+            },
+            "recall_at_fpr5": {
+              "en_self": 0.852,
+              "targets": {
+                "it": {
+                  "en_trained": 0.154,
+                  "native": 0.554,
+                  "ratio": 0.1807511737089202,
+                  "native_ratio": 0.6502347417840376
+                },
+                "de": {
+                  "en_trained": 0.12,
+                  "native": 0.77,
+                  "ratio": 0.14084507042253522,
+                  "native_ratio": 0.903755868544601
+                },
+                "fr": {
+                  "en_trained": 0.292,
+                  "native": 0.764,
+                  "ratio": 0.3427230046948357,
+                  "native_ratio": 0.8967136150234742
+                },
+                "es": {
+                  "en_trained": 0.348,
+                  "native": 0.68,
+                  "ratio": 0.40845070422535207,
+                  "native_ratio": 0.7981220657276996
+                }
+              }
+            },
+            "recall_at_fpr10": {
+              "en_self": 0.912,
+              "targets": {
+                "it": {
+                  "en_trained": 0.216,
+                  "native": 0.64,
+                  "ratio": 0.23684210526315788,
+                  "native_ratio": 0.7017543859649122
+                },
+                "de": {
+                  "en_trained": 0.234,
+                  "native": 0.852,
+                  "ratio": 0.2565789473684211,
+                  "native_ratio": 0.9342105263157894
+                },
+                "fr": {
+                  "en_trained": 0.384,
+                  "native": 0.862,
+                  "ratio": 0.42105263157894735,
+                  "native_ratio": 0.9451754385964912
+                },
+                "es": {
+                  "en_trained": 0.454,
+                  "native": 0.772,
+                  "ratio": 0.49780701754385964,
+                  "native_ratio": 0.8464912280701754
+                }
+              }
+            },
+            "fpr_at_recall90": {
+              "en_self": 0.08,
+              "targets": {
+                "it": {
+                  "en_trained": 0.81,
+                  "native": 0.466,
+                  "ratio": 10.125,
+                  "native_ratio": 5.825
+                },
+                "de": {
+                  "en_trained": 0.744,
+                  "native": 0.162,
+                  "ratio": 9.299999999999999,
+                  "native_ratio": 2.025
+                },
+                "fr": {
+                  "en_trained": 0.684,
+                  "native": 0.168,
+                  "ratio": 8.55,
+                  "native_ratio": 2.1
+                },
+                "es": {
+                  "en_trained": 0.56,
+                  "native": 0.23,
+                  "ratio": 7.000000000000001,
+                  "native_ratio": 2.875
+                }
+              }
+            }
+          },
+          "global_z": {
+            "accuracy": {
+              "en_self": 0.911,
+              "targets": {
+                "it": {
+                  "en_trained": 0.568,
+                  "native": null,
+                  "ratio": 0.6234906695938528,
+                  "native_ratio": null
+                },
+                "de": {
+                  "en_trained": 0.582,
+                  "native": null,
+                  "ratio": 0.6388583973655323,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.67,
+                  "native": null,
+                  "ratio": 0.7354555433589463,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.674,
+                  "native": null,
+                  "ratio": 0.7398463227222832,
+                  "native_ratio": null
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.910999910999911,
+              "targets": {
+                "it": {
+                  "en_trained": 0.5644722250226837,
+                  "native": null,
+                  "ratio": 0.6196183097352014,
+                  "native_ratio": null
+                },
+                "de": {
+                  "en_trained": 0.548603911811459,
+                  "native": null,
+                  "ratio": 0.6021997424887922,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.66999867999472,
+                  "native": null,
+                  "ratio": 0.73545416624611,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.668569848396122,
+                  "native": null,
+                  "ratio": 0.7338857450186813,
+                  "native_ratio": null
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.9726760000000001,
+              "targets": {
+                "it": {
+                  "en_trained": 0.5807640000000001,
+                  "native": null,
+                  "ratio": 0.5970785749828309,
+                  "native_ratio": null
+                },
+                "de": {
+                  "en_trained": 0.6685800000000002,
+                  "native": null,
+                  "ratio": 0.6873614646603804,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.70304,
+                  "native": null,
+                  "ratio": 0.7227895003063712,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.745196,
+                  "native": null,
+                  "ratio": 0.7661297287071953,
+                  "native_ratio": null
+                }
+              }
+            },
+            "recall_at_fpr5": {
+              "en_self": 0.852,
+              "targets": {
+                "it": {
+                  "en_trained": 0.092,
+                  "native": null,
+                  "ratio": 0.107981220657277,
+                  "native_ratio": null
+                },
+                "de": {
+                  "en_trained": 0.134,
+                  "native": null,
+                  "ratio": 0.15727699530516434,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.176,
+                  "native": null,
+                  "ratio": 0.20657276995305163,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.218,
+                  "native": null,
+                  "ratio": 0.255868544600939,
+                  "native_ratio": null
+                }
+              }
+            },
+            "recall_at_fpr10": {
+              "en_self": 0.912,
+              "targets": {
+                "it": {
+                  "en_trained": 0.164,
+                  "native": null,
+                  "ratio": 0.17982456140350878,
+                  "native_ratio": null
+                },
+                "de": {
+                  "en_trained": 0.226,
+                  "native": null,
+                  "ratio": 0.24780701754385964,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.27,
+                  "native": null,
+                  "ratio": 0.2960526315789474,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.348,
+                  "native": null,
+                  "ratio": 0.381578947368421,
+                  "native_ratio": null
+                }
+              }
+            },
+            "fpr_at_recall90": {
+              "en_self": 0.08,
+              "targets": {
+                "it": {
+                  "en_trained": 0.838,
+                  "native": null,
+                  "ratio": 10.475,
+                  "native_ratio": null
+                },
+                "de": {
+                  "en_trained": 0.77,
+                  "native": null,
+                  "ratio": 9.625,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.758,
+                  "native": null,
+                  "ratio": 9.475,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.612,
+                  "native": null,
+                  "ratio": 7.6499999999999995,
+                  "native_ratio": null
+                }
+              }
+            }
+          }
+        },
+        "per_target": {
+          "perlang_z": {
+            "it": {
+              "en_trained": 0.604232,
+              "native": 0.8584959999999999,
+              "ratio": 0.6212058280455156,
+              "native_ratio": 0.8826125040609616
+            },
+            "de": {
+              "en_trained": 0.67882,
+              "native": 0.9464039999999999,
+              "ratio": 0.6978891223799085,
+              "native_ratio": 0.9729899781633348
+            },
+            "fr": {
+              "en_trained": 0.759676,
+              "native": 0.9485999999999999,
+              "ratio": 0.7810164947012159,
+              "native_ratio": 0.9752476672602179
+            },
+            "es": {
+              "en_trained": 0.785312,
+              "native": 0.9251659999999999,
+              "ratio": 0.8073726502967071,
+              "native_ratio": 0.9511553693110552
+            }
+          },
+          "global_z": {
+            "it": {
+              "en_trained": 0.5807640000000001,
+              "native": null,
+              "ratio": 0.5970785749828309,
+              "native_ratio": null
+            },
+            "de": {
+              "en_trained": 0.6685800000000002,
+              "native": null,
+              "ratio": 0.6873614646603804,
+              "native_ratio": null
+            },
+            "fr": {
+              "en_trained": 0.70304,
+              "native": null,
+              "ratio": 0.7227895003063712,
+              "native_ratio": null
+            },
+            "es": {
+              "en_trained": 0.745196,
+              "native": null,
+              "ratio": 0.7661297287071953,
+              "native_ratio": null
+            }
+          }
+        },
+        "comparable": {
+          "perlang_z": false,
+          "global_z": false
+        }
+      }
+    },
+    "sib200": {
+      "name": "sib200",
+      "kind": "mc",
+      "n_classes": 7,
+      "classes": [
+        "entertainment",
+        "geography",
+        "health",
+        "politics",
+        "science/technology",
+        "sports",
+        "travel"
+      ],
+      "langs": [
+        "en",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "de",
+        "fr",
+        "es"
+      ],
+      "spec": "Davlan/sib200 per-language TSV (cols index_id/category/text); single-label topic; en eng_Latn -> deu/fra/spa Latn; full train/test (701/204).",
+      "configs": {
+        "perlang_z": {
+          "en_self": {
+            "accuracy": 0.7941176470588235,
+            "macro_f1": 0.7729059313147308,
+            "auc": 0.9687343708894682
+          },
+          "targets": {
+            "de": {
+              "en_trained": {
+                "accuracy": 0.7156862745098039,
+                "macro_f1": 0.6976530713169533,
+                "auc": 0.9171114829876817
+              },
+              "native": {
+                "accuracy": 0.8137254901960784,
+                "macro_f1": 0.792395668898654,
+                "auc": 0.9562540077042524
+              }
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.7843137254901961,
+                "macro_f1": 0.7688113321439387,
+                "auc": 0.9464944703769803
+              },
+              "native": {
+                "accuracy": 0.7941176470588235,
+                "macro_f1": 0.77097612885312,
+                "auc": 0.9545961972945227
+              }
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.7156862745098039,
+                "macro_f1": 0.6925825139982731,
+                "auc": 0.9403400040646168
+              },
+              "native": {
+                "accuracy": 0.7794117647058824,
+                "macro_f1": 0.7565178451651945,
+                "auc": 0.9564651905623097
+              }
+            }
+          }
+        },
+        "global_z": {
+          "en_self": {
+            "accuracy": 0.7941176470588235,
+            "macro_f1": 0.7729059313147308,
+            "auc": 0.9687343708894682
+          },
+          "targets": {
+            "de": {
+              "en_trained": {
+                "accuracy": 0.5931372549019608,
+                "macro_f1": 0.5218987621161534,
+                "auc": 0.8881547191314295
+              },
+              "native": null
+            },
+            "fr": {
+              "en_trained": {
+                "accuracy": 0.5686274509803921,
+                "macro_f1": 0.5186189898494609,
+                "auc": 0.9270909419552879
+              },
+              "native": null
+            },
+            "es": {
+              "en_trained": {
+                "accuracy": 0.5196078431372549,
+                "macro_f1": 0.44180726450912783,
+                "auc": 0.8852305249447391
+              },
+              "native": null
+            }
+          }
+        }
+      },
+      "n": {
+        "en": {
+          "train": 701,
+          "test": 204
+        },
+        "de": {
+          "train": 701,
+          "test": 204
+        },
+        "fr": {
+          "train": 701,
+          "test": 204
+        },
+        "es": {
+          "train": 701,
+          "test": 204
+        }
+      },
+      "summary": {
+        "headline": "macro_f1",
+        "metrics": {
+          "perlang_z": {
+            "accuracy": {
+              "en_self": 0.7941176470588235,
+              "targets": {
+                "de": {
+                  "en_trained": 0.7156862745098039,
+                  "native": 0.8137254901960784,
+                  "ratio": 0.9012345679012347,
+                  "native_ratio": 1.0246913580246915
+                },
+                "fr": {
+                  "en_trained": 0.7843137254901961,
+                  "native": 0.7941176470588235,
+                  "ratio": 0.9876543209876544,
+                  "native_ratio": 1.0
+                },
+                "es": {
+                  "en_trained": 0.7156862745098039,
+                  "native": 0.7794117647058824,
+                  "ratio": 0.9012345679012347,
+                  "native_ratio": 0.9814814814814815
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.7729059313147308,
+              "targets": {
+                "de": {
+                  "en_trained": 0.6976530713169533,
+                  "native": 0.792395668898654,
+                  "ratio": 0.9026364568456983,
+                  "native_ratio": 1.025216183230436
+                },
+                "fr": {
+                  "en_trained": 0.7688113321439387,
+                  "native": 0.77097612885312,
+                  "ratio": 0.9947023318040435,
+                  "native_ratio": 0.9975031858555824
+                },
+                "es": {
+                  "en_trained": 0.6925825139982731,
+                  "native": 0.7565178451651945,
+                  "ratio": 0.8960760759335541,
+                  "native_ratio": 0.9787967908052408
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.9687343708894682,
+              "targets": {
+                "de": {
+                  "en_trained": 0.9171114829876817,
+                  "native": 0.9562540077042524,
+                  "ratio": 0.9467109979236231,
+                  "native_ratio": 0.9871168366063479
+                },
+                "fr": {
+                  "en_trained": 0.9464944703769803,
+                  "native": 0.9545961972945227,
+                  "ratio": 0.9770423129592607,
+                  "native_ratio": 0.9854055208323369
+                },
+                "es": {
+                  "en_trained": 0.9403400040646168,
+                  "native": 0.9564651905623097,
+                  "ratio": 0.9706892129792191,
+                  "native_ratio": 0.9873348353316985
+                }
+              }
+            }
+          },
+          "global_z": {
+            "accuracy": {
+              "en_self": 0.7941176470588235,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5931372549019608,
+                  "native": null,
+                  "ratio": 0.7469135802469137,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.5686274509803921,
+                  "native": null,
+                  "ratio": 0.7160493827160493,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.5196078431372549,
+                  "native": null,
+                  "ratio": 0.6543209876543211,
+                  "native_ratio": null
+                }
+              }
+            },
+            "macro_f1": {
+              "en_self": 0.7729059313147308,
+              "targets": {
+                "de": {
+                  "en_trained": 0.5218987621161534,
+                  "native": null,
+                  "ratio": 0.6752422784858069,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.5186189898494609,
+                  "native": null,
+                  "ratio": 0.6709988484203737,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.44180726450912783,
+                  "native": null,
+                  "ratio": 0.571618416432131,
+                  "native_ratio": null
+                }
+              }
+            },
+            "auc": {
+              "en_self": 0.9687343708894682,
+              "targets": {
+                "de": {
+                  "en_trained": 0.8881547191314295,
+                  "native": null,
+                  "ratio": 0.9168196626655742,
+                  "native_ratio": null
+                },
+                "fr": {
+                  "en_trained": 0.9270909419552879,
+                  "native": null,
+                  "ratio": 0.9570125411200757,
+                  "native_ratio": null
+                },
+                "es": {
+                  "en_trained": 0.8852305249447391,
+                  "native": null,
+                  "ratio": 0.9138010909347029,
+                  "native_ratio": null
+                }
+              }
+            }
+          }
+        },
+        "per_target": {
+          "perlang_z": {
+            "de": {
+              "en_trained": 0.6976530713169533,
+              "native": 0.792395668898654,
+              "ratio": 0.9026364568456983,
+              "native_ratio": 1.025216183230436
+            },
+            "fr": {
+              "en_trained": 0.7688113321439387,
+              "native": 0.77097612885312,
+              "ratio": 0.9947023318040435,
+              "native_ratio": 0.9975031858555824
+            },
+            "es": {
+              "en_trained": 0.6925825139982731,
+              "native": 0.7565178451651945,
+              "ratio": 0.8960760759335541,
+              "native_ratio": 0.9787967908052408
+            }
+          },
+          "global_z": {
+            "de": {
+              "en_trained": 0.5218987621161534,
+              "native": null,
+              "ratio": 0.6752422784858069,
+              "native_ratio": null
+            },
+            "fr": {
+              "en_trained": 0.5186189898494609,
+              "native": null,
+              "ratio": 0.6709988484203737,
+              "native_ratio": null
+            },
+            "es": {
+              "en_trained": 0.44180726450912783,
+              "native": null,
+              "ratio": 0.571618416432131,
+              "native_ratio": null
+            }
+          }
+        },
+        "comparable": {
+          "perlang_z": false,
+          "global_z": false
+        }
+      }
+    }
+  },
+  "meta": {
+    "model": "EuroBERT/EuroBERT-210m",
+    "configs": [
+      "perlang_z",
+      "global_z"
+    ],
+    "headline": {
+      "xnli": "macro_f1",
+      "sib200": "macro_f1",
+      "pawsx": "auc",
+      "textdetox": "auc"
+    },
+    "max_train": 20000,
+    "max_test": 5000,
+    "seed": 0,
+    "smoke": false,
+    "xgb": {
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "started": "2026-10-12 21:16:21",
+    "skipped": [
+      "mlsnt: ComplexDataLab/MLSNT is Chinese-only (no English)"
+    ],
+    "finished": "2026-10-12 22:05:51"
+  }
+}
