@@ -1,49 +1,57 @@
 """clean_toxi.py -- build a LEAKAGE-CORRECTED, size-managed copy of `FredZhang7/toxi-text-3M`.
 
 Problem.  The HF dataset `FredZhang7/toxi-text-3M` has train/test leakage: exact texts appear
-in BOTH the train and the test split (translation artifacts).  Measured on the raw files
-(this machine, seed 0), for the final test sets the share of test texts that are also present
-in that language's train pool is HUGE: en 90.1%, it ~99.9%, de ~84.7%, fr ~99.9%, es ~99.8%.
-A model that trains on the raw train split can memorise the test texts -> inflated scores.
+in MORE THAN ONE split (translation artifacts).  Measured against the shipped train pool the
+share of test texts also present in train is huge (en 90.1%, it ~99.9%, de ~84.7%, fr ~99.9%,
+es ~99.8%).  The original per-split counts are also tiny for some languages (en: 525 test rows
+vs a 2.5M train pool), so a plain 80/10/10 re-split of the shipped splits is not possible.
 
-Fix (this builder).  For EVERY requested language, remove every test text from that language's
-train pool, drop duplicate train texts, then cap.  The result is a leakage-free re-split:
-0 overlap, verified and reported in `leakage_report.md`.
+Fix (this builder).  For EVERY requested language:
+    1. POOL all available rows from ALL shipped splits (train + validation + test).
+    2. Deduplicate GLOBALLY per language (drop duplicate `text`).  Because a text is unique
+       per language, no text can appear in two splits -> leakage is removed by construction.
+    3. Re-split the deduped pool 80 / 10 / 10 (train / validation / test) with a fixed seed,
+       with ceil() on the 10% parts so validation and test are each >= 10%.
+    4. Optionally cap the TOTAL per language (`--total-cap`) to keep the committed copy small.
+       The cap is applied to the pool BEFORE splitting, so the 80/10/10 proportions still hold.
+Verified by reloading the parquet: 0 cross-split text overlap, split fractions ~0.8/0.1/0.1.
 
 Data source (read-only):
     FredZhang7/toxi-text-3M
-      train : train/multilingual-train-deduplicated.csv   (2,880,667 rows)
-      test  : test/multilingual-test.csv                   (63,812 rows)
-    Loaded from the local HF datasets arrow cache when present (fast, offline); otherwise
-    falls back to `datasets.load_dataset(...)` (downloads on a fresh machine).
+      train      : train/multilingual-train-deduplicated.csv  (2,880,667 rows)
+      validation : validation/multilingual-validation(new).csv (29,641 rows)
+      test       : test/multilingual-test.csv                  (63,812 rows)
+    train/test are read from the local HF `datasets` arrow cache when present (fast, offline);
+    every split falls back to `huggingface_hub.hf_hub_download` + pandas.  A split that cannot
+    be obtained is skipped with a warning (the pool is then train+test, etc.).
 
-Outputs (CREATE-ONLY -- nothing existing is deleted or moved):
-    <out>/<lang>_train.parquet   one per (lang, split), columns text,is_toxic,lang, gzip
+Outputs (CREATE-ONLY except the stale-file cleanup noted below):
+    <out>/<lang>_train.parquet
+    <out>/<lang>_validation.parquet
     <out>/<lang>_test.parquet
-    <out>/leakage_report.md      pre/post overlap per language + method + CLI
+    <out>/leakage_report.md
+    All parquet: columns `text,is_toxic,lang`, gzip.  Stale `<lang>_*.parquet` files that do NOT
+    match the {train,validation,test} triple are removed (this is the only deletion performed).
 
 Usage:
-    # size-managed committed copy (defaults; <out> defaults to data/toxi_clean)
-    python clean_toxi.py --cap 20000 --test-cap 5000 --langs en,it,de,fr,es --out data/toxi_clean
-
-    # reproduce the FULL cleaned dataset (no caps; only leakage removal + train dedup)
-    python clean_toxi.py --cap 0 --test-cap 0 --langs en,it,de,fr,es --out data/toxi_clean_full
-
-    # en-only "literal spec" behaviour (subsample EN train, do NOT remove EN test texts):
-    python clean_toxi.py --en-subsample-only
-
-Note: a cap of 0 (or negative) means "no cap" (keep everything left after cleaning).
+    python clean_toxi.py --langs en,it,de,fr,es --out data/toxi_clean --seed 0 --total-cap 30000
+    python clean_toxi.py --langs en,it,de,fr,es --out data/toxi_clean --seed 0 --total-cap 0   # no cap
+    python clean_toxi.py --no-validation                                                        # pool train+test only
 """
 import argparse
 import glob
+import math
 import os
-import sys
 import time
 
 DATASET = "FredZhang7/toxi-text-3M"
 DEFAULT_LANGS = ["en", "it", "de", "fr", "es"]
-FILES = {"train": "train/multilingual-train-deduplicated.csv",
-         "test": "test/multilingual-test.csv"}
+SPLITS = ["train", "validation", "test"]
+FILES = {
+    "train": "train/multilingual-train-deduplicated.csv",
+    "validation": "validation/multilingual-validation(new).csv",
+    "test": "test/multilingual-test.csv",
+}
 COLS = ["text", "is_toxic", "lang"]
 
 _T0 = time.time()
@@ -62,7 +70,9 @@ def _hf_datasets_cache():
 
 
 def _load_from_arrow_cache(split):
-    """Load a split from the local HF `datasets` arrow cache. Returns DataFrame or None."""
+    """Load train/test from the local HF `datasets` arrow cache. Returns DataFrame or None."""
+    if split not in ("train", "test"):
+        return None
     cache = _hf_datasets_cache()
     if not os.path.isdir(cache):
         return None
@@ -80,23 +90,26 @@ def _load_from_arrow_cache(split):
         dss = [Dataset.from_file(f) for f in files]
         ds = concatenate_datasets(dss) if len(dss) > 1 else dss[0]
         df = ds.to_pandas()
-        log("loaded %s from arrow cache: %d rows (%d shard files)" % (split, len(df), len(files)))
+        log("loaded %-10s from arrow cache: %d rows (%d files)" % (split, len(df), len(files)))
         return df[COLS]
     return None
 
 
-def _load_via_datasets(split):
-    """Fallback: download/convert via the `datasets` library."""
-    from datasets import load_dataset
-    log("loading %s via datasets.load_dataset (may download) ..." % split)
-    ds = load_dataset(DATASET, data_files={split: FILES[split]})
-    return ds[split].to_pandas()[COLS]
+def _load_via_hub(split):
+    """Download a split CSV via huggingface_hub and read it with pandas."""
+    import pandas as pd
+    from huggingface_hub import hf_hub_download
+    log("downloading %-10s via hf_hub_download ..." % split)
+    p = hf_hub_download(DATASET, FILES[split], repo_type="dataset")
+    df = pd.read_csv(p)
+    log("loaded %-10s from CSV: %d rows" % (split, len(df)))
+    return df
 
 
 def load_split(split):
     df = _load_from_arrow_cache(split)
     if df is None:
-        df = _load_via_datasets(split)
+        df = _load_via_hub(split)
     df = df[COLS].copy()
     df["text"] = df["text"].astype(str)
     df["is_toxic"] = df["is_toxic"].astype(int)
@@ -104,12 +117,19 @@ def load_split(split):
     return df
 
 
-# ------------------------------------------------------------------ capping
-def cap(df, n, seed):
-    """Return df capped to n rows (seed). n<=0 means no cap."""
-    if n and n > 0 and len(df) > n:
-        return df.sample(n=int(n), random_state=seed).reset_index(drop=True)
-    return df.reset_index(drop=True)
+# ------------------------------------------------------------------ splitting
+def split_80_10_10(pool, seed):
+    """Deterministic 80/10/10 split. val/test sizes use ceil(0.1*N) so both are >= 10%."""
+    import numpy as np
+    n = len(pool)
+    n_test = max(1, int(math.ceil(0.10 * n)))
+    n_val = max(1, int(math.ceil(0.10 * n)))
+    n_train = n - n_val - n_test
+    pos = np.random.default_rng(seed).permutation(n)
+    tr = pool.iloc[pos[n_val + n_test:]].reset_index(drop=True)
+    va = pool.iloc[pos[:n_val]].reset_index(drop=True)
+    te = pool.iloc[pos[n_val:n_val + n_test]].reset_index(drop=True)
+    return tr, va, te
 
 
 # ------------------------------------------------------------------ build
@@ -118,159 +138,157 @@ def build(args):
     out = args.out
     os.makedirs(out, exist_ok=True)
 
-    train_all = load_split("train")
-    test_all = load_split("test")
+    split_names = [s for s in SPLITS if not (s == "validation" and args.no_validation)]
+    loaded = {}
+    for s in split_names:
+        try:
+            loaded[s] = load_split(s)
+        except Exception as e:  # noqa: BLE001
+            log("WARN: split %s unavailable (%r); pooling without it" % (s, e))
+            loaded[s] = None
+    if loaded.get("train") is None and loaded.get("test") is None:
+        raise SystemExit("need at least one of train/test to pool")
 
     reports = {}
     written = []
     for L in langs:
-        tr = train_all[train_all["lang"] == L].copy()
-        te = test_all[test_all["lang"] == L].copy()
-        pool_before_rows = len(tr)
-        pool_before_unique = int(tr["text"].nunique())
+        frames = [loaded[s][loaded[s]["lang"] == L] for s in split_names
+                  if loaded[s] is not None]
+        pool = (frames[0] if len(frames) == 1 else
+                __import__("pandas").concat(frames, ignore_index=True))[COLS]
+        pooled_n = len(pool)
 
-        # 1) finalise the test set (cap), then treat it as the leak source
-        te = cap(te, args.test_cap, args.seed)[COLS]
-        test_texts = set(te["text"].tolist())
-        test_n = len(te)
+        # 1) global dedup per language (unique text -> no cross-split leakage)
+        pool = pool.drop_duplicates(subset=["text"], keep="first").reset_index(drop=True)
+        dedup_n = len(pool)
+        dedup_drop = pooled_n - dedup_n
 
-        # 2) measure leak BEFORE correction (unique test texts present in the train pool)
-        train_set_before = set(tr["text"].tolist())
-        leaked_before = len(test_texts & train_set_before)
-        leaked_pct_before = (100.0 * leaked_before / test_n) if test_n else 0.0
+        # 2) optional TOTAL cap per language (before splitting; keeps 80/10/10)
+        capped = False
+        if args.total_cap and args.total_cap > 0 and len(pool) > args.total_cap:
+            pool = pool.sample(n=int(args.total_cap), random_state=args.seed).reset_index(drop=True)
+            capped = True
+        pool_n = len(pool)
 
-        # 3) correct: remove test texts from the train pool
-        if args.en_subsample_only and L == "en":
-            removed_leak = 0
-        else:
-            before = len(tr)
-            tr = tr[~tr["text"].isin(test_texts)]
-            removed_leak = before - len(tr)
+        # 3) re-split 80/10/10
+        tr, va, te = split_80_10_10(pool, args.seed)
 
-        # 4) drop duplicate train texts
-        before = len(tr)
-        tr = tr.drop_duplicates(subset=["text"], keep="first")
-        dropped_dups = before - len(tr)
+        # 4) write parquet
+        paths = {}
+        for name, df in (("train", tr), ("validation", va), ("test", te)):
+            p = os.path.join(out, "%s_%s.parquet" % (L, name))
+            df.to_parquet(p, engine="pyarrow", compression="gzip", index=False)
+            written.append(p)
+            paths[name] = p
 
-        # 5) cap train
-        tr = cap(tr, args.cap, args.seed)[COLS]
+        # 5) remove stale <lang>_*.parquet that are not part of the new triple
+        expected = {"%s_train.parquet" % L, "%s_validation.parquet" % L, "%s_test.parquet" % L}
+        for p in glob.glob(os.path.join(out, "%s_*.parquet" % L)):
+            if os.path.basename(p) not in expected:
+                os.remove(p)
+                log("removed stale file %s" % p)
 
-        # 6) verify post-condition
-        train_set_after = set(tr["text"].tolist())
-        leaked_after = len(test_texts & train_set_after)
-        assert leaked_after == 0, "leak persists for %s: %d" % (L, leaked_after)
-
-        # 7) write parquet (gzip)
-        tr_path = os.path.join(out, "%s_train.parquet" % L)
-        te_path = os.path.join(out, "%s_test.parquet" % L)
-        tr.to_parquet(tr_path, engine="pyarrow", compression="gzip", index=False)
-        te.to_parquet(te_path, engine="pyarrow", compression="gzip", index=False)
-        written += [tr_path, te_path]
+        # 6) verify 0 cross-split overlap
+        st = {"train": set(tr["text"]), "validation": set(va["text"]), "test": set(te["text"])}
+        overlap = (len(st["train"] & st["validation"]) + len(st["train"] & st["test"]) +
+                   len(st["validation"] & st["test"]))
+        assert overlap == 0, "cross-split overlap for %s: %d" % (L, overlap)
 
         reports[L] = dict(
-            test_n=test_n,
-            pool_before_rows=pool_before_rows,
-            pool_before_unique=pool_before_unique,
-            leaked_before=leaked_before,
-            leaked_pct_before=leaked_pct_before,
-            removed_leak=removed_leak,
-            dropped_dups=dropped_dups,
-            train_after=len(tr),
-            leaked_after=leaked_after,
-            train_toxic=int(tr["is_toxic"].sum()),
-            test_toxic=int(te["is_toxic"].sum()),
+            pooled_n=pooled_n, dedup_n=dedup_n, dedup_drop=dedup_drop, capped=capped,
+            pool_n=pool_n,
+            train=len(tr), val=len(va), test=len(te),
+            frac_train=len(tr) / pool_n, frac_val=len(va) / pool_n, frac_test=len(te) / pool_n,
+            pr_train=float(tr["is_toxic"].mean()),
+            pr_val=float(va["is_toxic"].mean()),
+            pr_test=float(te["is_toxic"].mean()),
+            overlap=overlap,
         )
-        log("%s: test=%d  leaked_before=%d (%.1f%%)  removed_leak=%d  dropped_dups=%d  "
-            "train_after=%d  leaked_after=%d" %
-            (L, test_n, leaked_before, leaked_pct_before, removed_leak, dropped_dups,
-             len(tr), leaked_after))
+        log("%s: pooled=%d dedup=%d(-%d)%s  pool=%d  train=%d val=%d test=%d  "
+            "frac=%.3f/%.3f/%.3f  overlap=%d"
+            % (L, pooled_n, dedup_n, dedup_drop, " capped" if capped else "", pool_n,
+               len(tr), len(va), len(te), len(tr) / pool_n, len(va) / pool_n, len(te) / pool_n,
+               overlap))
 
     total = sum(os.path.getsize(p) for p in written)
     report_path = os.path.join(out, "leakage_report.md")
     with open(report_path, "w", encoding="utf-8") as f:
-        f.write(render_report(args, langs, reports, total, written))
+        f.write(render_report(args, langs, reports, total, written, split_names))
     log("wrote %s (%d files, %.2f MiB total)" % (report_path, len(written), total / 1024.0 / 1024.0))
-    return reports, total, written
+    return reports, total
 
 
 # ------------------------------------------------------------------ report
-def render_report(args, langs, reports, total_bytes, written):
-    cli = ("python clean_toxi.py --cap %d --test-cap %d --langs %s --out %s --seed %d%s"
-           % (args.cap, args.test_cap, ",".join(langs), args.out, args.seed,
-              " --en-subsample-only" if args.en_subsample_only else ""))
+def render_report(args, langs, reports, total_bytes, written, split_names):
+    cli = ("python clean_toxi.py --langs %s --out %s --seed %d --total-cap %d%s"
+           % (",".join(langs), args.out, args.seed, args.total_cap,
+              " --no-validation" if args.no_validation else ""))
     L = []
-    L.append("# toxi-text-3M -- leakage-corrected copy\n")
-    L.append("Source: `%s` (read-only). "
-             "train `%s` = 2,880,667 rows; test `%s` = 63,812 rows.\n"
-             % (DATASET, FILES["train"], FILES["test"]))
-    L.append("**Method.** For every language: (1) finalise the test set (cap `--test-cap`); "
-             "(2) remove every test text from that language's train pool; "
-             "(3) drop duplicate train texts; (4) cap train to `--cap` (seed `--seed`); "
-             "(5) verify 0 remaining overlap. Test texts are treated as the leak source, so the "
-             "post-condition is exactly 0 by construction and asserted.\n")
-    L.append("> EN is **also** leaked (90.1% of its 525 test texts sit in the EN train pool), so "
-             "the same removal is applied to EN by default. Pass `--en-subsample-only` to instead "
-             "reproduce the literal 'subsample EN train only' behaviour (leaves EN leakage intact).\n")
-    L.append("## Overlap per language (test texts found in the train pool)\n")
-    L.append("| lang | test rows | train pool (rows / unique) | leaked test texts BEFORE | % BEFORE | "
-             "removed from train | dup train dropped | train rows AFTER | leaked AFTER |")
-    L.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+    L.append("# toxi-text-3M -- leakage-corrected 80/10/10 copy\n")
+    L.append("Source: `%s` (read-only). Shipped splits pooled: `%s`.\n"
+             % (DATASET, ", ".join(split_names)))
+    L.append("**Method.** For each language: (1) pool ALL shipped splits "
+             "(train + validation + test); (2) deduplicate GLOBALLY per language on `text`; "
+             "(3) optionally cap the TOTAL per language (`--total-cap`, before splitting); "
+             "(4) re-split 80/10/10 with seed `--seed` (ceil on the 10% parts so val and test are "
+             "each >= 10%). A text is unique per language, so no text can appear in two splits -> "
+             "0 cross-split leakage by construction (asserted).\n")
+    L.append("## Per-language counts\n")
+    L.append("| lang | pooled N | dedup drop | pool N (post-cap) | train | val | test | "
+             "train/val/test frac | pos-rate tr/val/te | cross-split overlap |")
+    L.append("|---|---:|---:|---:|---:|---:|---:|:--:|:--:|---:|")
     for lg in langs:
         r = reports[lg]
-        L.append("| %s | %d | %d / %d | %d | %.1f%% | %d | %d | %d | %d |"
-                 % (lg, r["test_n"], r["pool_before_rows"], r["pool_before_unique"],
-                    r["leaked_before"], r["leaked_pct_before"], r["removed_leak"],
-                    r["dropped_dups"], r["train_after"], r["leaked_after"]))
+        L.append("| %s | %d | %d | %d%s | %d | %d | %d | %.3f / %.3f / %.3f | "
+                 "%.3f / %.3f / %.3f | %d |"
+                 % (lg, r["pooled_n"], r["dedup_drop"], r["pool_n"],
+                    " (capped)" if r["capped"] else "",
+                    r["train"], r["val"], r["test"],
+                    r["frac_train"], r["frac_val"], r["frac_test"],
+                    r["pr_train"], r["pr_val"], r["pr_test"], r["overlap"]))
     L.append("")
-    L.append("**After correction every language has 0 leaked test texts** (asserted at build time).\n")
+    L.append("**Cross-split text overlap is 0 for every language** (asserted at build time; "
+             "val and test are each >= 10% of the pooled per-language data).\n")
     L.append("## Caps and size\n")
-    L.append("- train cap `--cap` = %d per language (0 = no cap); test cap `--test-cap` = %d "
-             "per language (0 = no cap); seed = %d.  " % (args.cap, args.test_cap, args.seed))
-    L.append("A test language with fewer rows than the cap keeps all of them "
-             "(e.g. de test, en test).\n")
-    L.append("- total `%s/` size on disk = **%.2f MiB** (%.2f MB decimal; %.0f bytes total) "
-             "across %d parquet files (gzip).\n"
-             % (args.out, total_bytes / 1024.0 / 1024.0, total_bytes / 1e6, total_bytes, len(written)))
+    L.append("- `--total-cap` = %d per language total (0 = no cap); seed = %d.  "
+             "A language whose deduped pool is below the cap keeps all of it.\n"
+             % (args.total_cap, args.seed))
+    L.append("- total size on disk = **%.2f MiB** (%.2f MB decimal; %d bytes) across %d parquet "
+             "files (gzip) + this report.\n"
+             % (total_bytes / 1024.0 / 1024.0, total_bytes / 1e6, total_bytes, len(written)))
     L.append("## Files\n")
     for p in written:
         L.append("- `%s` (%.1f KiB)" % (os.path.relpath(p, os.getcwd()).replace("\\", "/"),
                                         os.path.getsize(p) / 1024.0))
     L.append("")
-    L.append("## Full-dataset reproduction\n")
-    L.append("The size-managed copy above is a cap. To rebuild the FULL cleaned dataset "
-             "(leakage removal + train dedup, no caps):\n")
-    L.append("```\npython clean_toxi.py --cap 0 --test-cap 0 --langs %s --out data/toxi_clean_full\n```\n"
-             % ",".join(langs))
-    L.append("## Exact CLI used for this copy\n")
+    L.append("## Exact CLI used\n")
     L.append("```\n%s\n```\n" % cli)
     return "\n".join(L)
 
 
 # ------------------------------------------------------------------ main
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Build a leakage-corrected toxi-text-3M copy.")
-    ap.add_argument("--cap", type=int, default=20000,
-                    help="train rows per language after cleaning (0 = no cap)")
-    ap.add_argument("--test-cap", type=int, default=5000,
-                    help="test rows per language (0 = no cap)")
+    ap = argparse.ArgumentParser(description="Build a leakage-corrected, 80/10/10 toxi copy.")
     ap.add_argument("--langs", default=",".join(DEFAULT_LANGS),
                     help="comma-separated languages")
     ap.add_argument("--out", default=os.path.join("data", "toxi_clean"),
                     help="output directory")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--en-subsample-only", action="store_true",
-                    help="for EN only: subsample train, do NOT remove EN test texts (literal spec)")
+    ap.add_argument("--total-cap", type=int, default=30000,
+                    help="cap TOTAL rows per language before splitting (0 = no cap)")
+    ap.add_argument("--no-validation", action="store_true",
+                    help="do not pool the validation file (pool train+test only)")
     args = ap.parse_args(argv)
 
-    reports, total, written = build(args)
+    reports, total = build(args)
 
-    # stdout summary table
-    print("\n%-4s %10s %16s %18s %8s %10s %12s" %
-          ("lang", "test", "leaked_before", "pct_before", "removed", "dup_dropped", "train_after"))
+    print("\n%-4s %12s %10s %12s %9s %9s %9s %10s %20s" %
+          ("lang", "pooled", "dedup_drop", "pool", "train", "val", "test",
+           "overlap", "pos tr/val/te"))
     for lg, r in reports.items():
-        print("%-4s %10d %16d %17.1f%% %8d %10d %12d" %
-              (lg, r["test_n"], r["leaked_before"], r["leaked_pct_before"],
-               r["removed_leak"], r["dropped_dups"], r["train_after"]))
+        print("%-4s %12d %10d %12d %9d %9d %9d %10d  %.3f/%.3f/%.3f" %
+              (lg, r["pooled_n"], r["dedup_drop"], r["pool_n"], r["train"], r["val"], r["test"],
+               r["overlap"], r["pr_train"], r["pr_val"], r["pr_test"]))
     print("\ntotal size: %.2f MiB (%.2f MB, %d bytes)" % (total / 1024.0 / 1024.0, total / 1e6, total))
 
 
