@@ -1,0 +1,67 @@
+{
+  "data": "flores200_en_it_de_fr.csv",
+  "n_rows": 2006,
+  "subset": false,
+  "device": "cuda",
+  "fp16": true,
+  "num_beams": 1,
+  "batch_size": 64,
+  "max_length": 512,
+  "models": {
+    "bilingual": {
+      "it": "Helsinki-NLP/opus-mt-it-en",
+      "de": "Helsinki-NLP/opus-mt-de-en",
+      "fr": "Helsinki-NLP/opus-mt-fr-en"
+    },
+    "multilingual": {
+      "it": "Helsinki-NLP/opus-mt-mul-en",
+      "de": "Helsinki-NLP/opus-mt-mul-en",
+      "fr": "Helsinki-NLP/opus-mt-mul-en"
+    }
+  },
+  "per_language": {
+    "bilingual": {
+      "it": {
+        "bleu": 29.7733,
+        "chrf": 60.0139
+      },
+      "de": {
+        "bleu": 40.6498,
+        "chrf": 66.3492
+      },
+      "fr": {
+        "bleu": 42.0677,
+        "chrf": 66.8887
+      }
+    },
+    "multilingual": {
+      "it": {
+        "bleu": 23.1609,
+        "chrf": 54.0181
+      },
+      "de": {
+        "bleu": 29.2159,
+        "chrf": 56.8221
+      },
+      "fr": {
+        "bleu": 31.7873,
+        "chrf": 58.9048
+      }
+    }
+  },
+  "macro": {
+    "bilingual": {
+      "bleu": 37.4969,
+      "chrf": 64.4173
+    },
+    "multilingual": {
+      "bleu": 28.0547,
+      "chrf": 56.5817
+    }
+  },
+  "delta_multilingual_minus_bilingual": {
+    "bleu": -9.4422,
+    "chrf": -7.8356
+  },
+  "delta_definition": "multilingual - bilingual (positive => multilingual better)"
+}
