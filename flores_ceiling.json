@@ -1,0 +1,658 @@
+{
+  "config": {
+    "emb": "EuroBERT-210m mean",
+    "feature": "perlang_z",
+    "xgb": {
+      "objective": "multi:softprob",
+      "tree_method": "hist",
+      "device": "cpu",
+      "max_bin": 64,
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "langs": [
+      "en",
+      "it",
+      "de",
+      "fr"
+    ],
+    "targets": [
+      "it",
+      "de",
+      "fr"
+    ],
+    "threshold": 0.9,
+    "ceiling_train": "train+val -> self test",
+    "seed": 0,
+    "smoke": false,
+    "python": "3.13.5"
+  },
+  "source_flores_calib": {
+    "file": "flores_calib.json",
+    "datasets": {
+      "sent": {
+        "best_label_free_method": "quantile_hardprior",
+        "best_min_ratio_both": 0.7142577318948763,
+        "en_baseline_self": {
+          "micro_f1": 0.5366336633663367,
+          "macro_f1": 0.403158789113484,
+          "acc": 0.5366336633663367,
+          "auc": 0.8485563069487236
+        },
+        "en_trained_calibrated_target": {
+          "it": {
+            "micro_f1": 0.39801980198019804,
+            "macro_f1": 0.2985673858172215,
+            "acc": 0.39801980198019804,
+            "auc": 0.7819435650290103
+          },
+          "de": {
+            "micro_f1": 0.3920792079207921,
+            "macro_f1": 0.28795928230568185,
+            "acc": 0.3920792079207921,
+            "auc": 0.7858719699942752
+          },
+          "fr": {
+            "micro_f1": 0.4198019801980198,
+            "macro_f1": 0.3476452951634758,
+            "acc": 0.4198019801980198,
+            "auc": 0.778442666698867
+          }
+        }
+      },
+      "agg": {
+        "best_label_free_method": "prior_sinkhorn",
+        "best_min_ratio_both": 0.6969422015969808,
+        "en_baseline_self": {
+          "micro_f1": 0.5539568345323741,
+          "macro_f1": 0.5014398101898102,
+          "acc": 0.5539568345323741,
+          "auc": 0.8882002587394395
+        },
+        "en_trained_calibrated_target": {
+          "it": {
+            "micro_f1": 0.5035971223021583,
+            "macro_f1": 0.3494745652820585,
+            "acc": 0.5035971223021583,
+            "auc": 0.8586558319673611
+          },
+          "de": {
+            "micro_f1": 0.5107913669064749,
+            "macro_f1": 0.3664282009550552,
+            "acc": 0.5107913669064749,
+            "auc": 0.8431125774405472
+          },
+          "fr": {
+            "micro_f1": 0.5467625899280576,
+            "macro_f1": 0.4117994617994618,
+            "acc": 0.5467625899280576,
+            "auc": 0.8348494388133272
+          }
+        }
+      }
+    }
+  },
+  "datasets": {
+    "sent": {
+      "name": "sent",
+      "n_classes": 12,
+      "classes": [
+        "business and economy",
+        "crime and law",
+        "education and society",
+        "entertainment and culture",
+        "geography",
+        "health",
+        "history",
+        "politics",
+        "safety",
+        "science and technology",
+        "sports",
+        "travel"
+      ],
+      "sizes": {
+        "train": 997,
+        "val": 504,
+        "test": 505,
+        "train_val": 1501
+      },
+      "ceiling": {
+        "en": {
+          "micro_f1": 0.6059405940594059,
+          "macro_f1": 0.4864630732511938,
+          "acc": 0.6059405940594059,
+          "auc": 0.9038005526611896,
+          "pred_dist": [
+            0.0,
+            0.04950495049504951,
+            0.04950495049504951,
+            0.06732673267326733,
+            0.027722772277227723,
+            0.019801980198019802,
+            0.07524752475247524,
+            0.07722772277227723,
+            0.04554455445544554,
+            0.19801980198019803,
+            0.04356435643564356,
+            0.3465346534653465
+          ]
+        },
+        "it": {
+          "micro_f1": 0.5623762376237624,
+          "macro_f1": 0.43432952591095436,
+          "acc": 0.5623762376237624,
+          "auc": 0.8828872541296598,
+          "pred_dist": [
+            0.0039603960396039604,
+            0.05148514851485148,
+            0.055445544554455446,
+            0.06534653465346535,
+            0.02178217821782178,
+            0.019801980198019802,
+            0.0594059405940594,
+            0.07920792079207921,
+            0.033663366336633666,
+            0.2,
+            0.04356435643564356,
+            0.36633663366336633
+          ]
+        },
+        "de": {
+          "micro_f1": 0.5366336633663367,
+          "macro_f1": 0.43547238931758675,
+          "acc": 0.5366336633663367,
+          "auc": 0.883475938982042,
+          "pred_dist": [
+            0.005940594059405941,
+            0.061386138613861385,
+            0.04554455445544554,
+            0.07326732673267326,
+            0.0297029702970297,
+            0.011881188118811881,
+            0.061386138613861385,
+            0.07722772277227723,
+            0.041584158415841586,
+            0.19801980198019803,
+            0.03762376237623762,
+            0.3564356435643564
+          ]
+        },
+        "fr": {
+          "micro_f1": 0.5821782178217821,
+          "macro_f1": 0.46749433869635126,
+          "acc": 0.5821782178217821,
+          "auc": 0.8740837654362178,
+          "pred_dist": [
+            0.0039603960396039604,
+            0.04554455445544554,
+            0.0594059405940594,
+            0.06534653465346535,
+            0.013861386138613862,
+            0.02574257425742574,
+            0.07524752475247524,
+            0.07722772277227723,
+            0.05148514851485148,
+            0.19801980198019803,
+            0.03762376237623762,
+            0.3465346534653465
+          ]
+        }
+      }
+    },
+    "agg": {
+      "name": "agg",
+      "n_classes": 11,
+      "classes": [
+        "crime and law",
+        "education and society",
+        "entertainment and culture",
+        "geography",
+        "health",
+        "history",
+        "politics",
+        "safety",
+        "science and technology",
+        "sports",
+        "travel"
+      ],
+      "sizes": {
+        "train": 276,
+        "val": 140,
+        "test": 139,
+        "train_val": 416
+      },
+      "ceiling": {
+        "en": {
+          "micro_f1": 0.6187050359712231,
+          "macro_f1": 0.5572906957476335,
+          "acc": 0.6187050359712231,
+          "auc": 0.914188437523583,
+          "pred_dist": [
+            0.07913669064748201,
+            0.03597122302158273,
+            0.06474820143884892,
+            0.04316546762589928,
+            0.02158273381294964,
+            0.07194244604316546,
+            0.10071942446043165,
+            0.050359712230215826,
+            0.2302158273381295,
+            0.06474820143884892,
+            0.23741007194244604
+          ]
+        },
+        "it": {
+          "micro_f1": 0.6187050359712231,
+          "macro_f1": 0.5587862704890569,
+          "acc": 0.6187050359712231,
+          "auc": 0.9015567436274154,
+          "pred_dist": [
+            0.06474820143884892,
+            0.02158273381294964,
+            0.08633093525179857,
+            0.04316546762589928,
+            0.014388489208633094,
+            0.06474820143884892,
+            0.10071942446043165,
+            0.07194244604316546,
+            0.26618705035971224,
+            0.05755395683453238,
+            0.20863309352517986
+          ]
+        },
+        "de": {
+          "micro_f1": 0.60431654676259,
+          "macro_f1": 0.5322493030627001,
+          "acc": 0.60431654676259,
+          "auc": 0.8949118749562242,
+          "pred_dist": [
+            0.10071942446043165,
+            0.02877697841726619,
+            0.04316546762589928,
+            0.06474820143884892,
+            0.007194244604316547,
+            0.050359712230215826,
+            0.11510791366906475,
+            0.050359712230215826,
+            0.2517985611510791,
+            0.05755395683453238,
+            0.2302158273381295
+          ]
+        },
+        "fr": {
+          "micro_f1": 0.5323741007194245,
+          "macro_f1": 0.45416739111116267,
+          "acc": 0.5323741007194245,
+          "auc": 0.8851755325255914,
+          "pred_dist": [
+            0.08633093525179857,
+            0.02877697841726619,
+            0.07194244604316546,
+            0.03597122302158273,
+            0.02158273381294964,
+            0.09352517985611511,
+            0.07194244604316546,
+            0.050359712230215826,
+            0.2517985611510791,
+            0.06474820143884892,
+            0.22302158273381295
+          ]
+        }
+      }
+    }
+  },
+  "analysis": {
+    "sent": {
+      "name": "sent",
+      "en_self": {
+        "en_ceiling_trainval": {
+          "micro_f1": 0.6059405940594059,
+          "macro_f1": 0.4864630732511938,
+          "auc": 0.9038005526611896
+        },
+        "en_calib_baseline_trainonly": {
+          "micro_f1": 0.5366336633663367,
+          "macro_f1": 0.403158789113484,
+          "auc": 0.8485563069487236
+        }
+      },
+      "bar_0.9": {
+        "en_ceiling_trainval": {
+          "micro_f1": 0.5453465346534654,
+          "macro_f1": 0.43781676592607444
+        },
+        "en_calib_baseline_trainonly": {
+          "micro_f1": 0.482970297029703,
+          "macro_f1": 0.3628429102021356
+        }
+      },
+      "per_target": {
+        "it": {
+          "ceiling": {
+            "micro_f1": 0.5623762376237624,
+            "macro_f1": 0.43432952591095436,
+            "auc": 0.8828872541296598
+          },
+          "en_trained_calibrated": {
+            "micro_f1": 0.39801980198019804,
+            "macro_f1": 0.2985673858172215,
+            "auc": 0.7819435650290103
+          },
+          "ratio_calibrated_over_ceiling": {
+            "micro": 0.7077464788732394,
+            "macro": 0.6874213425647543,
+            "auc": 0.8856663876066954
+          },
+          "feasibility_0.9": {
+            "en_ceiling_trainval": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.5453465346534654,
+                "macro_f1": 0.43781676592607444
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5623762376237624,
+                "macro_f1": 0.43432952591095436
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": true,
+              "margin_micro": -0.017029702970297045,
+              "margin_macro": 0.0034872400151200744,
+              "verdict": "INFEASIBLE on macro only"
+            },
+            "en_calib_baseline_trainonly": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.482970297029703,
+                "macro_f1": 0.3628429102021356
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5623762376237624,
+                "macro_f1": 0.43432952591095436
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.07940594059405942,
+              "margin_macro": -0.07148661570881876,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            }
+          }
+        },
+        "de": {
+          "ceiling": {
+            "micro_f1": 0.5366336633663367,
+            "macro_f1": 0.43547238931758675,
+            "auc": 0.883475938982042
+          },
+          "en_trained_calibrated": {
+            "micro_f1": 0.3920792079207921,
+            "macro_f1": 0.28795928230568185,
+            "auc": 0.7858719699942752
+          },
+          "ratio_calibrated_over_ceiling": {
+            "micro": 0.7306273062730627,
+            "macro": 0.661257267669559,
+            "auc": 0.8895227762510115
+          },
+          "feasibility_0.9": {
+            "en_ceiling_trainval": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.5453465346534654,
+                "macro_f1": 0.43781676592607444
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5366336633663367,
+                "macro_f1": 0.43547238931758675
+              },
+              "infeasible_micro": true,
+              "infeasible_macro": true,
+              "margin_micro": 0.00871287128712872,
+              "margin_macro": 0.002344376608487686,
+              "verdict": "INFEASIBLE (0.9*EN-self exceeds target's own ceiling on both micro and macro)"
+            },
+            "en_calib_baseline_trainonly": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.482970297029703,
+                "macro_f1": 0.3628429102021356
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5366336633663367,
+                "macro_f1": 0.43547238931758675
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.053663366336633656,
+              "margin_macro": -0.07262947911545115,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            }
+          }
+        },
+        "fr": {
+          "ceiling": {
+            "micro_f1": 0.5821782178217821,
+            "macro_f1": 0.46749433869635126,
+            "auc": 0.8740837654362178
+          },
+          "en_trained_calibrated": {
+            "micro_f1": 0.4198019801980198,
+            "macro_f1": 0.3476452951634758,
+            "auc": 0.778442666698867
+          },
+          "ratio_calibrated_over_ceiling": {
+            "micro": 0.7210884353741497,
+            "macro": 0.7436353050454365,
+            "auc": 0.8905813120901285
+          },
+          "feasibility_0.9": {
+            "en_ceiling_trainval": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.5453465346534654,
+                "macro_f1": 0.43781676592607444
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5821782178217821,
+                "macro_f1": 0.46749433869635126
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.03683168316831675,
+              "margin_macro": -0.029677572770276828,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            },
+            "en_calib_baseline_trainonly": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.482970297029703,
+                "macro_f1": 0.3628429102021356
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5821782178217821,
+                "macro_f1": 0.46749433869635126
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.09920792079207913,
+              "margin_macro": -0.10465142849421566,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            }
+          }
+        }
+      }
+    },
+    "agg": {
+      "name": "agg",
+      "en_self": {
+        "en_ceiling_trainval": {
+          "micro_f1": 0.6187050359712231,
+          "macro_f1": 0.5572906957476335,
+          "auc": 0.914188437523583
+        },
+        "en_calib_baseline_trainonly": {
+          "micro_f1": 0.5539568345323741,
+          "macro_f1": 0.5014398101898102,
+          "auc": 0.8882002587394395
+        }
+      },
+      "bar_0.9": {
+        "en_ceiling_trainval": {
+          "micro_f1": 0.5568345323741007,
+          "macro_f1": 0.5015616261728701
+        },
+        "en_calib_baseline_trainonly": {
+          "micro_f1": 0.4985611510791367,
+          "macro_f1": 0.4512958291708292
+        }
+      },
+      "per_target": {
+        "it": {
+          "ceiling": {
+            "micro_f1": 0.6187050359712231,
+            "macro_f1": 0.5587862704890569,
+            "auc": 0.9015567436274154
+          },
+          "en_trained_calibrated": {
+            "micro_f1": 0.5035971223021583,
+            "macro_f1": 0.3494745652820585,
+            "auc": 0.8586558319673611
+          },
+          "ratio_calibrated_over_ceiling": {
+            "micro": 0.8139534883720929,
+            "macro": 0.6254172368555044,
+            "auc": 0.952414629513565
+          },
+          "feasibility_0.9": {
+            "en_ceiling_trainval": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.5568345323741007,
+                "macro_f1": 0.5015616261728701
+              },
+              "target_ceiling": {
+                "micro_f1": 0.6187050359712231,
+                "macro_f1": 0.5587862704890569
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.06187050359712232,
+              "margin_macro": -0.05722464431618679,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            },
+            "en_calib_baseline_trainonly": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.4985611510791367,
+                "macro_f1": 0.4512958291708292
+              },
+              "target_ceiling": {
+                "micro_f1": 0.6187050359712231,
+                "macro_f1": 0.5587862704890569
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.12014388489208638,
+              "margin_macro": -0.10749044131822771,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            }
+          }
+        },
+        "de": {
+          "ceiling": {
+            "micro_f1": 0.60431654676259,
+            "macro_f1": 0.5322493030627001,
+            "auc": 0.8949118749562242
+          },
+          "en_trained_calibrated": {
+            "micro_f1": 0.5107913669064749,
+            "macro_f1": 0.3664282009550552,
+            "auc": 0.8431125774405472
+          },
+          "ratio_calibrated_over_ceiling": {
+            "micro": 0.8452380952380952,
+            "macro": 0.6884521949517501,
+            "auc": 0.9421179906477264
+          },
+          "feasibility_0.9": {
+            "en_ceiling_trainval": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.5568345323741007,
+                "macro_f1": 0.5015616261728701
+              },
+              "target_ceiling": {
+                "micro_f1": 0.60431654676259,
+                "macro_f1": 0.5322493030627001
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.0474820143884892,
+              "margin_macro": -0.030687676889829985,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            },
+            "en_calib_baseline_trainonly": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.4985611510791367,
+                "macro_f1": 0.4512958291708292
+              },
+              "target_ceiling": {
+                "micro_f1": 0.60431654676259,
+                "macro_f1": 0.5322493030627001
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.10575539568345327,
+              "margin_macro": -0.08095347389187091,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            }
+          }
+        },
+        "fr": {
+          "ceiling": {
+            "micro_f1": 0.5323741007194245,
+            "macro_f1": 0.45416739111116267,
+            "auc": 0.8851755325255914
+          },
+          "en_trained_calibrated": {
+            "micro_f1": 0.5467625899280576,
+            "macro_f1": 0.4117994617994618,
+            "auc": 0.8348494388133272
+          },
+          "ratio_calibrated_over_ceiling": {
+            "micro": 1.027027027027027,
+            "macro": 0.9067129649972364,
+            "auc": 0.9431456339866587
+          },
+          "feasibility_0.9": {
+            "en_ceiling_trainval": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.5568345323741007,
+                "macro_f1": 0.5015616261728701
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5323741007194245,
+                "macro_f1": 0.45416739111116267
+              },
+              "infeasible_micro": true,
+              "infeasible_macro": true,
+              "margin_micro": 0.024460431654676262,
+              "margin_macro": 0.04739423506170748,
+              "verdict": "INFEASIBLE (0.9*EN-self exceeds target's own ceiling on both micro and macro)"
+            },
+            "en_calib_baseline_trainonly": {
+              "bar_0.9x_en_self": {
+                "micro_f1": 0.4985611510791367,
+                "macro_f1": 0.4512958291708292
+              },
+              "target_ceiling": {
+                "micro_f1": 0.5323741007194245,
+                "macro_f1": 0.45416739111116267
+              },
+              "infeasible_micro": false,
+              "infeasible_macro": false,
+              "margin_micro": -0.033812949640287804,
+              "margin_macro": -0.0028715619403334447,
+              "verdict": "feasible in principle (target ceiling >= 0.9*EN-self)"
+            }
+          }
+        }
+      }
+    }
+  }
+}
