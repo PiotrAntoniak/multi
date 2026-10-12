@@ -767,6 +767,10 @@
     "target_text_key": "it_text",
     "source_gold_key": "en_gold",
     "mt_key": "it2en_mt",
+    "source_pred_prob_key": "en_pred_prob",
+    "source_gold_prob_key": "en_gold_prob",
+    "target_pred_prob_key": "it_pred_prob",
+    "target_gold_prob_key": "it_gold_prob",
     "mt_model": "Helsinki-NLP/opus-mt-it-en",
     "mt_available": true,
     "both_wrong_total": 209,
@@ -787,7 +791,11 @@
         "source_pred": 2,
         "source_pred_label": "education and society",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.391415,
+        "en_gold_prob": 0.136402,
+        "it_pred_prob": 0.389678,
+        "it_gold_prob": 0.114169
       },
       {
         "index": 1412,
@@ -801,7 +809,11 @@
         "source_pred": 10,
         "source_pred_label": "sports",
         "target_pred": 10,
-        "target_pred_label": "sports"
+        "target_pred_label": "sports",
+        "en_pred_prob": 0.528145,
+        "en_gold_prob": 0.021548,
+        "it_pred_prob": 0.955016,
+        "it_gold_prob": 0.00265
       },
       {
         "index": 1835,
@@ -815,7 +827,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.836702,
+        "en_gold_prob": 0.061501,
+        "it_pred_prob": 0.46285,
+        "it_gold_prob": 0.380724
       },
       {
         "index": 1981,
@@ -829,7 +845,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 6,
-        "target_pred_label": "history"
+        "target_pred_label": "history",
+        "en_pred_prob": 0.561059,
+        "en_gold_prob": 0.034772,
+        "it_pred_prob": 0.340994,
+        "it_gold_prob": 0.13426
       },
       {
         "index": 1228,
@@ -843,7 +863,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.560745,
+        "en_gold_prob": 0.190682,
+        "it_pred_prob": 0.56865,
+        "it_gold_prob": 0.026856
       },
       {
         "index": 1669,
@@ -857,7 +881,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 5,
-        "target_pred_label": "health"
+        "target_pred_label": "health",
+        "en_pred_prob": 0.425506,
+        "en_gold_prob": 0.090638,
+        "it_pred_prob": 0.417988,
+        "it_gold_prob": 0.094363
       },
       {
         "index": 1640,
@@ -871,7 +899,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.695306,
+        "en_gold_prob": 0.048939,
+        "it_pred_prob": 0.298255,
+        "it_gold_prob": 0.125613
       },
       {
         "index": 1104,
@@ -885,7 +917,11 @@
         "source_pred": 10,
         "source_pred_label": "sports",
         "target_pred": 8,
-        "target_pred_label": "safety"
+        "target_pred_label": "safety",
+        "en_pred_prob": 0.360189,
+        "en_gold_prob": 0.031229,
+        "it_pred_prob": 0.779786,
+        "it_gold_prob": 0.045085
       },
       {
         "index": 1435,
@@ -899,7 +935,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.246868,
+        "en_gold_prob": 0.100028,
+        "it_pred_prob": 0.266641,
+        "it_gold_prob": 0.180549
       },
       {
         "index": 1204,
@@ -913,7 +953,11 @@
         "source_pred": 8,
         "source_pred_label": "safety",
         "target_pred": 8,
-        "target_pred_label": "safety"
+        "target_pred_label": "safety",
+        "en_pred_prob": 0.593456,
+        "en_gold_prob": 0.131455,
+        "it_pred_prob": 0.541432,
+        "it_gold_prob": 0.038693
       },
       {
         "index": 1834,
@@ -927,7 +971,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.696387,
+        "en_gold_prob": 0.019133,
+        "it_pred_prob": 0.87666,
+        "it_gold_prob": 0.003633
       },
       {
         "index": 1809,
@@ -941,7 +989,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 7,
-        "target_pred_label": "politics"
+        "target_pred_label": "politics",
+        "en_pred_prob": 0.430039,
+        "en_gold_prob": 0.053839,
+        "it_pred_prob": 0.262481,
+        "it_gold_prob": 0.162567
       },
       {
         "index": 1416,
@@ -955,7 +1007,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.869798,
+        "en_gold_prob": 0.008288,
+        "it_pred_prob": 0.376322,
+        "it_gold_prob": 0.065483
       },
       {
         "index": 1437,
@@ -969,7 +1025,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.284056,
+        "en_gold_prob": 0.240012,
+        "it_pred_prob": 0.328901,
+        "it_gold_prob": 0.071244
       },
       {
         "index": 1308,
@@ -983,7 +1043,11 @@
         "source_pred": 10,
         "source_pred_label": "sports",
         "target_pred": 6,
-        "target_pred_label": "history"
+        "target_pred_label": "history",
+        "en_pred_prob": 0.149167,
+        "en_gold_prob": 0.109777,
+        "it_pred_prob": 0.554961,
+        "it_gold_prob": 0.109382
       },
       {
         "index": 1113,
@@ -997,7 +1061,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.981468,
+        "en_gold_prob": 0.00331,
+        "it_pred_prob": 0.30266,
+        "it_gold_prob": 0.061689
       },
       {
         "index": 1457,
@@ -1011,7 +1079,11 @@
         "source_pred": 6,
         "source_pred_label": "history",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.361576,
+        "en_gold_prob": 0.069928,
+        "it_pred_prob": 0.472628,
+        "it_gold_prob": 0.127653
       },
       {
         "index": 1971,
@@ -1025,7 +1097,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.728106,
+        "en_gold_prob": 0.088264,
+        "it_pred_prob": 0.368065,
+        "it_gold_prob": 0.125931
       },
       {
         "index": 1044,
@@ -1039,7 +1115,11 @@
         "source_pred": 1,
         "source_pred_label": "crime and law",
         "target_pred": 1,
-        "target_pred_label": "crime and law"
+        "target_pred_label": "crime and law",
+        "en_pred_prob": 0.428797,
+        "en_gold_prob": 0.289503,
+        "it_pred_prob": 0.39496,
+        "it_gold_prob": 0.10346
       },
       {
         "index": 1179,
@@ -1053,7 +1133,11 @@
         "source_pred": 7,
         "source_pred_label": "politics",
         "target_pred": 7,
-        "target_pred_label": "politics"
+        "target_pred_label": "politics",
+        "en_pred_prob": 0.291694,
+        "en_gold_prob": 0.02468,
+        "it_pred_prob": 0.486413,
+        "it_gold_prob": 0.023936
       },
       {
         "index": 2005,
@@ -1067,7 +1151,11 @@
         "source_pred": 5,
         "source_pred_label": "health",
         "target_pred": 5,
-        "target_pred_label": "health"
+        "target_pred_label": "health",
+        "en_pred_prob": 0.23169,
+        "en_gold_prob": 0.150206,
+        "it_pred_prob": 0.336838,
+        "it_gold_prob": 0.022731
       },
       {
         "index": 1988,
@@ -1081,7 +1169,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.941839,
+        "en_gold_prob": 0.031718,
+        "it_pred_prob": 0.983975,
+        "it_gold_prob": 0.005818
       },
       {
         "index": 1602,
@@ -1095,7 +1187,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.42673,
+        "en_gold_prob": 0.152591,
+        "it_pred_prob": 0.711925,
+        "it_gold_prob": 0.104675
       },
       {
         "index": 1423,
@@ -1109,7 +1205,11 @@
         "source_pred": 1,
         "source_pred_label": "crime and law",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.342555,
+        "en_gold_prob": 0.079812,
+        "it_pred_prob": 0.542712,
+        "it_gold_prob": 0.120696
       },
       {
         "index": 1452,
@@ -1123,7 +1223,11 @@
         "source_pred": 3,
         "source_pred_label": "entertainment and culture",
         "target_pred": 4,
-        "target_pred_label": "geography"
+        "target_pred_label": "geography",
+        "en_pred_prob": 0.403442,
+        "en_gold_prob": 0.033084,
+        "it_pred_prob": 0.272894,
+        "it_gold_prob": 0.222198
       },
       {
         "index": 1041,
@@ -1137,7 +1241,11 @@
         "source_pred": 0,
         "source_pred_label": "business and economy",
         "target_pred": 7,
-        "target_pred_label": "politics"
+        "target_pred_label": "politics",
+        "en_pred_prob": 0.305569,
+        "en_gold_prob": 0.241866,
+        "it_pred_prob": 0.775961,
+        "it_gold_prob": 0.106566
       },
       {
         "index": 1259,
@@ -1151,7 +1259,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 1,
-        "target_pred_label": "crime and law"
+        "target_pred_label": "crime and law",
+        "en_pred_prob": 0.366703,
+        "en_gold_prob": 0.029585,
+        "it_pred_prob": 0.436128,
+        "it_gold_prob": 0.123751
       },
       {
         "index": 1454,
@@ -1165,7 +1277,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.631917,
+        "en_gold_prob": 0.019508,
+        "it_pred_prob": 0.903664,
+        "it_gold_prob": 0.007301
       },
       {
         "index": 1394,
@@ -1179,7 +1295,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.511287,
+        "en_gold_prob": 0.234852,
+        "it_pred_prob": 0.51066,
+        "it_gold_prob": 0.348446
       },
       {
         "index": 1619,
@@ -1193,7 +1313,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.285678,
+        "en_gold_prob": 0.176594,
+        "it_pred_prob": 0.689388,
+        "it_gold_prob": 0.023496
       }
     ],
     "transfer_gap": [
@@ -1209,7 +1333,11 @@
         "source_pred": 0,
         "source_pred_label": "business and economy",
         "target_pred": 7,
-        "target_pred_label": "politics"
+        "target_pred_label": "politics",
+        "en_pred_prob": 0.177234,
+        "en_gold_prob": 0.153324,
+        "it_pred_prob": 0.34059,
+        "it_gold_prob": 0.34059
       },
       {
         "index": 1036,
@@ -1223,7 +1351,11 @@
         "source_pred": 3,
         "source_pred_label": "entertainment and culture",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.337092,
+        "en_gold_prob": 0.181246,
+        "it_pred_prob": 0.248576,
+        "it_gold_prob": 0.248576
       },
       {
         "index": 1883,
@@ -1237,7 +1369,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.55857,
+        "en_gold_prob": 0.238317,
+        "it_pred_prob": 0.439836,
+        "it_gold_prob": 0.439836
       },
       {
         "index": 1877,
@@ -1251,7 +1387,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.514558,
+        "en_gold_prob": 0.159769,
+        "it_pred_prob": 0.858786,
+        "it_gold_prob": 0.858786
       },
       {
         "index": 1328,
@@ -1265,7 +1405,11 @@
         "source_pred": 0,
         "source_pred_label": "business and economy",
         "target_pred": 7,
-        "target_pred_label": "politics"
+        "target_pred_label": "politics",
+        "en_pred_prob": 0.135596,
+        "en_gold_prob": 0.101015,
+        "it_pred_prob": 0.351254,
+        "it_gold_prob": 0.351254
       },
       {
         "index": 1014,
@@ -1279,7 +1423,11 @@
         "source_pred": 10,
         "source_pred_label": "sports",
         "target_pred": 3,
-        "target_pred_label": "entertainment and culture"
+        "target_pred_label": "entertainment and culture",
+        "en_pred_prob": 0.447652,
+        "en_gold_prob": 0.144525,
+        "it_pred_prob": 0.392161,
+        "it_gold_prob": 0.392161
       },
       {
         "index": 1445,
@@ -1293,7 +1441,11 @@
         "source_pred": 3,
         "source_pred_label": "entertainment and culture",
         "target_pred": 6,
-        "target_pred_label": "history"
+        "target_pred_label": "history",
+        "en_pred_prob": 0.648549,
+        "en_gold_prob": 0.031096,
+        "it_pred_prob": 0.416031,
+        "it_gold_prob": 0.416031
       },
       {
         "index": 1432,
@@ -1307,7 +1459,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 6,
-        "target_pred_label": "history"
+        "target_pred_label": "history",
+        "en_pred_prob": 0.51925,
+        "en_gold_prob": 0.058575,
+        "it_pred_prob": 0.617703,
+        "it_gold_prob": 0.617703
       },
       {
         "index": 1974,
@@ -1321,7 +1477,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 3,
-        "target_pred_label": "entertainment and culture"
+        "target_pred_label": "entertainment and culture",
+        "en_pred_prob": 0.704673,
+        "en_gold_prob": 0.166706,
+        "it_pred_prob": 0.667137,
+        "it_gold_prob": 0.667137
       },
       {
         "index": 1639,
@@ -1335,7 +1495,11 @@
         "source_pred": 2,
         "source_pred_label": "education and society",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.248872,
+        "en_gold_prob": 0.157741,
+        "it_pred_prob": 0.474912,
+        "it_gold_prob": 0.474912
       },
       {
         "index": 1263,
@@ -1349,7 +1513,11 @@
         "source_pred": 7,
         "source_pred_label": "politics",
         "target_pred": 1,
-        "target_pred_label": "crime and law"
+        "target_pred_label": "crime and law",
+        "en_pred_prob": 0.344247,
+        "en_gold_prob": 0.106786,
+        "it_pred_prob": 0.457127,
+        "it_gold_prob": 0.457127
       },
       {
         "index": 1691,
@@ -1363,7 +1531,11 @@
         "source_pred": 4,
         "source_pred_label": "geography",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.310176,
+        "en_gold_prob": 0.291924,
+        "it_pred_prob": 0.758279,
+        "it_gold_prob": 0.758279
       },
       {
         "index": 1336,
@@ -1377,7 +1549,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.575879,
+        "en_gold_prob": 0.069934,
+        "it_pred_prob": 0.581963,
+        "it_gold_prob": 0.581963
       },
       {
         "index": 1819,
@@ -1391,7 +1567,11 @@
         "source_pred": 5,
         "source_pred_label": "health",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.514739,
+        "en_gold_prob": 0.149568,
+        "it_pred_prob": 0.335826,
+        "it_gold_prob": 0.335826
       },
       {
         "index": 1889,
@@ -1405,7 +1585,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.35196,
+        "en_gold_prob": 0.325516,
+        "it_pred_prob": 0.9502,
+        "it_gold_prob": 0.9502
       },
       {
         "index": 1450,
@@ -1419,7 +1603,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 6,
-        "target_pred_label": "history"
+        "target_pred_label": "history",
+        "en_pred_prob": 0.359816,
+        "en_gold_prob": 0.111579,
+        "it_pred_prob": 0.54719,
+        "it_gold_prob": 0.54719
       },
       {
         "index": 1622,
@@ -1433,7 +1621,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 4,
-        "target_pred_label": "geography"
+        "target_pred_label": "geography",
+        "en_pred_prob": 0.245612,
+        "en_gold_prob": 0.215273,
+        "it_pred_prob": 0.890296,
+        "it_gold_prob": 0.890296
       },
       {
         "index": 1232,
@@ -1447,7 +1639,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 3,
-        "target_pred_label": "entertainment and culture"
+        "target_pred_label": "entertainment and culture",
+        "en_pred_prob": 0.559932,
+        "en_gold_prob": 0.051086,
+        "it_pred_prob": 0.603103,
+        "it_gold_prob": 0.603103
       },
       {
         "index": 1540,
@@ -1461,7 +1657,11 @@
         "source_pred": 4,
         "source_pred_label": "geography",
         "target_pred": 6,
-        "target_pred_label": "history"
+        "target_pred_label": "history",
+        "en_pred_prob": 0.329739,
+        "en_gold_prob": 0.088941,
+        "it_pred_prob": 0.805999,
+        "it_gold_prob": 0.805999
       },
       {
         "index": 1358,
@@ -1475,7 +1675,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.443504,
+        "en_gold_prob": 0.160007,
+        "it_pred_prob": 0.63377,
+        "it_gold_prob": 0.63377
       },
       {
         "index": 1333,
@@ -1489,7 +1693,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.434028,
+        "en_gold_prob": 0.036614,
+        "it_pred_prob": 0.345666,
+        "it_gold_prob": 0.345666
       },
       {
         "index": 1753,
@@ -1503,7 +1711,11 @@
         "source_pred": 4,
         "source_pred_label": "geography",
         "target_pred": 11,
-        "target_pred_label": "travel"
+        "target_pred_label": "travel",
+        "en_pred_prob": 0.450135,
+        "en_gold_prob": 0.124204,
+        "it_pred_prob": 0.725765,
+        "it_gold_prob": 0.725765
       },
       {
         "index": 1154,
@@ -1517,7 +1729,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.687883,
+        "en_gold_prob": 0.168698,
+        "it_pred_prob": 0.600588,
+        "it_gold_prob": 0.600588
       },
       {
         "index": 1249,
@@ -1531,7 +1747,11 @@
         "source_pred": 8,
         "source_pred_label": "safety",
         "target_pred": 1,
-        "target_pred_label": "crime and law"
+        "target_pred_label": "crime and law",
+        "en_pred_prob": 0.345739,
+        "en_gold_prob": 0.110743,
+        "it_pred_prob": 0.626658,
+        "it_gold_prob": 0.626658
       },
       {
         "index": 1473,
@@ -1545,7 +1765,11 @@
         "source_pred": 3,
         "source_pred_label": "entertainment and culture",
         "target_pred": 6,
-        "target_pred_label": "history"
+        "target_pred_label": "history",
+        "en_pred_prob": 0.554844,
+        "en_gold_prob": 0.04404,
+        "it_pred_prob": 0.339063,
+        "it_gold_prob": 0.339063
       },
       {
         "index": 1339,
@@ -1559,7 +1783,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.628793,
+        "en_gold_prob": 0.058799,
+        "it_pred_prob": 0.739892,
+        "it_gold_prob": 0.739892
       },
       {
         "index": 1650,
@@ -1573,7 +1801,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 2,
-        "target_pred_label": "education and society"
+        "target_pred_label": "education and society",
+        "en_pred_prob": 0.208585,
+        "en_gold_prob": 0.049982,
+        "it_pred_prob": 0.498301,
+        "it_gold_prob": 0.498301
       },
       {
         "index": 1166,
@@ -1587,7 +1819,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 3,
-        "target_pred_label": "entertainment and culture"
+        "target_pred_label": "entertainment and culture",
+        "en_pred_prob": 0.541229,
+        "en_gold_prob": 0.029168,
+        "it_pred_prob": 0.765357,
+        "it_gold_prob": 0.765357
       },
       {
         "index": 1376,
@@ -1601,7 +1837,11 @@
         "source_pred": 11,
         "source_pred_label": "travel",
         "target_pred": 9,
-        "target_pred_label": "science and technology"
+        "target_pred_label": "science and technology",
+        "en_pred_prob": 0.383997,
+        "en_gold_prob": 0.151914,
+        "it_pred_prob": 0.572223,
+        "it_gold_prob": 0.572223
       },
       {
         "index": 1653,
@@ -1615,7 +1855,11 @@
         "source_pred": 9,
         "source_pred_label": "science and technology",
         "target_pred": 2,
-        "target_pred_label": "education and society"
+        "target_pred_label": "education and society",
+        "en_pred_prob": 0.468537,
+        "en_gold_prob": 0.166279,
+        "it_pred_prob": 0.314853,
+        "it_gold_prob": 0.314853
       }
     ]
   }

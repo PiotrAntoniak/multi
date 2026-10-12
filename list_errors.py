@@ -32,6 +32,11 @@ Each listed item shows the text in THREE forms (dynamic keys ``<target>_text`` /
    (transformers; downloaded on demand, fp16 greedy batched on GPU when available; the
    output is cached in ``mt_cache_<target>2<source>.json``).
 
+Each listed item also carries the predicted-class and gold-class probabilities of BOTH models
+(keys ``<source>_pred_prob`` / ``<source>_gold_prob`` / ``<target>_pred_prob`` /
+``<target>_gold_prob``; for en->it: ``en_pred_prob`` / ``en_gold_prob`` / ``it_pred_prob`` /
+``it_gold_prob``), from ``predict_proba`` (max softmax prob = argmax class).
+
 Outputs (create-only): ``list_errors.md`` / ``list_errors.json`` (+ the MT cache).  The repo
 has an existing ``it_errors.py`` (hard-coded en->it) that this script reproduces with
 ``python list_errors.py --dataset sent`` (and ``--dataset agg``).
@@ -238,9 +243,11 @@ def run_dataset(D, source, target, train_on):
     tgt_model.fit(Xt[target][fit_rows], y[fit_rows])
     log("  %s-trained + %s-trained models fitted" % (source.upper(), target.upper()))
 
-    # Both models score the TARGET-language test embeddings.
-    src_pred = np.asarray(src_model.predict(Xt[target][te]), dtype=int)
-    tgt_pred = np.asarray(tgt_model.predict(Xt[target][te]), dtype=int)
+    # Both models score the TARGET-language test embeddings (argmax(proba) == predict()).
+    src_proba = np.asarray(src_model.predict_proba(Xt[target][te]), dtype=np.float64)
+    tgt_proba = np.asarray(tgt_model.predict_proba(Xt[target][te]), dtype=np.float64)
+    src_pred = src_proba.argmax(1)
+    tgt_pred = tgt_proba.argmax(1)
     gold = np.asarray(y[te], dtype=int)
 
     src_wrong = src_pred != gold
@@ -267,6 +274,10 @@ def run_dataset(D, source, target, train_on):
     t_key = "%s_text" % target
     s_key = "%s_gold" % source
     mt_key = "%s2%s_mt" % (target, source)
+    sp_key = "%s_pred_prob" % source      # source model's predicted-class probability
+    sg_key = "%s_gold_prob" % source      # source model's probability of the gold class
+    tp_key = "%s_pred_prob" % target      # target model's predicted-class probability
+    tg_key = "%s_gold_prob" % target      # target model's probability of the gold class
 
     def rec(i):
         # ``i`` is a position in the test arrays; ``te[i]`` is the CSV row it came from.
@@ -278,7 +289,11 @@ def run_dataset(D, source, target, train_on):
                 mt_key: None,
                 "gold": int(gold[i]), "gold_label": cls[int(gold[i])],
                 "source_pred": int(src_pred[i]), "source_pred_label": cls[int(src_pred[i])],
-                "target_pred": int(tgt_pred[i]), "target_pred_label": cls[int(tgt_pred[i])]}
+                "target_pred": int(tgt_pred[i]), "target_pred_label": cls[int(tgt_pred[i])],
+                sp_key: round(float(src_proba[i, src_pred[i]]), 6),
+                sg_key: round(float(src_proba[i, gold[i]]), 6),
+                tp_key: round(float(tgt_proba[i, tgt_pred[i]]), 6),
+                tg_key: round(float(tgt_proba[i, gold[i]]), 6)}
 
     def collect(mask):
         out = []
@@ -344,6 +359,8 @@ def run_dataset(D, source, target, train_on):
         "confusion_source_rows_gold_cols_pred": M.tolist(),
         "source_error_pairs": error_pairs,
         "target_text_key": t_key, "source_gold_key": s_key, "mt_key": mt_key,
+        "source_pred_prob_key": sp_key, "source_gold_prob_key": sg_key,
+        "target_pred_prob_key": tp_key, "target_gold_prob_key": tg_key,
         "mt_model": mt_model_id(target, source), "mt_available": mt_available,
         "both_wrong_total": len(bw_pairs),
         "transfer_gap_total": len(tg_pairs),
@@ -396,17 +413,22 @@ def md_dataset(res, max_show):
                  % (r["gold_label"], r["source_pred_label"], r["count"]))
 
     t_key, s_key, mt_key = res["target_text_key"], res["source_gold_key"], res["mt_key"]
+    sp_key, sg_key = res["source_pred_prob_key"], res["source_gold_prob_key"]
+    tp_key, tg_key = res["target_pred_prob_key"], res["target_gold_prob_key"]
 
     def _table(items):
         rows = []
-        rows.append("| CSV row | %s (`%s`) | %s (`%s`) | %s (`%s`->`%s`) | gold | %s pred | %s pred |"
-                    % (t_key, target, s_key, source, mt_key, target, source, SRC_UP, TGT_UP))
-        rows.append("|---:|---|---|---|---|---|---|")
+        rows.append("| CSV row | %s (`%s`) | %s (`%s`) | %s (`%s`->`%s`) | gold | %s pred | %s pred "
+                    "| %s | %s | %s | %s |"
+                    % (t_key, target, s_key, source, mt_key, target, source, SRC_UP, TGT_UP,
+                       sp_key, sg_key, tp_key, tg_key))
+        rows.append("|---:|---|---|---|---|---|---|---|---|---|---|")
         for r in items:
             mt = r.get(mt_key)
-            rows.append("| %d | %s | %s | %s | %s | %s | %s |"
+            rows.append("| %d | %s | %s | %s | %s | %s | %s | %.4f | %.4f | %.4f | %.4f |"
                         % (r["index"], r[t_key], r[s_key], "" if mt is None else mt,
-                           r["gold_label"], r["source_pred_label"], r["target_pred_label"]))
+                           r["gold_label"], r["source_pred_label"], r["target_pred_label"],
+                           r[sp_key], r[sg_key], r[tp_key], r[tg_key]))
         return rows
 
     L.append("\n### transfer_gap (%s wrong & %s right) — %d total, showing %d\n"
