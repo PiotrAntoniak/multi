@@ -60,6 +60,21 @@ false-alarm budget** as a native model (FLORES: identical; MultiEURLEX: ≈ equa
   and SHAP mass on the language dims **≤ random** (below random on FLORES, equal on MultiEURLEX). The
   model spends its SHAP budget on task-bearing directions, not language directions.
 
+### Where it does NOT hold — toxicity (task-dependent)
+
+On `toxi-text-3M` (binary toxic comments, en/it/de/fr/es; leakage-corrected, 80/10/10), the
+English-trained model is **not** comparable to native (3 seeds, val-tuned):
+
+| target | AUC EN / native | target/EN AUC | FPR@90%-recall EN / native |
+|---|---:|---:|---:|
+| it | 0.649 / 0.834 | 0.72 | 0.80 / 0.48 |
+| de | 0.678 / 0.869 | 0.75 | 0.73 / 0.39 |
+| fr | 0.776 / 0.866 | 0.86 | 0.58 / 0.36 |
+| es | 0.639 / 0.797 | 0.71 | 0.76 / 0.48 |
+
+So the comparability is **task-dependent**: it holds for topic classification (FLORES, MultiEURLEX) but
+**fails for toxicity**, which is more lexically language-specific. Reproduce: `python toxi_proof_clean.py`.
+
 ## Honest boundary
 
 - Configs with **no target information** (`raw`, L2, English-stats centering) **never** reach 0.9

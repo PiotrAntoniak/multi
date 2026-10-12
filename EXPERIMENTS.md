@@ -172,6 +172,24 @@ In-language ceilings under the identical protocol (train+val→test): sent micro
 0.71–0.73 (sent) / 0.81–0.85 (agg) of the target's own ceiling; the rest is ceiling/label-noise bound.
 FLORES single-label F1 is thus not a representation/transfer failure.
 
+### E20 — external validation on toxicity (toxi-text-3M, clean 80/10/10) — DONE
+`toxi-text-3M` (binary toxic, en/it/de/fr/es, pooled+deduped to remove train/test leakage, re-split
+80/10/10; committed as `data/toxi_clean*`). One English-trained XGB on 210m **mean** + `perlang_z`;
+native model per target; 3 seeds; thresholds tuned on the **val** splits. Models saved to `models_toxi/`.
+
+| target | AUC EN / native | AP EN/native | FPR@R90 EN/native | target/EN AUC |
+|---|---:|---:|---:|---:|
+| it | 0.649 / 0.834 | 0.447 / 0.695 | 0.799 / 0.476 | 0.72 |
+| de | 0.678 / 0.869 | 0.495 / 0.770 | 0.725 / 0.386 | 0.75 |
+| fr | 0.776 / 0.866 | 0.663 / 0.782 | 0.581 / 0.364 | 0.86 |
+| es | 0.639 / 0.797 | 0.426 / 0.613 | 0.757 / 0.482 | 0.71 |
+
+**Verdict: NOT comparable** on toxicity (target/EN AUC 0.72–0.86; 0/4 ≥ 0.9). English transfer is
+clearly below native here. **So the out-of-the-box comparability holds for TOPIC tasks (FLORES,
+MultiEURLEX) but NOT for toxicity** — a task-dependent boundary. (A pre-clean run with a smaller,
+partly-overlapping split had looked comparable; the clean, properly-split retrain is the defensible
+result.) All 15 models + manifest persisted in `models_toxi/`; outputs `toxi_proof_clean.*`.
+
 ## Related work
 LIR (Ding 2021, arXiv:2109.04727) — SVD language components; improves Amazon-reviews zero-shot.
 Libovický 2020 / Zhao 2021 — subtract language means → smaller transfer gap. Xie EMNLP 2022 — low-rank
