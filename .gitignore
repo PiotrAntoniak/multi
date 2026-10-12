@@ -72,3 +72,6 @@ translated_emb/
 chunk_pool_mel*
 *_smoke.*
 
+
+# MT caches (derived, regenerated on demand)
+mt_cache_*.json
