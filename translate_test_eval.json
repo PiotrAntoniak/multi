@@ -1,0 +1,271 @@
+{
+  "config": {
+    "dataset": "flores sent",
+    "n_classes": 12,
+    "classes": [
+      "business and economy",
+      "crime and law",
+      "education and society",
+      "entertainment and culture",
+      "geography",
+      "health",
+      "history",
+      "politics",
+      "safety",
+      "science and technology",
+      "sports",
+      "travel"
+    ],
+    "splits": {
+      "train": 997,
+      "val": 504,
+      "test": 505
+    },
+    "feature": "perlang_z in ENGLISH space (L2-normalize + EN-train z-score, applied to EN, translated-EN and original target)",
+    "xgb": {
+      "objective": "multi:softprob",
+      "num_class": 12,
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "mt_models": {
+      "it": "Helsinki-NLP/opus-mt-it-en",
+      "de": "Helsinki-NLP/opus-mt-de-en",
+      "fr": "Helsinki-NLP/opus-mt-fr-en"
+    },
+    "mt_batch": 64,
+    "mt_max_len": 512,
+    "device": "cuda",
+    "smoke": false,
+    "seed": 0,
+    "ceiling_def": "native model on target own train+val (own-train perlang_z) -> target test",
+    "python": "3.13.5"
+  },
+  "mt_samples": {
+    "it": [
+      {
+        "src": "Nelle terre gli arabi portarono anche l'Islam, che intraprese un lungo viaggio verso le Comore e Mayotte.",
+        "mt_en": "In the lands the Arabs also brought Islam, which undertook a long journey to the Comoros and Mayotte."
+      },
+      {
+        "src": "È arrivata a questa conclusione grazie alla moltitudine di commenti positivi e di incoraggiamento ricevuti sia da uomini che da donne che spingono per il riconoscimento dei farmaci contraccettivi come necessità medica.",
+        "mt_en": "It came to this conclusion thanks to the multitude of positive comments and encouragement received from both men and women who push for the recognition of contraceptive drugs as a medical necessity."
+      },
+      {
+        "src": "Il portavoce di Medici Senza Frontiere, Richard Veerman, ha dichiarato: \"L'Angola sta per attraversare la peggiore epidemia di sempre e la situazione in questo Paese rimane molto grave\".",
+        "mt_en": "The spokesman for Doctors Without Borders, Richard Veerman, said: \"Angola is about to go through the worst epidemic ever and the situation in this country remains very serious\" ."
+      }
+    ],
+    "de": [
+      {
+        "src": "Die Araber brachten auch den Islam ins Land, und auf den Komoren und in Mayotte war er sehr erfolgreich.",
+        "mt_en": "The Arabs also brought Islam to the country, and he was very successful in the Comoros and in Mayotte."
+      },
+      {
+        "src": "Zu dieser Schlussfolgerung kam sie aufgrund der zahlreichen positiven Kommentare und der Ermutigung, die sie sowohl von Männern als auch von Frauen erhielt, die darauf drängten, dass Verhütungsmittel als medizinische Notwendigkeit angesehen werden sollten.",
+        "mt_en": "This conclusion was reached due to the numerous positive comments and encouragement received from both men and women who urged that contraceptives be considered a medical necessity."
+      },
+      {
+        "src": "\"Richard Veerman, Sprecher von Ärzte ohne Grenzen, sagte: „Angola steuert auf den schlimmsten Ausbruch aller Zeiten zu, und die Lage in Angola ist nach wie vor sehr schlecht.\"\"\"",
+        "mt_en": "\"Richard Veerman, spokesman for Doctors Without Borders, said: \"Angola is heading for the worst outbreak of all time, and the situation in Angola is still very bad.\"\""
+      }
+    ],
+    "fr": [
+      {
+        "src": "Les Arabes ont également apporté la pratique de l'Islam dans les terres et cette religion s'est largement répandue aux Comores et à Mayotte.",
+        "mt_en": "Arabs have also brought the practice of Islam to the land and this religion has spread widely in the Comoros and Mayotte."
+      },
+      {
+        "src": "Elle est arrivée à cette conclusion grâce aux multiples commentaires positifs et encouragements qu’elle a reçus aussi bien des femmes que des hommes sur l’importance de considérer la contraception comme une nécessité.",
+        "mt_en": "She came to this conclusion with the many positive comments and encouragements she received from both women and men on the importance of considering contraception as a necessity."
+      },
+      {
+        "src": "Le porte-parole de Médecins Sans Frontières, Richard Veerman, a déclaré : « L'Angola se dirige vers la pire épidémie jamais connue et la situation reste très mauvaise en Angola », a-t-il déclaré.",
+        "mt_en": "The spokesman for Médecins Sans Frontières, Richard Veerman, said: \"Angola is heading for the worst epidemic ever and the situation in Angola remains very bad,\" he said."
+      }
+    ]
+  },
+  "backbones": {
+    "210m": {
+      "backbone": "210m",
+      "model": "EuroBERT/EuroBERT-210m",
+      "emb_dir": "embeddings",
+      "xgb_params": {
+        "objective": "multi:softprob",
+        "num_class": 12,
+        "tree_method": "hist",
+        "max_bin": 64,
+        "device": "cpu",
+        "n_jobs": 2,
+        "seed": 0,
+        "max_depth": 8,
+        "min_child_weight": 5,
+        "learning_rate": 0.1,
+        "n_estimators": 400
+      },
+      "sanity": {
+        "emb_repro_max_abs_diff": 1.6748905181884766e-05
+      },
+      "en_test": {
+        "accuracy": 0.6059405940594059,
+        "micro_f1": 0.6059405940594059,
+        "macro_f1": 0.4864630732511938,
+        "auc_ovr_macro": 0.9038005526611896
+      },
+      "translated": {
+        "it": {
+          "accuracy": 0.5782178217821782,
+          "micro_f1": 0.5782178217821782,
+          "macro_f1": 0.4657512409066873,
+          "auc_ovr_macro": 0.8969334490557886
+        },
+        "de": {
+          "accuracy": 0.5841584158415841,
+          "micro_f1": 0.5841584158415841,
+          "macro_f1": 0.46579112003189005,
+          "auc_ovr_macro": 0.9007086238780396
+        },
+        "fr": {
+          "accuracy": 0.5821782178217821,
+          "micro_f1": 0.5821782178217821,
+          "macro_f1": 0.4759597495406285,
+          "auc_ovr_macro": 0.8960624237269537
+        }
+      },
+      "untranslated": {
+        "it": {
+          "accuracy": 0.4178217821782178,
+          "micro_f1": 0.4178217821782178,
+          "macro_f1": 0.2309159092894649,
+          "auc_ovr_macro": 0.7992303588966737
+        },
+        "de": {
+          "accuracy": 0.4198019801980198,
+          "micro_f1": 0.4198019801980198,
+          "macro_f1": 0.2992687358272991,
+          "auc_ovr_macro": 0.7746072122339824
+        },
+        "fr": {
+          "accuracy": 0.4198019801980198,
+          "micro_f1": 0.4198019801980198,
+          "macro_f1": 0.28777560844019295,
+          "auc_ovr_macro": 0.8155645037271828
+        }
+      },
+      "ceiling": {
+        "it": {
+          "accuracy": 0.5623762376237624,
+          "micro_f1": 0.5623762376237624,
+          "macro_f1": 0.43432952591095436,
+          "auc_ovr_macro": 0.8828872541296598
+        },
+        "de": {
+          "accuracy": 0.5366336633663367,
+          "micro_f1": 0.5366336633663367,
+          "macro_f1": 0.43547238931758675,
+          "auc_ovr_macro": 0.883475938982042
+        },
+        "fr": {
+          "accuracy": 0.5821782178217821,
+          "micro_f1": 0.5821782178217821,
+          "macro_f1": 0.46749433869635126,
+          "auc_ovr_macro": 0.8740837654362178
+        }
+      }
+    },
+    "610m": {
+      "backbone": "610m",
+      "model": "EuroBERT/EuroBERT-610m",
+      "emb_dir": "embeddings_610",
+      "xgb_params": {
+        "objective": "multi:softprob",
+        "num_class": 12,
+        "tree_method": "hist",
+        "max_bin": 64,
+        "device": "cpu",
+        "n_jobs": 2,
+        "seed": 0,
+        "max_depth": 8,
+        "min_child_weight": 5,
+        "learning_rate": 0.1,
+        "n_estimators": 400
+      },
+      "sanity": {
+        "emb_repro_max_abs_diff": 7.2479248046875e-05
+      },
+      "en_test": {
+        "accuracy": 0.6118811881188119,
+        "micro_f1": 0.6118811881188119,
+        "macro_f1": 0.4948290956230918,
+        "auc_ovr_macro": 0.9097723912667776
+      },
+      "translated": {
+        "it": {
+          "accuracy": 0.601980198019802,
+          "micro_f1": 0.601980198019802,
+          "macro_f1": 0.5194479268662572,
+          "auc_ovr_macro": 0.9112075780361426
+        },
+        "de": {
+          "accuracy": 0.6118811881188119,
+          "micro_f1": 0.6118811881188119,
+          "macro_f1": 0.4937250815569963,
+          "auc_ovr_macro": 0.9072700205742373
+        },
+        "fr": {
+          "accuracy": 0.5900990099009901,
+          "micro_f1": 0.5900990099009901,
+          "macro_f1": 0.5154135117514539,
+          "auc_ovr_macro": 0.9136126126653946
+        }
+      },
+      "untranslated": {
+        "it": {
+          "accuracy": 0.4514851485148515,
+          "micro_f1": 0.4514851485148515,
+          "macro_f1": 0.27551456846019695,
+          "auc_ovr_macro": 0.8485632518917609
+        },
+        "de": {
+          "accuracy": 0.43366336633663366,
+          "micro_f1": 0.43366336633663366,
+          "macro_f1": 0.311396465409962,
+          "auc_ovr_macro": 0.863954630921901
+        },
+        "fr": {
+          "accuracy": 0.4613861386138614,
+          "micro_f1": 0.4613861386138614,
+          "macro_f1": 0.34006990609485316,
+          "auc_ovr_macro": 0.8506343896091284
+        }
+      },
+      "ceiling": {
+        "it": {
+          "accuracy": 0.5465346534653466,
+          "micro_f1": 0.5465346534653466,
+          "macro_f1": 0.4276247225579149,
+          "auc_ovr_macro": 0.898307750173078
+        },
+        "de": {
+          "accuracy": 0.5722772277227722,
+          "micro_f1": 0.5722772277227722,
+          "macro_f1": 0.4655580819280425,
+          "auc_ovr_macro": 0.8943294515446829
+        },
+        "fr": {
+          "accuracy": 0.5663366336633663,
+          "micro_f1": 0.5663366336633663,
+          "macro_f1": 0.43678684310688776,
+          "auc_ovr_macro": 0.8764544954137429
+        }
+      }
+    }
+  }
+}
