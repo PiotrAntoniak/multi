@@ -144,7 +144,43 @@ def rewrite(text, src="English", tgt="Italian", sample=False):
 
 ---
 
-## 7. Prompt-design checklist (from FinePhrase)
+## 7. Appendix — FinePhrase's own prompt templates (verbatim, for reference)
+
+The FinePhrase repo (`github.com/huggingface/finephrase/prompts/`) ships a **library of rephrasing
+prompt templates** organized by strategy: `rewire/` (guided rewrite), `nemotron/` (wikipedia-style,
+distill, diverse QA pairs, extract knowledge, knowledge list), `dspy/` (GEPA-optimized), `format/`
+(table/math/faq/tutorial), `beyondweb/`. Conventions: a `[TEXT]` slot, an explicit output constraint,
+and often a priming suffix. Two verbatim examples (attribution: Niklaus et al. 2026, Apache-2.0 repo):
+
+```
+# prompts/rephrase.md
+Rephrase the low-quality web document below into higher quality, more educational content.
+Make sure the rephrased document can stand on its own; do NOT reference the input text.
+Output only the rephrased text, nothing else.
+
+Document:
+[TEXT]
+
+Here's a rephrased version of the provided text, aiming for a higher quality and more
+educational content, without referencing the original input:
+```
+
+```
+# prompts/nemotron/wikipedia_style_rephrasing.md
+For the following paragraph give me a diverse paraphrase of the same in high quality English
+language as in sentences on Wikipedia. Begin your answer on a separate line with
+"Here is a paraphrased version:".
+
+Text:
+[TEXT]
+```
+
+Use these for *pretraining-style* rephrasing; for **labeled** classification data use Section 1/2
+(label-preserving translation/paraphrase). Other FinePhrase prompts: `nemotron/distill.md`,
+`nemotron/extract_knowledge.md`, `nemotron/diverse_qa_pairs.md`, `nemotron/knowledge_list.md`,
+`rewire/guided_rewrite_corrected.md`, `dspy/5-max_full_evals.md` (see the repo's `prompts/` tree).
+
+## 8. Prompt-design checklist (from FinePhrase)
 
 - Prefer **one clear instruction** over many constraints; state the **output format explicitly**
   ("Output only the …"), which was the single biggest lever.
