@@ -298,12 +298,28 @@ corrected in v2.)
 
 ## PART F — Fine-tuning (in progress)
 
-### E29 — Fine-tune last layer + linear head, raw (`finetune_lastlayer.py`) — RUNNING
+### E29 — Fine-tune last layer + linear head, raw (`finetune_lastlayer.py`) — DONE
 Train **only** EuroBERT's last transformer layer + a linear head (embeddings + lower layers frozen), **raw
-mean-pooled features, no `perlang_z`/alignment**, bf16 compute (fp32 master weights). EuroBERT paper
-protocol: AdamW β=(0.9, 0.95), ε=1e-5, wd=0.1, linear schedule + 10% warmup, batch 32, ≤10k steps, early
-stopping; LR grid {1e-5, 3.6e-5, 6e-5, 1e-4} chosen on val. Datasets: FLORES sent/agg + toxicity.
-Compare vs the **frozen raw + XGBoost** baseline — does fine-tuning alone make EuroBERT cross-lingual?
+mean-pooled features, no `perlang_z`/alignment**, bf16 compute (fp32 master weights). EuroBERT protocol:
+AdamW β=(0.9,0.95), ε=1e-5, wd=0.1, linear schedule + 10% warmup, batch 32, early stopping; LR chosen on
+val (3.6e-5 for FLORES, 1e-4 for toxic). 210m, single seed. AUC / macro-F1 (unless binary → F1(pos)).
+
+| dataset | eval | fine-tuned (raw) | frozen-raw + XGBoost | better |
+|---|---|---|---:|---|
+| FLORES sent | EN-self | **0.916 / 0.551** | 0.911 / 0.488 | fine-tune |
+| FLORES sent | EN→it | **0.812 / 0.248** | 0.799 / 0.184 | fine-tune |
+| FLORES sent | EN→de | 0.814 / 0.247 | **0.832 / 0.293** | XGBoost |
+| FLORES sent | EN→fr | 0.821 / 0.250 | 0.830 / 0.233 | mixed |
+| FLORES agg | EN-self | **0.925** / 0.545 | 0.913 / **0.556** | mixed |
+| toxic | EN-self | **0.929 / 0.797** | 0.904 / 0.760 | fine-tune |
+| toxic | EN→it | 0.642 / **0.501** | **0.669** / 0.449 | mixed |
+| toxic | EN→de | **0.739 / 0.554** | 0.705 / 0.511 | fine-tune |
+| toxic | EN→es | **0.689 / 0.530** | 0.629 / 0.430 | fine-tune |
+
+**Finding:** last-layer fine-tuning (raw) **improves EN-self** and helps *some* transfers, but does **not**
+dramatically close the cross-lingual gap; **in-language** fine-tuned models reach higher AUC (FLORES sent
+targets 0.84–0.86) than the EN model transfers to them (0.81–0.82) — the residual gap persists. bf16
+compute confirmed; features raw (untransformed), matching the frozen baseline.
 
 ---
 
