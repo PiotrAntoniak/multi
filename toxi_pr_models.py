@@ -29,6 +29,10 @@ monotone, and directly comparable across classifiers and backbones (q = % of the
 score is below the threshold; q=0 predicts everything positive, larger q = stricter).
 
 Per-model decision score (higher score = more toxic, all monotone):
+  * XGBoost             -> `predict_proba[:,1]` (binary:logistic; fully continuous here:
+                           measured 2310 distinct values on the IT test).  Same recipe as the
+                           reference `toxi_pr_all.py` (hist, max_bin=64, cpu, depth=8, mcw=5,
+                           lr=0.1, n=400).  Listed FIRST in the model order.
   * SVC_linear          -> `decision_function` (liblinear primal linear SVM margin).
   * LogisticRegression  -> `decision_function` (logit).
   * MLPClassifier       -> `predict_proba[:,1]` (continuous).
@@ -58,16 +62,18 @@ validation score's percentiles (raw thresholds are unbounded for margin/LLR scor
 0..1 grid cannot be used); the chosen raw threshold is then located on each test cell's own
 percentile axis.
 
-Combined grid figures (rows = classifier, cols = backbone): delivered as TWO separate figures,
-one for **Precision** (`toxi_pr_models_grid_precision.png`) and one for **Recall**
-(`toxi_pr_models_grid_recall.png`), each overlaying the three language pairs (colour-coded).  The
-deliverable is explicitly Precision and Recall, never F1 (the old single F1 grid is dropped).
-Because the columns already separate the backbones, a within-cell solid/dotted styling would be
-meaningless, so the grid columns are labelled with the backbone name only (210m/610m); the
-solid-vs-dotted (210m vs 610m) distinction lives in the per-model figures, as before.
+Combined grid figure (THE deliverable, rows = classifier x {Precision, Recall}, cols = backbone):
+`toxi_pr_models_grid.png` is ONE big grid: for each classifier TWO rows (Precision, Recall), two
+columns (210m, 610m), each panel overlaying the three language pairs vs the decision-score
+percentile with the val-tuned threshold marker.  Two metric-only grids
+(`toxi_pr_models_grid_precision.png`, `toxi_pr_models_grid_recall.png`) are also emitted for
+convenience.  Never F1.  Because the columns already separate the backbones, a within-cell
+solid/dotted styling would be meaningless, so the grid columns are labelled with the backbone name
+only; the solid-vs-dotted (210m vs 610m) distinction lives in the per-model figures.
 
 Outputs (CREATE-only; our own outputs are re-written by design):
     toxi_pr_<model>.png                    -- per-model 2x2 (210 solid / 610 dotted), P top / R bottom
+    toxi_pr_models_grid.png                -- ONE combined grid: rows=classifier x {P,R}, cols=backbone
     toxi_pr_models_grid_precision.png      -- grid: rows=models, cols={210m,610m}, Precision vs percentile
     toxi_pr_models_grid_recall.png         -- grid: rows=models, cols={210m,610m}, Recall vs percentile
     toxi_pr_models.json / .md              -- numbers (P@R90 for EN-on-IT & IT-on-IT, AUC, full sweeps)
@@ -117,6 +123,7 @@ except Exception:
 
 OUT_JSON = os.path.join(REPO, "toxi_pr_models.json")
 OUT_MD = os.path.join(REPO, "toxi_pr_models.md")
+OUT_GRID_COMBINED = os.path.join(REPO, "toxi_pr_models_grid.png")
 OUT_GRID_PRECISION = os.path.join(REPO, "toxi_pr_models_grid_precision.png")
 OUT_GRID_RECALL = os.path.join(REPO, "toxi_pr_models_grid_recall.png")
 PID_PATH = os.path.join(OPCODE, "toxi_pr_models.pid")
@@ -164,6 +171,7 @@ def write_status(obj):
 
 # ------------------------------------------------------------------ classifier zoo
 def build_zoo():
+    from xgboost import XGBClassifier
     from sklearn.svm import LinearSVC
     from sklearn.linear_model import LogisticRegression
     from sklearn.ensemble import RandomForestClassifier
@@ -172,7 +180,16 @@ def build_zoo():
     from sklearn.naive_bayes import GaussianNB
 
     # ordered exactly as requested; score = monotone decision-score kind (see module docstring)
+    # XGBoost is FIRST (the reference detector from toxi_pr_all.py).
     zoo = {
+        "XGBoost": dict(
+            score="proba",
+            make=lambda: XGBClassifier(objective="binary:logistic", tree_method="hist",
+                                       max_bin=64, device="cpu", n_jobs=N_JOBS, seed=SEED,
+                                       max_depth=8, min_child_weight=5, learning_rate=0.1,
+                                       n_estimators=400),
+            note="XGBoost binary:logistic, hist, max_bin=64, cpu, n_jobs=2, seed=0, depth=8, "
+                 "mcw=5, lr=0.1, n=400 (identical to toxi_pr_all.py); score = predict_proba[:,1]"),
         "SVC_linear": dict(
             score="margin",
             make=lambda: LinearSVC(C=1.0, loss="squared_hinge", dual=False, max_iter=20000),
@@ -515,8 +532,71 @@ def plot_grid(results, model_order, out_png, metric):
     log("wrote %s" % out_png)
 
 
+def plot_grid_combined(results, model_order, out_png):
+    """ONE big combined grid: BOTH metrics and ALL classifiers.
+
+    Columns = backbones {210m, 610m}.  Rows = for EACH classifier, TWO rows:
+    one `Precision` row and one `Recall` row (7 classifiers -> 14 rows x 2 cols).
+    Each panel overlays EN-on-EN / EN-on-IT / IT-on-IT vs decision-score percentile q,
+    with the own-language val-tuned threshold marker/guide.  One shared legend at the bottom."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    names = ["en_model_on_en", "en_model_on_it", "it_model_on_it"]
+    rows = [(name, metric) for name in model_order for metric in ("precision", "recall")]
+    nrow, ncol = len(rows), len(BACKBONES)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(13, 1.5 * nrow),
+                             sharex=True, sharey=True, squeeze=False)
+
+    for i, (name, metric) in enumerate(rows):
+        for j, bbi in enumerate(BACKBONES):
+            ax = axes[i, j]
+            cells = results.get(name, {}).get(bbi)
+            if cells is None:
+                ax.set_axis_off()
+                continue
+            for nm in names:
+                cell = cells[nm]
+                x = np.array(cell["curve"]["q"], dtype=np.float64)
+                arr = np.array([np.nan if v is None else v for v in cell["curve"][metric]],
+                               dtype=np.float64)
+                ax.plot(x, arr, color=CELL_COLORS[nm], lw=1.5, alpha=0.95, ls="-")
+                vq = cell["val_thr_pct"]
+                jj = int(np.argmin(np.abs(x - vq)))
+                if np.isfinite(arr[jj]):
+                    ax.plot([vq], [arr[jj]], marker="o", ms=4.5, mfc="white",
+                            mec=CELL_COLORS[nm], mew=1.2, zorder=6)
+                ax.axvline(vq, color=CELL_COLORS[nm], ls=":", lw=0.7, alpha=0.20, zorder=1)
+            ax.grid(alpha=0.22)
+            ax.set_xlim(0, 100)
+            ax.set_ylim(0, 1.03)
+            if i == 0:
+                ax.set_title("EuroBERT-%s" % bbi, fontsize=11)
+            if j == 0:
+                ax.set_ylabel("%s\n%s" % (name, metric), fontsize=7.6)
+            if i == nrow - 1:
+                ax.set_xlabel("score percentile  q")
+
+    handles = [Line2D([], [], color=CELL_COLORS[n], lw=2.0, label=CELL_LABELS[n]) for n in names]
+    handles += [Line2D([], [], color="grey", marker="o", ls="none", mfc="white", mec="grey",
+                       mew=1.4, ms=5, label="val-tuned threshold (own val split)")]
+    fig.legend(handles=handles, fontsize=9.5, loc="lower center", ncol=4,
+               framealpha=0.92, bbox_to_anchor=(0.5, 0.002))
+    fig.suptitle("toxi_pr_models_grid -- Precision and Recall vs decision-score percentile  "
+                 "(rows = classifier x {Precision, Recall}; cols = backbone)\n"
+                 "raw mean embeddings;  colour = EN model / EN test,  EN model / IT test,  "
+                 "IT model / IT test;  XGBoost listed first", fontsize=11)
+    fig.tight_layout(rect=[0, 0.012, 1, 0.992])
+    fig.savefig(out_png, dpi=110)
+    plt.close(fig)
+    log("wrote %s" % out_png)
+
+
 def plot_grids(results, model_order):
-    """Emit the two deliverable grids (precision + recall) separately."""
+    """Emit the combined deliverable grid plus the metric-only grids."""
+    plot_grid_combined(results, model_order, OUT_GRID_COMBINED)
     plot_grid(results, model_order, OUT_GRID_PRECISION, "precision")
     plot_grid(results, model_order, OUT_GRID_RECALL, "recall")
 
@@ -588,8 +668,10 @@ def write_reports(payload, results, model_order):
             for g, n, ei, ii in ranked))
         A("")
     A("## Grid figure paths (rows=models, cols={210m,610m}; vs decision-score percentile)\n")
-    A("* `toxi_pr_models_grid_precision.png` -- Precision, overlaying EN-on-EN / EN-on-IT / IT-on-IT")
-    A("* `toxi_pr_models_grid_recall.png` -- Recall, overlaying EN-on-EN / EN-on-IT / IT-on-IT")
+    A("* `toxi_pr_models_grid.png` -- ONE combined grid: rows = classifier x {Precision, Recall} "
+      "(14 rows for 7 classifiers), cols = backbone")
+    A("* `toxi_pr_models_grid_precision.png` -- Precision only, overlaying EN-on-EN / EN-on-IT / IT-on-IT")
+    A("* `toxi_pr_models_grid_recall.png` -- Recall only, overlaying EN-on-EN / EN-on-IT / IT-on-IT")
     A("")
     A("## Per-model figure paths\n")
     for name in model_order:
@@ -626,7 +708,7 @@ def figures_only():
     with open(OUT_JSON, "r", encoding="utf-8") as f:
         payload = json.load(f)
     results = payload["results"]
-    model_order = [n for n in ("SVC_linear", "MLPClassifier", "LogisticRegression",
+    model_order = [n for n in ("XGBoost", "SVC_linear", "MLPClassifier", "LogisticRegression",
                                "RandomForestClassifier", "KNeighborsClassifier", "GaussianNB")
                    if n in results]
     for name in model_order:
@@ -672,6 +754,26 @@ def main(argv=None):
 
     out_json, out_md = OUT_JSON, OUT_MD
 
+    # Load any previously computed results so that `--only <model>` ADDS a model instead of
+    # clobbering the others (the freshly-run models always win; the rest are carried over).
+    existing = {}
+    if not args.smoke and os.path.exists(out_json):
+        try:
+            with open(out_json, "r", encoding="utf-8") as f:
+                existing = json.load(f).get("results", {}) or {}
+        except Exception:
+            existing = {}
+
+    def merged_snapshot():
+        snap = {}
+        for n in order:
+            fresh = results.get(n)
+            if fresh and any(fresh.get(b) for b in BACKBONES):
+                snap[n] = fresh
+            elif n in existing and any(existing[n].get(b) for b in BACKBONES):
+                snap[n] = existing[n]
+        return snap
+
     try:
         if os.path.exists(LOG_PATH) and not args.smoke:
             os.remove(LOG_PATH)
@@ -702,13 +804,16 @@ def main(argv=None):
             except Exception as exc:                          # noqa: BLE001
                 log("  FAILED %-22s %-4s: %r" % (name, bbi, exc))
                 results[name][bbi] = None
-            # incremental save
+            # incremental save (merged with previously stored models, so --only never clobbers)
             try:
                 with open(out_json if not args.smoke else out_json + ".smoke", "w",
                           encoding="utf-8") as f:
-                    json.dump({"results": results}, f, indent=2)
+                    json.dump({"results": merged_snapshot()}, f, indent=2)
             except Exception:
                 pass
+
+    merged = merged_snapshot()
+    report_order = [n for n in order if n in merged]
 
     payload = {
         "config": {
@@ -722,7 +827,7 @@ def main(argv=None):
                           "0 = predict all positive, larger q = stricter",
             "pct_grid": PCT_GRID,
             "classifiers": {n: {"score_kind": zoo[n]["score"], "note": zoo[n]["note"]}
-                            for n in model_order if n in zoo},
+                            for n in report_order if n in zoo},
             "recall_target": RECALL_TARGET,
             "val_threshold_rule": "F1-optimal on the model's own-language validation split, searched "
                                   "over the validation score's percentiles (raw threshold stored)",
@@ -733,9 +838,11 @@ def main(argv=None):
             "note": "210m curves are solid, 610m curves are dotted in the per-model figures. "
                     "The deliverable grids are two separate figures (Precision and Recall), each "
                     "with columns = backbones, so within-cell solid/dotted is meaningless there.",
-            "grid_figures": ["toxi_pr_models_grid_precision.png", "toxi_pr_models_grid_recall.png"],
+            "grid_figures": ["toxi_pr_models_grid.png",
+                             "toxi_pr_models_grid_precision.png",
+                             "toxi_pr_models_grid_recall.png"],
         },
-        "results": results,
+        "results": merged,
         "generated": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
 
@@ -748,22 +855,22 @@ def main(argv=None):
         write_status(state)
         return 0
 
-    write_reports(payload, results, model_order)
+    write_reports(payload, merged, report_order)
 
     # per-model 2x2 figures
-    for name in model_order:
+    for name in report_order:
         try:
-            if all(results.get(name, {}).get(bbi) is None for bbi in backbones):
+            if all(merged.get(name, {}).get(bbi) is None for bbi in backbones):
                 log("skip figure %s (no cells)" % name)
                 continue
-            plot_model({bbi: results[name][bbi] for bbi in backbones}, name,
+            plot_model({bbi: merged[name][bbi] for bbi in backbones}, name,
                        os.path.join(REPO, "toxi_pr_%s.png" % name))
         except Exception as exc:                              # noqa: BLE001
             log("per-model plot failed for %s: %r" % (name, exc))
 
     # deliverable grids: Precision and Recall, each as its own figure (no F1 grid)
     try:
-        plot_grids(results, model_order)
+        plot_grids(merged, report_order)
     except Exception as exc:                                  # noqa: BLE001
         log("grid plot failed: %r" % (exc,))
 
@@ -774,8 +881,8 @@ def main(argv=None):
     log("=" * 70)
     for bbi in backbones:
         ranked = []
-        for name in model_order:
-            cells = results.get(name, {}).get(bbi)
+        for name in report_order:
+            cells = merged.get(name, {}).get(bbi)
             if not cells:
                 continue
             ei = cells["en_model_on_it"]["recall90"]["precision"]

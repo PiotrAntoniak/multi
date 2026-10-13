@@ -11,6 +11,8 @@ Same toxicity task and figure layout as `toxi_pr.png` (XGBoost), swapped detecto
 
 | model | backbone | AUC EN/EN | AUC EN/IT | AUC IT/IT | P@R90 EN/EN | P@R90 EN/IT | P@R90 IT/IT | gap |
 |---|---|---|---|---|---|---|---|---|
+| XGBoost | 210m | 0.907 | 0.621 | 0.842 | 0.271 | 0.318 | 0.450 | 0.131 |
+| XGBoost | 610m | 0.913 | 0.715 | 0.843 | 0.287 | 0.360 | 0.467 | 0.107 |
 | SVC_linear | 210m | 0.896 | 0.633 | 0.823 | 0.264 | 0.321 | 0.442 | 0.121 |
 | SVC_linear | 610m | 0.906 | 0.706 | 0.822 | 0.299 | 0.341 | 0.442 | 0.101 |
 | MLPClassifier | 210m | 0.882 | 0.572 | 0.812 | 0.253 | 0.307 | 0.430 | 0.123 |
@@ -26,17 +28,19 @@ Same toxicity task and figure layout as `toxi_pr.png` (XGBoost), swapped detecto
 
 ## Closest EN-on-IT to IT-on-IT @ recall 0.90 (per backbone)
 
-**210m**: `GaussianNB` (gap 0.015; EN/IT 0.329 vs IT/IT 0.344), `RandomForestClassifier` (gap 0.061; EN/IT 0.333 vs IT/IT 0.394), `LogisticRegression` (gap 0.120; EN/IT 0.323 vs IT/IT 0.443), `KNeighborsClassifier` (gap 0.120; EN/IT 0.294 vs IT/IT 0.414), `SVC_linear` (gap 0.121; EN/IT 0.321 vs IT/IT 0.442), `MLPClassifier` (gap 0.123; EN/IT 0.307 vs IT/IT 0.430)
+**210m**: `GaussianNB` (gap 0.015; EN/IT 0.329 vs IT/IT 0.344), `RandomForestClassifier` (gap 0.061; EN/IT 0.333 vs IT/IT 0.394), `LogisticRegression` (gap 0.120; EN/IT 0.323 vs IT/IT 0.443), `KNeighborsClassifier` (gap 0.120; EN/IT 0.294 vs IT/IT 0.414), `SVC_linear` (gap 0.121; EN/IT 0.321 vs IT/IT 0.442), `MLPClassifier` (gap 0.123; EN/IT 0.307 vs IT/IT 0.430), `XGBoost` (gap 0.131; EN/IT 0.318 vs IT/IT 0.450)
 
-**610m**: `GaussianNB` (gap 0.022; EN/IT 0.346 vs IT/IT 0.324), `RandomForestClassifier` (gap 0.053; EN/IT 0.346 vs IT/IT 0.398), `LogisticRegression` (gap 0.097; EN/IT 0.346 vs IT/IT 0.444), `SVC_linear` (gap 0.101; EN/IT 0.341 vs IT/IT 0.442), `MLPClassifier` (gap 0.108; EN/IT 0.346 vs IT/IT 0.454), `KNeighborsClassifier` (gap 0.124; EN/IT 0.294 vs IT/IT 0.418)
+**610m**: `GaussianNB` (gap 0.022; EN/IT 0.346 vs IT/IT 0.324), `RandomForestClassifier` (gap 0.053; EN/IT 0.346 vs IT/IT 0.398), `LogisticRegression` (gap 0.097; EN/IT 0.346 vs IT/IT 0.444), `SVC_linear` (gap 0.101; EN/IT 0.341 vs IT/IT 0.442), `XGBoost` (gap 0.107; EN/IT 0.360 vs IT/IT 0.467), `MLPClassifier` (gap 0.108; EN/IT 0.346 vs IT/IT 0.454), `KNeighborsClassifier` (gap 0.124; EN/IT 0.294 vs IT/IT 0.418)
 
 ## Grid figure paths (rows=models, cols={210m,610m}; vs decision-score percentile)
 
-* `toxi_pr_models_grid_precision.png` -- Precision, overlaying EN-on-EN / EN-on-IT / IT-on-IT
-* `toxi_pr_models_grid_recall.png` -- Recall, overlaying EN-on-EN / EN-on-IT / IT-on-IT
+* `toxi_pr_models_grid.png` -- ONE combined grid: rows = classifier x {Precision, Recall} (14 rows for 7 classifiers), cols = backbone
+* `toxi_pr_models_grid_precision.png` -- Precision only, overlaying EN-on-EN / EN-on-IT / IT-on-IT
+* `toxi_pr_models_grid_recall.png` -- Recall only, overlaying EN-on-EN / EN-on-IT / IT-on-IT
 
 ## Per-model figure paths
 
+* `toxi_pr_XGBoost.png`
 * `toxi_pr_SVC_linear.png`
 * `toxi_pr_MLPClassifier.png`
 * `toxi_pr_LogisticRegression.png`
