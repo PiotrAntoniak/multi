@@ -2,195 +2,329 @@
 
 **Question.** Can a model trained on **English** perform comparably on **non-English** text, and which
 embedding dimensions carry language? Constraint (user): frozen **EuroBERT-210m / 610m**, **mean pooling
-only**, classifier **XGBoost** (plus comparisons), and — for the headline "out-of-the-box" claim — **no
-second model and no machine translation**.
+only**, classifier **XGBoost**; for the headline "out-of-the-box" claim, **no second model, no MT**.
 
-**How to read this file.** Each experiment is one block: **What** (what it does), **Setup**, **Key result**,
-**Finding**. Metrics are `macro-F1 / micro-F1 / AUC`. Large derived caches are git-ignored and rebuilt by
-the scripts (`REPRODUCE.md`).
+**How to read the tables.** Each row is one condition; the last column is the **delta** of the two named
+columns (so you never have to guess signs). `macro` rows average the language rows. Metrics:
+`accuracy / macro-F1 / micro-F1 / AUC` as labelled.
 
 ## Glossary
 
 | term | meaning |
 |---|---|
-| **mean** | mean-pooled last hidden state (the only pooling used). |
-| **perlang_z** (`l2_thenZ [both]`) | L2-normalize each vector, then z-score with **each language's own train** mean/std, applied to English **and** the target. Model-free. |
-| **pc** | GLOBAL iterative PCA ablation: fit PCA on the stacked-language train pool, zero the leading PC, inverse, re-fit; k = #PCs removed. |
-| **inlp** | project out a language-subspace basis (iterated null-space probe). |
+| **mean** | mean-pooled last hidden state (only pooling used). |
+| **perlang_z** | L2-normalize each vector, then z-score with **each language's own train** mean/std, applied to English **and** target. Model-free. |
+| **pc(k)** | global PCA ablation: fit PCA on the stacked-language train pool, remove the leading PC, repeat k times. |
+| **inlp** | project out a language-subspace basis. |
 | **D** | language-shift: target features + (mean_en_train − mean_target_train). |
 | **self / transfer** | self = in-language (train L → test L); transfer = cross-lingual (train L → test L′). |
 | **XL-mean** | mean over non-English targets. |
-| **backbones** | 210m = 768-d, 610m = 1152-d. |
 
 ---
 
-## PART A — The headline result: one English model, comparable across languages
+## PART A — Headline: one English model, comparable across languages
 
-### E18 — Out-of-the-box cross-lingual proof — `proof_mean_alllangs.py` — DONE (verified)
-**What:** train ONE English XGBoost on mean-pooled EuroBERT-210m with only model-free feature ops, and
-check comparability (target/English ≥ 0.9) across languages. **Setup:** ladder `raw → l2 → global_center/
-global_z` (English stats only) `→ perlang_center/perlang_z` (target's own unlabeled train stats) → XGB.
-**Key result (perlang_z):** target/English — FLORES sent AUC it .92 / de .93 / fr .92 (EN .849);
-FLORES agg AUC it .97 / de .95 / fr .94 (EN .888); MultiEURLEX micro-F1 de .93 / fr .93, AUC de .94 / fr .96
-(EN .718 / .906). **Finding:** equivalent across languages **iff** a mild unlabeled **target sample** is
-used for per-language standardization; English-only stats never reach 0.9. **Independently verified** (rebuilt
-from raw embeddings; all claims reproduce to 6 decimals).
+### E18 — Out-of-the-box cross-lingual proof (`proof_mean_alllangs.py`) — DONE (verified)
+Train ONE English XGBoost, only **model-free** feature ops; check target/English ≥ 0.9.
 
-### E24 — More datasets (XNLI, PAWS-X, textdetox, SIB-200) — `more_datasets.py` — DONE
-**What:** same out-of-the-box proof on additional multilingual classification tasks.
-**Key result (target/EN ratio, perlang_z):** PAWS-X (binary paraphrase) **0.92–0.95 ✅**; XNLI (3-cl NLI)
-de 0.90 / fr 0.95 / es 0.95 (borderline); SIB-200 (topic) de 0.90 / fr 1.00 / es 0.90; **textdetox
-(binary toxic) 0.62–0.81 ✗**. **Finding:** comparability holds for **topic / paraphrase / NLI**, fails for
-**toxicity**. `global_z` (no target sample) is always worse.
+| dataset | metric | English-self | target mean (it/de/fr) | target/English | comparable |
+|---|---|---:|---:|---:|:--:|
+| FLORES sent (210m) | AUC | 0.849 | 0.92 / 0.93 / 0.92 | 0.92–0.93 | ✅ |
+| FLORES agg (210m) | AUC | 0.888 | 0.97 / 0.95 / 0.94 | 0.94–0.97 | ✅ |
+| MultiEURLEX (210m) | micro-F1 (+calib) | 0.718 | de 0.93 / fr 0.93 | 0.93 | ✅ |
+| MultiEURLEX (210m) | AUC | 0.906 | de 0.94 / fr 0.96 | 0.94–0.96 | ✅ |
 
-### E25 — Full language × language matrices — `lang_matrix.py` — DONE
-**What:** train **every** language, test **every** language (held-out test), all multilingual datasets,
-both backbones. **Key result (in-language diag vs cross-lingual off-diag macro-F1):**
+| feature config | uses target sample? | reaches target/English ≥ 0.9? |
+|---|---|:--:|
+| raw / L2 / global centering/z (English stats only) | no | **never** (≤0.89) |
+| `perlang_z` (target's own unlabeled train stats) | yes (unlabeled) | **yes** |
 
-| dataset | 210m diag/off (gap) | 610m diag/off (gap) |
-|---|---|---|
-| flores_sent | .461/.377 (.084) | .486/.447 (.039) |
-| flores_agg | .544/.423 (.121) | .510/.464 (.046) |
-| mel | .588/.330 (.258) | .577/.417 (.160) |
-| toxic | .739/.567 (.171) | .750/.598 (.152) |
-| xnli | .452/.408 (.044) | .460/.430 (.030) |
-| **pawsx** | .520/**.532** (closed) | .561/.558 (closed) |
-| sib200 | .792/.691 (.101) | .800/.763 (.037) |
-| textdetox | .870/.672 (.198) | .874/.717 (.158) |
+**Finding:** comparable across languages **iff** a mild unlabeled **target sample** is used for
+per-language standardization. Independently verified (rebuilt from raw embeddings; matches to 6 decimals).
 
-**Finding:** **610m shrinks the cross-lingual gap on every dataset**; PAWS-X transfers at parity; XNLI/FLORES/
-SIB-200 nearly close; MultiEURLEX/textdetox retain the largest gaps. (English-only SST-2/emotion skipped.)
+### E24 — More datasets (XNLI, PAWS-X, textdetox, SIB-200) (`more_datasets.py`) — DONE
 
-### E20 — Toxicity, clean split — `toxi_proof_clean.py` — DONE
-**What:** out-of-the-box proof on `toxi-text-3M` (binary toxic, en/it/de/fr/es), leakage-corrected 80/10/10,
-3 seeds. **Key result (AUC EN/native, target/EN):** it .649/.834 (0.72), de .678/.869 (0.75), fr .776/.866
-(0.86), es .639/.797 (0.71) — **NOT comparable**. **Finding:** toxicity is the clear counter-example.
-Models saved to `models_toxi/`; cleaned dataset in `data/toxi_clean/` (+ single `data/toxi_clean.parquet`).
+| dataset | task | metric | target | English-self | target/English | comparable |
+|---|---|---|---:|---:|---:|:--:|
+| PAWS-X | binary paraphrase | AUC | de | 0.602 | 0.937 | ✅ |
+| PAWS-X | | AUC | fr | 0.602 | 0.946 | ✅ |
+| PAWS-X | | AUC | es | 0.602 | 0.918 | ✅ |
+| XNLI | 3-class NLI | macro-F1 | de | 0.440 | 0.898 | ✗ (borderline) |
+| XNLI | | macro-F1 | fr | 0.440 | 0.948 | ✅ |
+| XNLI | | macro-F1 | es | 0.440 | 0.949 | ✅ |
+| SIB-200 | topic | macro-F1 | de | 0.773 | 0.903 | ✅ |
+| SIB-200 | | macro-F1 | fr | 0.773 | 0.995 | ✅ |
+| SIB-200 | | macro-F1 | es | 0.773 | 0.896 | ✗ (borderline) |
+| textdetox | binary toxic | AUC | it/de/fr/es | 0.973 | 0.62–0.81 | ✗ |
 
----
+**Finding:** comparable for **topic / paraphrase / NLI**; **fails for toxicity**.
 
-## PART B — Why mean pooling transfers (dimensions & language)
+### E25 — Full language × language matrices (`lang_matrix.py`) — DONE
 
-### E1/E1b — Language-dimension census + INLP — `langdims_probe.py`, `lang_inlp.*` — DONE
-**What:** per-dim η² across languages; language probe before/after zeroing dims; INLP. **Key result:** probe
-= 1.000 on 768 dims; zeroing the top-557 η² dims (90% of mass) → 0.999; only all-768 → 0.25. INLP reaches
-chance after ~30 directions (60–72% variance retained). **Finding:** language is **redundant across ~all
-dims** (no small dim set), but a small **subspace** suffices.
+| dataset | backbone | in-language (diagonal) | cross-lingual (off-diag) | gap | 610 vs 210 gap |
+|---|---|---:|---:|---:|---|
+| flores_sent | 210m | 0.461 | 0.377 | 0.084 | — |
+| flores_sent | 610m | 0.486 | 0.447 | 0.039 | smaller |
+| flores_agg | 210m | 0.544 | 0.423 | 0.121 | — |
+| flores_agg | 610m | 0.510 | 0.464 | 0.046 | smaller |
+| mel | 210m | 0.588 | 0.330 | 0.258 | — |
+| mel | 610m | 0.577 | 0.417 | 0.160 | smaller |
+| toxic | 210m | 0.739 | 0.567 | 0.171 | — |
+| toxic | 610m | 0.750 | 0.598 | 0.152 | smaller |
+| xnli | 210m | 0.452 | 0.408 | 0.044 | — |
+| xnli | 610m | 0.460 | 0.430 | 0.030 | smaller |
+| **pawsx** | 210m | 0.520 | **0.532** | **−0.013** | closed |
+| **pawsx** | 610m | 0.561 | 0.558 | 0.003 | closed |
+| sib200 | 210m | 0.792 | 0.691 | 0.101 | — |
+| sib200 | 610m | 0.800 | 0.763 | 0.037 | smaller |
+| textdetox | 210m | 0.870 | 0.672 | 0.198 | — |
+| textdetox | 610m | 0.874 | 0.717 | 0.158 | smaller |
 
-### E17 — Language dims vs their SHAP contribution — `lang_shap_dims.py` — DONE
-**What:** per-dim η² vs the English XGB's mean|SHAP|. **Key result:** Spearman(η², SHAP) ≈ 0 (−.02…−.08);
-top-50 overlap 0–1/50; SHAP mass on the 50%-language dims **below random** (FLORES) / **= random** (mel).
-**Finding:** the task model **does not use** the language dims — why mean pooling transfers.
+**Finding:** **610m shrinks the gap on every dataset**; PAWS-X transfers at parity; largest gaps on
+MultiEURLEX/textdetox.
 
-### E12/E13/E26 — Dimension removal — `pc_ablation*.py`, `dim_removal.py` — DONE
-**What:** iteratively remove leading PCs (global shared PCA, k=0–5), plus INLP and random control; across
-datasets/backbones. **Key result (XL-mean macro-F1, k=0→best):** mel 210m .076→**.290** (k=2), 610m
-.107→**.341**; flores_agg 210m .204→**.380** (k=3); flores_sent 210m .206→.259 (k=3); **toxic neutral-to-
-harmful** (610m best at k=0). Random control stays below. **Finding:** the leading PCs are ~96–98%
-language-aligned; removing ~2–3 **helps topic tasks** (optimum k≈2–3, harm past that), is
-neutral/harmful for toxicity; effect is **subspace-specific**, not mere dimensionality; EN-self flat.
+### E20 — Toxicity, clean split (`toxi_proof_clean.py`) — DONE
+`toxi-text-3M`, binary, leakage-corrected 80/10/10, 3 seeds.
 
----
+| target | English-trained AUC | native AUC | English/native |
+|---|---:|---:|---:|
+| it | 0.649 | 0.834 | 0.78 |
+| de | 0.678 | 0.869 | 0.78 |
+| fr | 0.776 | 0.866 | 0.90 |
+| es | 0.639 | 0.797 | 0.80 |
 
-## PART C — Task-level cross-lingual transfer (210m & 610m)
+**Finding:** **not comparable on toxicity** (0/4). Models in `models_toxi/`; data in `data/toxi_clean/`.
 
-### E3/E6/E7 — FLORES topic cross-lingual — `crosslingual_topic*.py`, `crosslingual_inlp.py` — DONE
-**What:** EN topic classifier → it/de/fr under `full/zero_k/subspace/centroid/abtt/inlp`. **Key result
-(mean macro-F1):** sent full .234 → .334 (`inlp`); agg .246 → .356. **Finding:** removing language
-helps; ABTT hurts; the rank-3 centroid projection's probe collapse is tautological (INLP is faithful).
+### E25b — All-languages vs per-language training (`alllang_vs_perlang.py`) — DONE
+One model on pooled all-languages vs one model per language (mean + `perlang_z`, fixed XGBoost).
 
-### E9/E10/E11 — MultiEURLEX (long EU docs, 21-label) — `multieurlex_*`, `mel_close.py` — DONE
-**What:** baseline, `l2_thenZ`, calibration, 610m, ensembling, and gap-closers. **Key result (EN→de/fr
-micro-F1):** raw .266/.334 → `l2_thenZ`+calib (210m) .688/.683 → **610m + calib .711/.707** (~94% of
-English). `pc` k=2 on plain .512/.525. Ensembling with a gold/MT English view closes the AUC gap.
-**Finding:** `l2_thenZ` + threshold/prior calibration + bigger backbone essentially closes the gap;
-`mlp_align` fails on long docs; translate-train (chunked MT) hurts here.
+| dataset | backbone | metric | per-lang | all-langs | Δ (all−per) | verdict |
+|---|---|---:|---:|---:|---:|---|
+| FLORES sent | 210m | macro-F1 | 0.388 | 0.400 | +0.012 | all-langs better |
+| FLORES sent | 610m | macro-F1 | 0.379 | 0.414 | +0.035 | all-langs better |
+| FLORES agg | 210m | macro-F1 | 0.506 | 0.543 | +0.037 | all-langs better |
+| FLORES agg | 610m | macro-F1 | 0.446 | 0.548 | **+0.101** | all-langs better |
+| toxicity | 210m | macro-F1 | 0.746 | 0.730 | −0.016 | per-lang better |
+| toxicity | 610m | macro-F1 | 0.752 | 0.738 | −0.014 | per-lang better |
 
-### E14/E14b — FLORES gap-closers — `flores_close.py` — DONE
-**What:** transforms, kNN, translate-train, MLP-alignment, ensembles; macro-F1 vs in-language ceiling.
-**Key result (sent / agg mean target):** raw .291/.277 → `pc+inlp` .371/.310 → translate-train .567/.618,
-MLP-align .541/.649, **kNN .602/.676** (≥90% closure; matches ceiling). **Finding:** with XGBoost,
-translate-train closes ~95%/86% (accuracy); kNN / MLP-alignment reach the native ceiling (use unlabeled
-target / MT).
+Italian-only check (macro-F1, per-lang → all-langs):
 
-### E23 — Translate-test — `translate_test_eval.py` — DONE
-**What:** train EN → MT the it/de/fr **test** → EN → evaluate (vs original EN test). **Key result (macro-F1):**
-EN test .486 (210m)/.495 (610m); translated-test it .466/.519, de .466/.494, fr .476/.515 → **ratio
-0.96–0.98 (210m), 1.00–1.05 (610m)**; untranslated only .23–.34. **Finding:** translating the **test** into
-English recovers English-level performance.
+| dataset | backbone | IT per-lang | IT all-langs | Δ | AUC Δ |
+|---|---|---:|---:|---:|---:|
+| FLORES sent | 210m | 0.378 | 0.354 | −0.023 | +0.016 |
+| FLORES sent | 610m | 0.317 | 0.377 | **+0.060** | +0.016 |
+| FLORES agg | 210m | 0.540 | 0.498 | −0.042 | +0.016 |
+| FLORES agg | 610m | 0.482 | 0.516 | **+0.034** | 0.000 |
+| toxicity | 210m | — | — | −0.014 | — |
 
-### E4 — Sentiment / emotion — `crosslingual_sentiment.py` — DONE
-**What:** EN sentiment (SST-2) & emotion → translated it/de/fr under neutralizations. **Key result (macro-F1):**
-SST-2 EN .792 → cross it/de/fr .596/.593/.636 (raw) → best `centroid` .630/.627/.649; emotion EN .370 →
-best .203/.214/.219. **Finding:** neutralization helps but a real residual gap remains (lexical
-language-specificity + MT noise).
+**Finding:** pooling all languages **helps FLORES** (bigger at 610m) and **hurts toxicity**. For **Italian
+specifically**, all-langs is better **only on FLORES at 610m**.
 
 ---
 
-## PART D — Other classifiers, MT, and calibration
+## PART B — Why mean pooling transfers
 
-### E21 — Non-XGBoost classifiers — `models_compare.py` — DONE
-**What:** 16 sklearn classifiers on FLORES-sent mean embeddings, EN & IT, both backbones. **Key result
-(EN-self / transfer macro-F1, 610m):** **`SVC_linear` .583 / .562** > MLP .564/.517 > LogisticRegression
-.541/.514 > XGBoost .495/.466; `GaussianNB` is a transfer specialist at 210m (.453). **Finding:** a **linear
-SVM beats XGBoost** on both self and transfer; tree ensembles do not.
+### E1/E1b — Language-dimension census + INLP (`langdims_probe.py`, `lang_inlp.*`) — DONE
 
-### E28 — backbone × dataset × method grid (10 Optuna trials) — `backbone_grid.py` — DONE
-**What:** XGBoost + 10 Optuna trials per cell; `mean/pc/inlp/D`; 210m & 610m. **Key result (XL-mean
-macro-F1):** mel 210m .059 (mean) → **.293 (pc)** / .299 (inlp); mel 610m .115 → .338/.349; flores_sent
-610m .241 → **.307 (inlp)**; toxic ~flat (.45–.50, pc/D slightly hurt). **Finding:** the language-subspace
-methods (`pc`/`inlp`/`D`) massively help multi-label/long-doc mel and help FLORES-sent; helpfulness shrinks
-as the task becomes lexical (toxicity).
+| measurement | value |
+|---|---:|
+| 4-language linear probe, all 768 dims | 1.000 |
+| probe after zeroing top-557 η² dims (90% of mass) | 0.999 |
+| probe after zeroing **all** 768 dims (chance) | 0.250 |
+| INLP directions to reach chance (mean pooling) | ~30 |
 
-### E22 — MT: bilingual vs multilingual → English — `mt_compare.py` — DONE
-**What:** FLORES it/de/fr → en with `opus-mt-{it,de,fr}-en` (bilingual) vs `opus-mt-mul-en` (multilingual).
-**Key result (BLEU / chrF, macro):** bilingual **37.5 / 64.4** vs multilingual 28.1 / 56.6 (−9.4 BLEU).
-**Finding:** the three bilingual models beat one many→en model on every language.
+**Finding:** language is **redundant across ~all dims** (no small dim set), but a small **subspace**
+(~30 dirs) suffices.
 
-### E19 — FLORES calibration & ceiling feasibility — `flores_calib.py`, `flores_ceiling.py` — DONE
-**What:** label-free calibration; per-language in-language ceilings. **Key result:** agg micro-F1 reaches
-0.91/0.92/0.99 of English via `prior_sinkhorn`; sent F1 does not (best ~0.77). `0.9×EN-self` is **provably
-infeasible** for sent/de, sent/it(macro), agg/fr (exceeds their own ceilings). AUC invariant across
-calibrations. **Finding:** FLORES single-label F1's residual is ceiling/label-noise bound, not transfer.
+### E17 — Language dims vs their SHAP contribution (`lang_shap_dims.py`) — DONE
 
-### E27 — Precision/recall vs threshold — `toxi_pr.py` (+610) — DONE
-**What:** P/R-vs-threshold 2×2 (EN-on-EN | EN-on-IT + IT-on-IT) for toxicity, 210m & 610m.
-**Key result:** at recall 0.90, EN-on-IT precision .32 vs IT-on-IT .44 (210m); AUC verdict matches the
-"not comparable on toxicity" result.
+| dataset | Spearman(η², SHAP) | top-50 overlap | SHAP mass on 50%-language dims | vs random |
+|---|---:|---:|---:|---|
+| sent | −0.076 | 0/50 | 0.283 | below (0.309) |
+| agg | −0.059 | 1/50 | 0.267 | below (0.328) |
+| mel | −0.019 | 1/50 | 0.366 | equal (0.366) |
+
+**Finding:** the English classifier **does not use** the language dims (SHAP mass ≤ random) — why mean
+pooling transfers.
+
+### E12/E13/E26 — Dimension removal (`pc_ablation*.py`, `dim_removal.py`) — DONE
+Remove leading PCs (global shared PCA, k=0–5) / INLP / random control; XL-mean macro-F1 shown.
+
+| dataset | backbone | k=0 | best k | best XL-F1 | past-best at k=5 |
+|---|---|---:|---:|---:|---:|
+| mel | 210m | 0.076 | 2 | **0.290** | 0.189 |
+| mel | 610m | 0.107 | 2 | **0.341** | 0.228 |
+| flores_agg | 210m | 0.204 | 3 | **0.380** | 0.269 |
+| flores_sent | 210m | 0.206 | 3 | 0.259 | 0.178 |
+| toxic | 210m | 0.467 | 0 | 0.467 | 0.458 |
+| toxic | 610m | 0.501 | 0 | 0.501 | 0.463 |
+
+**Finding:** the leading ~2–3 PCs are ~96–98% language-aligned; removing them **helps topic tasks**
+(optimum k≈2–3, harm past that), neutral/harmful for toxicity; random control stays below; EN-self flat.
+
+---
+
+## PART C — Task-level cross-lingual transfer
+
+### E3/E6/E7 — FLORES topic cross-lingual (`crosslingual_topic*.py`, `crosslingual_inlp.py`) — DONE
+EN topic classifier → it/de/fr; mean macro-F1 over targets.
+
+| dataset | condition | full (raw) | best neutralization | best method |
+|---|---|---:|---:|---|
+| FLORES sent | 12-class | 0.234 | 0.334 | inlp |
+| FLORES agg | 11-class | 0.246 | 0.356 | zero90 / subspace |
+
+### E9/E10/E11 — MultiEURLEX long-doc (`multieurlex_*`, `mel_close.py`) — DONE
+EN→de/fr micro-F1 (21-label).
+
+| backbone | representation | de micro-F1 | fr micro-F1 |
+|---|---|---:|---:|
+| 210m | raw | 0.266 | 0.334 |
+| 210m | `l2_thenZ` + calib | 0.688 | 0.683 |
+| 610m | `l2_thenZ` + calib | **0.711** | **0.707** |
+| — | in-language ceiling | 0.714 | 0.712 |
+
+**Finding:** `l2_thenZ` + threshold/prior calibration + bigger backbone essentially closes the gap.
+
+### E14/E14b — FLORES gap-closers (`flores_close.py`) — DONE
+Mean target macro-F1 vs in-language ceiling (sent ~0.42 / agg ~0.43).
+
+| method | FLORES sent | FLORES agg | closes gap? |
+|---|---:|---:|:--:|
+| raw | 0.291 | 0.277 | 0% |
+| `l2_thenZ` | 0.358 | 0.343 | ~50% |
+| `pc+inlp` | 0.371 | 0.310 | 20–60% |
+| translate-train (XGB) | 0.567 | 0.618 | ≥90% |
+| MLP-align | 0.541 | 0.649 | ≥90% |
+| **kNN (l2_thenZ, k=10)** | **0.602** | **0.676** | ≥90% (matches ceiling) |
+
+### E23 — Translate-test (`translate_test_eval.py`) — DONE
+Train EN → MT the test → EN → evaluate.
+
+| backbone | English test | MT it | MT de | MT fr | untranslated it/de/fr |
+|---|---:|---:|---:|---:|---|
+| 210m | 0.486 | 0.466 | 0.466 | 0.476 | 0.231 / 0.299 / 0.288 |
+| 610m | 0.495 | 0.519 | 0.494 | 0.515 | 0.276 / 0.311 / 0.340 |
+
+**Finding:** translating the test into English recovers English-level (ratio 0.96–1.05).
+
+### E4 — Sentiment / emotion (`crosslingual_sentiment.py`) — DONE
+Macro-F1; English → translated it/de/fr.
+
+| task | English | raw cross | best neutralization (`centroid`) |
+|---|---:|---|---|
+| SST-2 (binary) | 0.792 | 0.596 / 0.593 / 0.636 | 0.630 / 0.627 / 0.649 |
+| emotion (6-class) | 0.370 | 0.170 / 0.118 / 0.174 | 0.203 / 0.214 / 0.219 |
+
+---
+
+## PART D — Classifiers, MT, calibration
+
+### E21 — Non-XGBoost classifiers (`models_compare.py`) — DONE
+FLORES-sent, macro-F1, EN-self / transfer.
+
+| model | 210m EN-self | 210m transfer | 610m EN-self | 610m transfer |
+|---|---:|---:|---:|---:|
+| SVC_linear | **0.555** | 0.430 | **0.583** | **0.562** |
+| MLP | 0.538 | 0.432 | 0.564 | 0.517 |
+| LogisticRegression | 0.503 | 0.387 | 0.541 | 0.514 |
+| GaussianNB | 0.463 | **0.453** | 0.484 | 0.494 |
+| XGBoost (ref) | 0.486 | 0.406 | 0.495 | 0.466 |
+
+**Finding:** a **linear SVM beats XGBoost** on self and transfer.
+
+### E28 — Backbone × dataset × method grid (`backbone_grid.py`) — DONE
+XGBoost + 10 Optuna trials; XL-mean macro-F1.
+
+| dataset | backbone | mean (raw) | pc | inlp | D |
+|---|---|---:|---:|---:|---:|
+| mel | 210m | 0.059 | 0.293 | **0.299** | 0.298 |
+| mel | 610m | 0.115 | 0.338 | **0.349** | 0.329 |
+| flores_sent | 610m | 0.241 | 0.265 | **0.307** | 0.274 |
+| flores_agg | 610m | 0.302 | **0.340** | 0.301 | 0.296 |
+| toxic | 610m | **0.500** | 0.465 | 0.494 | 0.452 |
+
+**Finding:** the language-subspace methods (`pc`/`inlp`/`D`) **massively help** multi-label long-doc mel;
+help FLORES-sent; neutral/harmful for toxicity.
+
+### E22 — MT: bilingual vs multilingual → English (`mt_compare.py`) — DONE
+
+| direction | BLEU (bilingual) | BLEU (multilingual mul-en) | Δ |
+|---|---:|---:|---:|
+| it→en | 29.8 | 23.2 | −6.6 |
+| de→en | 40.7 | 29.2 | −11.4 |
+| fr→en | 42.1 | 31.8 | −10.3 |
+| **macro** | **37.5** | **28.1** | **−9.4** |
+
+**Finding:** three bilingual models beat one many→en model (−9.4 BLEU).
+
+### E19 — Calibration & ceiling feasibility (`flores_calib.py`, `flores_ceiling.py`) — DONE
+FLORES single-label F1; `0.9 × English-self` feasibility.
+
+| dataset | target | 0.9×English-self | target's own ceiling | feasible? |
+|---|---|---:|---:|:--:|
+| sent | de | 0.545 | 0.537 | **NO** |
+| sent | it (macro) | 0.438 | 0.434 | **NO** |
+| agg | fr | 0.557 | 0.532 | **NO** |
+
+**Finding:** FLORES single-label F1's residual is ceiling/label-noise bound, not transfer; AUC invariant.
 
 ---
 
 ## PART E — Recall-first / highly unbalanced
 
-### E15 — English vs native at high recall — `imbalanced_recall*.py` — DONE
-**What:** rare-positive detection (FLORES rare topics; MultiEURLEX rare EuroVoc concepts), EN-trained vs
-native, recall-first (recall@FPR, recall@false-alarms, FPR@90%-recall). **Key result:** FLORES — FPR for 90%
-recall EN .543 vs native .540 (**identical**); MultiEURLEX (v2, label-bug fixed) EN .426 vs native .357.
-**Finding:** at the recall-critical point the English detector spends ~the same false-alarm budget as a
-native model. (A first MultiEURLEX run falsely showed EN ≫ native — a **label bug**; corrected in v2.)
+### E15 — English vs native at high recall (`imbalanced_recall*.py`) — DONE
+
+| dataset | English FPR@90%-recall | native FPR@90%-recall | English − native |
+|---|---:|---:|---:|
+| FLORES (rare topics, sent+agg) | 0.543 | 0.540 | +0.003 |
+| MultiEURLEX (rare concepts, v2) | 0.426 | 0.357 | +0.069 |
+
+**Finding:** at the recall-critical operating point the English detector spends ~the same false-alarm
+budget as a native model. (A first MultiEURLEX run falsely showed English ≫ native — a **label bug**;
+corrected in v2.)
+
+### E27 — toxi precision/recall vs threshold (`toxi_pr*.py`) — DONE
+
+| cell | 210m precision @ recall 0.90 | 610m precision @ recall 0.90 | Δ |
+|---|---:|---:|---:|
+| EN model / IT test | 0.324 | 0.359 | +0.035 |
+| IT model / IT test | 0.448 | 0.460 | +0.012 |
+| EN model / EN test | 0.276 | 0.278 | +0.002 |
+
+**Finding:** on toxicity the English model is below native and the threshold is miscalibrated; 610m helps.
 
 ---
 
-## PART F — Data, translation, and utilities
+## PART F — Fine-tuning (in progress)
 
-### E2/DATA — Translated eval sets — `translate_datasets.py`, `rebuild_caches.py` — DONE
-MT SST-2/emotion test(+val) → it/de/fr for the sentiment line (Marian flips some polarity — a floor).
+### E29 — Fine-tune last layer + linear head, raw (`finetune_lastlayer.py`) — RUNNING
+Train **only** EuroBERT's last transformer layer + a linear head (embeddings + lower layers frozen), **raw
+mean-pooled features, no `perlang_z`/alignment**, bf16 compute (fp32 master weights). EuroBERT paper
+protocol: AdamW β=(0.9, 0.95), ε=1e-5, wd=0.1, linear schedule + 10% warmup, batch 32, ≤10k steps, early
+stopping; LR grid {1e-5, 3.6e-5, 6e-5, 1e-4} chosen on val. Datasets: FLORES sent/agg + toxicity.
+Compare vs the **frozen raw + XGBoost** baseline — does fine-tuning alone make EuroBERT cross-lingual?
 
-### E5 — Independent verifications — DONE
-- E5a: reproduced the η²/SHAP/probe claims; found the rank-3 `subspace` probe-collapse is **tautological**.
-- E5b: reproduced E3/E4/E6 headline numbers (match ≥4 decimals).
-- (E18 verified to 6 decimals; E15-mel bug found by a dedicated check.)
+---
 
-### TOXI CLEANING — `clean_toxi.py` — DONE
-`toxi-text-3M` had train↔test **text leakage** in every language (en 90%, it/fr 99%); pooled+deduped,
-re-split **80/10/10** into `data/toxi_clean/` + one `data/toxi_clean.parquet` (120,840 rows).
+## Data & utilities
 
-### MASTER RESULT (10 datasets)
-English-trained, mean-pooled, model-free `perlang_z` → comparable (target/EN AUC or F1 ≥ 0.9) for
-**topic** (FLORES sent/agg, MultiEURLEX, SIB-200), **paraphrase** (PAWS-X), and **NLI** (XNLI); **not**
-comparable for **toxicity** (textdetox, toxi-text-3M). 610m shrinks the gap everywhere. On highly unbalanced
-positives the English model matches the native model's false-alarm cost at 90% recall.
+| dataset | rows | languages | label | notes |
+|---|---:|---|---|---|
+| FLORES sent | 2,006 | en/it/de/fr | 12-class topic | train 997 · val 504 · test 505 |
+| FLORES agg | 562 | en/it/de/fr | 11-class topic | 276/140/139 |
+| MultiEURLEX | ~17k/lang | en/de/fr | 21-label | long EU docs |
+| toxic (clean) | 120,840 | en/it/de/fr/es | binary | 80/10/10; leakage-corrected |
+| SST-2 | 68,221 | English | binary | — |
+| emotion | 20,000 | English | 6-class | — |
+| XNLI / PAWS-X / SIB-200 / textdetox | varies | 4–5 langs | NLI / paraphrase / topic / toxic | downloaded |
 
-> **Recovery note (2026-10-11):** a buggy cleanup command deleted all files under `multi/`. Tracked files
-> were restored from git; embeddings were rebuilt; this log and `lang_neutralize.py` rewritten. Only
-> git-recoverable + rebuilt artifacts remain; large caches stay git-ignored.
+- **E2** translated SST-2/emotion eval sets (`translate_datasets.py`, `rebuild_caches.py`).
+- **Cleanup/recovery note (2026-10-11):** a buggy cleanup deleted all files under `multi/`; tracked files
+  restored from git, embeddings rebuilt, this log rewritten.
+
+### Master result
+English-trained, mean-pooled, model-free `perlang_z` → **comparable (target/English ≥ 0.9)** for **topic**
+(FLORES sent/agg, MultiEURLEX, SIB-200), **paraphrase** (PAWS-X) and **NLI** (XNLI fr/es); **not
+comparable** for **toxicity** (textdetox, toxi-text-3M). **610m shrinks the gap everywhere.** On highly
+unbalanced positives the English model matches the native model's false-alarm cost at 90% recall.
