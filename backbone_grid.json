@@ -1,0 +1,2891 @@
+{
+  "config": {
+    "datasets": [
+      "flores_sent",
+      "flores_agg",
+      "mel",
+      "sst2",
+      "emotion",
+      "toxic"
+    ],
+    "backbones": [
+      "210m",
+      "610m"
+    ],
+    "methods": [
+      "mean",
+      "pc",
+      "inlp",
+      "D"
+    ],
+    "n_trials": 10,
+    "seed": 0,
+    "pooling": "mean",
+    "embedding_dtype": "bfloat16 forward -> float32 arrays",
+    "emb_root": "emb_bf16",
+    "optuna": "TPE seed 0",
+    "objective": "val AUC (macro OVR)",
+    "xgb": "hist cpu max_bin=64 n_jobs=2",
+    "smoke": false,
+    "row_limit": 0
+  },
+  "generated": "2026-10-13 00:35:12",
+  "cells": {
+    "flores_sent|210m|pc": {
+      "dataset": "flores_sent",
+      "backbone": "210m",
+      "method": "pc",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.07824023983213262,
+        "n_estimators": 618,
+        "subsample": 0.6156751169017283,
+        "colsample_bytree": 0.29796487380348674,
+        "min_child_weight": 2,
+        "reg_lambda": 0.015295398277813725,
+        "gamma": 0.5936385947712203
+      },
+      "best_value": 0.8933697813149907,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.3780966135126322,
+        "micro_f1": 0.5306930693069307,
+        "accuracy": 0.5306930693069307,
+        "auc": 0.8776543275540089
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.20249551153853693,
+          "micro_f1": 0.41386138613861384,
+          "accuracy": 0.41386138613861384,
+          "auc": 0.8177718401104892
+        },
+        "de": {
+          "macro_f1": 0.18642164564458738,
+          "micro_f1": 0.401980198019802,
+          "accuracy": 0.401980198019802,
+          "auc": 0.8026444895964685
+        },
+        "fr": {
+          "macro_f1": 0.23231115796044569,
+          "micro_f1": 0.403960396039604,
+          "accuracy": 0.403960396039604,
+          "auc": 0.8024832205401612
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.20707610504785667,
+        "micro_f1": 0.40660066006600665,
+        "auc": 0.8076331834157063
+      },
+      "elapsed_s": 101.0
+    },
+    "flores_sent|210m|mean": {
+      "dataset": "flores_sent",
+      "backbone": "210m",
+      "method": "mean",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8924007822345973,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.3753815701288717,
+        "micro_f1": 0.5306930693069307,
+        "accuracy": 0.5306930693069307,
+        "auc": 0.8843743328405913
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.13984492554546138,
+          "micro_f1": 0.37425742574257426,
+          "accuracy": 0.37425742574257426,
+          "auc": 0.809636307202207
+        },
+        "de": {
+          "macro_f1": 0.2506636377771871,
+          "micro_f1": 0.43564356435643564,
+          "accuracy": 0.43564356435643564,
+          "auc": 0.8022452138805515
+        },
+        "fr": {
+          "macro_f1": 0.20539057973598127,
+          "micro_f1": 0.4079207920792079,
+          "accuracy": 0.4079207920792079,
+          "auc": 0.8204173770325959
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.19863304768620993,
+        "micro_f1": 0.4059405940594059,
+        "auc": 0.8107662993717848
+      },
+      "elapsed_s": 103.6
+    },
+    "flores_sent|210m|inlp": {
+      "dataset": "flores_sent",
+      "backbone": "210m",
+      "method": "inlp",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "inlp",
+      "inlp_dirs": 30,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8949105312607498,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.38624718397279995,
+        "micro_f1": 0.5247524752475248,
+        "accuracy": 0.5247524752475248,
+        "auc": 0.8821327369334174
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.17419462970209124,
+          "micro_f1": 0.3702970297029703,
+          "accuracy": 0.3702970297029703,
+          "auc": 0.8227042026010659
+        },
+        "de": {
+          "macro_f1": 0.18901441110625425,
+          "micro_f1": 0.3782178217821782,
+          "accuracy": 0.3782178217821782,
+          "auc": 0.8093260433149116
+        },
+        "fr": {
+          "macro_f1": 0.2537942198657511,
+          "micro_f1": 0.42574257425742573,
+          "accuracy": 0.42574257425742573,
+          "auc": 0.8189688706613145
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.2056677535580322,
+        "micro_f1": 0.3914191419141914,
+        "auc": 0.8169997055257641
+      },
+      "elapsed_s": 107.2
+    },
+    "flores_sent|210m|D": {
+      "dataset": "flores_sent",
+      "backbone": "210m",
+      "method": "D",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8924007822345973,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.3753815701288717,
+        "micro_f1": 0.5306930693069307,
+        "accuracy": 0.5306930693069307,
+        "auc": 0.8843743328405913
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.17564413920456023,
+          "micro_f1": 0.39603960396039606,
+          "accuracy": 0.39603960396039606,
+          "auc": 0.8287891692631582
+        },
+        "de": {
+          "macro_f1": 0.1891425318299377,
+          "micro_f1": 0.4079207920792079,
+          "accuracy": 0.4079207920792079,
+          "auc": 0.8134531784536928
+        },
+        "fr": {
+          "macro_f1": 0.2614293053335716,
+          "micro_f1": 0.4396039603960396,
+          "accuracy": 0.4396039603960396,
+          "auc": 0.8196027660312869
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.2087386587893565,
+        "micro_f1": 0.4145214521452145,
+        "auc": 0.820615037916046
+      },
+      "elapsed_s": 111.3
+    },
+    "flores_sent|610m|mean": {
+      "dataset": "flores_sent",
+      "backbone": "610m",
+      "method": "mean",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8747677178062819,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.40347262833527037,
+        "micro_f1": 0.5485148514851486,
+        "accuracy": 0.5485148514851486,
+        "auc": 0.8897288408957887
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.18764410353205907,
+          "micro_f1": 0.41188118811881186,
+          "accuracy": 0.41188118811881186,
+          "auc": 0.8211800301303197
+        },
+        "de": {
+          "macro_f1": 0.2808893088266872,
+          "micro_f1": 0.4316831683168317,
+          "accuracy": 0.4316831683168317,
+          "auc": 0.8360332124520254
+        },
+        "fr": {
+          "macro_f1": 0.2546129040920841,
+          "micro_f1": 0.43564356435643564,
+          "accuracy": 0.43564356435643564,
+          "auc": 0.8310467211797684
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.24104877215027679,
+        "micro_f1": 0.4264026402640264,
+        "auc": 0.8294199879207045
+      },
+      "elapsed_s": 230.0
+    },
+    "flores_sent|610m|pc": {
+      "dataset": "flores_sent",
+      "backbone": "610m",
+      "method": "pc",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.07824023983213262,
+        "n_estimators": 618,
+        "subsample": 0.6156751169017283,
+        "colsample_bytree": 0.29796487380348674,
+        "min_child_weight": 2,
+        "reg_lambda": 0.015295398277813725,
+        "gamma": 0.5936385947712203
+      },
+      "best_value": 0.8737757809205636,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.40288668797898247,
+        "micro_f1": 0.5326732673267327,
+        "accuracy": 0.5326732673267327,
+        "auc": 0.8808626189354606
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.24549905960199317,
+          "micro_f1": 0.4178217821782178,
+          "accuracy": 0.4178217821782178,
+          "auc": 0.8333737178904296
+        },
+        "de": {
+          "macro_f1": 0.2681655145328136,
+          "micro_f1": 0.43564356435643564,
+          "accuracy": 0.43564356435643564,
+          "auc": 0.8276688878862676
+        },
+        "fr": {
+          "macro_f1": 0.2807149600789762,
+          "micro_f1": 0.45742574257425744,
+          "accuracy": 0.45742574257425744,
+          "auc": 0.8185431319677258
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.26479317807126096,
+        "micro_f1": 0.436963696369637,
+        "auc": 0.826528579248141
+      },
+      "elapsed_s": 226.9
+    },
+    "flores_agg|210m|mean": {
+      "dataset": "flores_agg",
+      "backbone": "210m",
+      "method": "mean",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8947821358974676,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.4925407549493428,
+        "micro_f1": 0.5971223021582733,
+        "accuracy": 0.5971223021582733,
+        "auc": 0.9235212345188515
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.3319334773983466,
+          "micro_f1": 0.5035971223021583,
+          "accuracy": 0.5035971223021583,
+          "auc": 0.8981273238994334
+        },
+        "de": {
+          "macro_f1": 0.2677532904805632,
+          "micro_f1": 0.4244604316546763,
+          "accuracy": 0.4244604316546763,
+          "auc": 0.8756807059943871
+        },
+        "fr": {
+          "macro_f1": 0.28334486369245726,
+          "micro_f1": 0.4748201438848921,
+          "accuracy": 0.4748201438848921,
+          "auc": 0.8694705593382797
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.2943438771904557,
+        "micro_f1": 0.4676258992805755,
+        "auc": 0.8810928630773667
+      },
+      "elapsed_s": 41.0
+    },
+    "flores_agg|210m|pc": {
+      "dataset": "flores_agg",
+      "backbone": "210m",
+      "method": "pc",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8919076238419155,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.4574513683576447,
+        "micro_f1": 0.5827338129496403,
+        "accuracy": 0.5827338129496403,
+        "auc": 0.9202627710565785
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.2664944324837373,
+          "micro_f1": 0.5035971223021583,
+          "accuracy": 0.5035971223021583,
+          "auc": 0.8976151550138575
+        },
+        "de": {
+          "macro_f1": 0.2791275875582542,
+          "micro_f1": 0.49640287769784175,
+          "accuracy": 0.49640287769784175,
+          "auc": 0.886771354288197
+        },
+        "fr": {
+          "macro_f1": 0.301755780365406,
+          "micro_f1": 0.4892086330935252,
+          "accuracy": 0.4892086330935252,
+          "auc": 0.8739107778926495
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.28245926680246586,
+        "micro_f1": 0.49640287769784175,
+        "auc": 0.8860990957315679
+      },
+      "elapsed_s": 40.2
+    },
+    "flores_sent|610m|inlp": {
+      "dataset": "flores_sent",
+      "backbone": "610m",
+      "method": "inlp",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "inlp",
+      "inlp_dirs": 30,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.866645677053936,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.39106458102831554,
+        "micro_f1": 0.5504950495049505,
+        "accuracy": 0.5504950495049505,
+        "auc": 0.8792156292974426
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.2833952930433375,
+          "micro_f1": 0.4633663366336634,
+          "accuracy": 0.4633663366336634,
+          "auc": 0.823732954402871
+        },
+        "de": {
+          "macro_f1": 0.3189752336411251,
+          "micro_f1": 0.48118811881188117,
+          "accuracy": 0.48118811881188117,
+          "auc": 0.8464004820407353
+        },
+        "fr": {
+          "macro_f1": 0.31878963949106376,
+          "micro_f1": 0.4792079207920792,
+          "accuracy": 0.4792079207920792,
+          "auc": 0.8423203917196153
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.30705338872517546,
+        "micro_f1": 0.47458745874587455,
+        "auc": 0.8374846093877405
+      },
+      "elapsed_s": 237.4
+    },
+    "flores_agg|210m|inlp": {
+      "dataset": "flores_agg",
+      "backbone": "210m",
+      "method": "inlp",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "inlp",
+      "inlp_dirs": 30,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8969264891138965,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.49223803811733724,
+        "micro_f1": 0.6115107913669064,
+        "accuracy": 0.6115107913669064,
+        "auc": 0.91985185234205
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.272342779027271,
+          "micro_f1": 0.4676258992805755,
+          "accuracy": 0.4676258992805755,
+          "auc": 0.9078874870405163
+        },
+        "de": {
+          "macro_f1": 0.28355895235018763,
+          "micro_f1": 0.4892086330935252,
+          "accuracy": 0.4892086330935252,
+          "auc": 0.8816432070750507
+        },
+        "fr": {
+          "macro_f1": 0.31880674975304135,
+          "micro_f1": 0.5179856115107914,
+          "accuracy": 0.5179856115107914,
+          "auc": 0.8722295103501753
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.29156949371016666,
+        "micro_f1": 0.4916067146282974,
+        "auc": 0.8872534014885808
+      },
+      "elapsed_s": 42.5
+    },
+    "flores_agg|210m|D": {
+      "dataset": "flores_agg",
+      "backbone": "210m",
+      "method": "D",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8947821358974676,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.4925407549493428,
+        "micro_f1": 0.5971223021582733,
+        "accuracy": 0.5971223021582733,
+        "auc": 0.9235212345188515
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.2794322852539954,
+          "micro_f1": 0.5035971223021583,
+          "accuracy": 0.5035971223021583,
+          "auc": 0.8939357249797418
+        },
+        "de": {
+          "macro_f1": 0.2663494581660797,
+          "micro_f1": 0.5035971223021583,
+          "accuracy": 0.5035971223021583,
+          "auc": 0.8687290691516288
+        },
+        "fr": {
+          "macro_f1": 0.331895338567699,
+          "micro_f1": 0.5179856115107914,
+          "accuracy": 0.5179856115107914,
+          "auc": 0.8600427811595714
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.29255902732925804,
+        "micro_f1": 0.5083932853717026,
+        "auc": 0.874235858430314
+      },
+      "elapsed_s": 39.9
+    },
+    "flores_agg|610m|mean": {
+      "dataset": "flores_agg",
+      "backbone": "610m",
+      "method": "mean",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.9037702326004292,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.40633903739102434,
+        "micro_f1": 0.5755395683453237,
+        "accuracy": 0.5755395683453237,
+        "auc": 0.9055210846614485
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.2806633753262967,
+          "micro_f1": 0.49640287769784175,
+          "accuracy": 0.49640287769784175,
+          "auc": 0.8996987856200235
+        },
+        "de": {
+          "macro_f1": 0.27792137138335293,
+          "micro_f1": 0.45323741007194246,
+          "accuracy": 0.45323741007194246,
+          "auc": 0.885275885609246
+        },
+        "fr": {
+          "macro_f1": 0.3477121154195195,
+          "micro_f1": 0.49640287769784175,
+          "accuracy": 0.49640287769784175,
+          "auc": 0.8713581395292279
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.30209895404305637,
+        "micro_f1": 0.4820143884892087,
+        "auc": 0.8854442702528326
+      },
+      "elapsed_s": 66.7
+    },
+    "flores_sent|610m|D": {
+      "dataset": "flores_sent",
+      "backbone": "610m",
+      "method": "D",
+      "kind": "multiclass",
+      "n_classes": 12,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 997,
+      "n_val": 504,
+      "n_test": 505,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.8747677178062819,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.40347262833527037,
+        "micro_f1": 0.5485148514851486,
+        "accuracy": 0.5485148514851486,
+        "auc": 0.8897288408957887
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.2339115612158552,
+          "micro_f1": 0.43366336633663366,
+          "accuracy": 0.43366336633663366,
+          "auc": 0.8232768819172693
+        },
+        "de": {
+          "macro_f1": 0.29891001445226145,
+          "micro_f1": 0.4594059405940594,
+          "accuracy": 0.4594059405940594,
+          "auc": 0.8439616360717158
+        },
+        "fr": {
+          "macro_f1": 0.28810016043701453,
+          "micro_f1": 0.4772277227722772,
+          "accuracy": 0.4772277227722772,
+          "auc": 0.823432050238833
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.27364057870171044,
+        "micro_f1": 0.4567656765676567,
+        "auc": 0.8302235227426061
+      },
+      "elapsed_s": 220.7
+    },
+    "flores_agg|610m|pc": {
+      "dataset": "flores_agg",
+      "backbone": "610m",
+      "method": "pc",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.9025562448477675,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.403087638544001,
+        "micro_f1": 0.5683453237410072,
+        "accuracy": 0.5683453237410072,
+        "auc": 0.9109078664899735
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.32176328625704004,
+          "micro_f1": 0.48201438848920863,
+          "accuracy": 0.48201438848920863,
+          "auc": 0.8977025864035941
+        },
+        "de": {
+          "macro_f1": 0.36476524718854697,
+          "micro_f1": 0.5035971223021583,
+          "accuracy": 0.5035971223021583,
+          "auc": 0.8868169938060622
+        },
+        "fr": {
+          "macro_f1": 0.3327729124239116,
+          "micro_f1": 0.48201438848920863,
+          "accuracy": 0.48201438848920863,
+          "auc": 0.8875843791810034
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.3397671486231662,
+        "micro_f1": 0.4892086330935252,
+        "auc": 0.8907013197968866
+      },
+      "elapsed_s": 67.3
+    },
+    "flores_agg|610m|inlp": {
+      "dataset": "flores_agg",
+      "backbone": "610m",
+      "method": "inlp",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "inlp",
+      "inlp_dirs": 30,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.9099800244978167,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.42936872330811726,
+        "micro_f1": 0.5755395683453237,
+        "accuracy": 0.5755395683453237,
+        "auc": 0.9106139581153344
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.25898770708897295,
+          "micro_f1": 0.4748201438848921,
+          "accuracy": 0.4748201438848921,
+          "auc": 0.8647682772062335
+        },
+        "de": {
+          "macro_f1": 0.31824597719933784,
+          "micro_f1": 0.5107913669064749,
+          "accuracy": 0.5107913669064749,
+          "auc": 0.8803340149115292
+        },
+        "fr": {
+          "macro_f1": 0.3271797627271874,
+          "micro_f1": 0.5035971223021583,
+          "accuracy": 0.5035971223021583,
+          "auc": 0.881128576475938
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.3014711490051661,
+        "micro_f1": 0.49640287769784175,
+        "auc": 0.8754102895312336
+      },
+      "elapsed_s": 71.1
+    },
+    "flores_agg|610m|D": {
+      "dataset": "flores_agg",
+      "backbone": "610m",
+      "method": "D",
+      "kind": "multiclass",
+      "n_classes": 11,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 276,
+      "n_val": 140,
+      "n_test": 139,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.9037702326004292,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.40633903739102434,
+        "micro_f1": 0.5755395683453237,
+        "accuracy": 0.5755395683453237,
+        "auc": 0.9055210846614485
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.2889268883850927,
+          "micro_f1": 0.5035971223021583,
+          "accuracy": 0.5035971223021583,
+          "auc": 0.873273276091867
+        },
+        "de": {
+          "macro_f1": 0.33948054869107497,
+          "micro_f1": 0.5323741007194245,
+          "accuracy": 0.5323741007194245,
+          "auc": 0.8863125505389032
+        },
+        "fr": {
+          "macro_f1": 0.26049427854601215,
+          "micro_f1": 0.4676258992805755,
+          "accuracy": 0.4676258992805755,
+          "auc": 0.8908549658612482
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.29630057187405995,
+        "micro_f1": 0.5011990407673861,
+        "auc": 0.8834802641640062
+      },
+      "elapsed_s": 69.5
+    },
+    "mel|210m|mean": {
+      "dataset": "mel",
+      "backbone": "210m",
+      "method": "mean",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9454278016538685,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.5092962613976709,
+        "micro_f1": 0.7017622270463543,
+        "subset_acc": 0.118,
+        "auc": 0.9123293662455736
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.048868755987145185,
+          "micro_f1": 0.20446800454373343,
+          "subset_acc": 0.0004,
+          "auc": 0.7962002447569978
+        },
+        "fr": {
+          "macro_f1": 0.06957071764598696,
+          "micro_f1": 0.2792536078683703,
+          "subset_acc": 0.0032,
+          "auc": 0.8185845299901204
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.059219736816566074,
+        "micro_f1": 0.24186080620605185,
+        "auc": 0.8073923873735591,
+        "subset_acc": 0.0018000000000000002
+      },
+      "elapsed_s": 1948.7
+    },
+    "mel|210m|pc": {
+      "dataset": "mel",
+      "backbone": "210m",
+      "method": "pc",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9462068947417958,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.5209166768777627,
+        "micro_f1": 0.7105505607268799,
+        "subset_acc": 0.1136,
+        "auc": 0.9090714840066015
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.2792489519206738,
+          "micro_f1": 0.5783553565578247,
+          "subset_acc": 0.059,
+          "auc": 0.8550702575617964
+        },
+        "fr": {
+          "macro_f1": 0.3071266869565242,
+          "micro_f1": 0.6037681679526288,
+          "subset_acc": 0.0668,
+          "auc": 0.8765720693053825
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.29318781943859895,
+        "micro_f1": 0.5910617622552268,
+        "auc": 0.8658211634335895,
+        "subset_acc": 0.0629
+      },
+      "elapsed_s": 1952.4
+    },
+    "mel|210m|inlp": {
+      "dataset": "mel",
+      "backbone": "210m",
+      "method": "inlp",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "inlp",
+      "inlp_dirs": 2,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9453783667001636,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.523316946133535,
+        "micro_f1": 0.7072969018385393,
+        "subset_acc": 0.1128,
+        "auc": 0.910382226650716
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.28732722433962615,
+          "micro_f1": 0.5844947735191638,
+          "subset_acc": 0.0696,
+          "auc": 0.8566614773195553
+        },
+        "fr": {
+          "macro_f1": 0.3109357623601915,
+          "micro_f1": 0.606742375544604,
+          "subset_acc": 0.0634,
+          "auc": 0.8751486252066688
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.29913149334990885,
+        "micro_f1": 0.5956185745318838,
+        "auc": 0.8659050512631121,
+        "subset_acc": 0.0665
+      },
+      "elapsed_s": 1935.2
+    },
+    "mel|210m|D": {
+      "dataset": "mel",
+      "backbone": "210m",
+      "method": "D",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 768,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9454278016538685,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.5092962613976709,
+        "micro_f1": 0.7017622270463543,
+        "subset_acc": 0.118,
+        "auc": 0.9123293662455736
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.2790531380384231,
+          "micro_f1": 0.5751377741613345,
+          "subset_acc": 0.0656,
+          "auc": 0.8539234988574029
+        },
+        "fr": {
+          "macro_f1": 0.3164734193837273,
+          "micro_f1": 0.6015239477503629,
+          "subset_acc": 0.0694,
+          "auc": 0.874075569475635
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.2977632787110752,
+        "micro_f1": 0.5883308609558486,
+        "auc": 0.863999534166519,
+        "subset_acc": 0.0675
+      },
+      "elapsed_s": 1771.9
+    },
+    "mel|610m|mean": {
+      "dataset": "mel",
+      "backbone": "610m",
+      "method": "mean",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9483296936003869,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.5013800212456893,
+        "micro_f1": 0.7105416801816412,
+        "subset_acc": 0.1418,
+        "auc": 0.9118771524290568
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.08551234613279554,
+          "micro_f1": 0.2433296783625731,
+          "subset_acc": 0.0192,
+          "auc": 0.832053005968766
+        },
+        "fr": {
+          "macro_f1": 0.14527705784835557,
+          "micro_f1": 0.38487676889328576,
+          "subset_acc": 0.0142,
+          "auc": 0.8455448669425975
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.11539470199057555,
+        "micro_f1": 0.3141032236279294,
+        "auc": 0.8387989364556817,
+        "subset_acc": 0.0167
+      },
+      "elapsed_s": 3987.4
+    },
+    "mel|610m|pc": {
+      "dataset": "mel",
+      "backbone": "610m",
+      "method": "pc",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9484585636722387,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.5172223855787069,
+        "micro_f1": 0.721652137549458,
+        "subset_acc": 0.1418,
+        "auc": 0.910571336692772
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.30969397231637724,
+          "micro_f1": 0.6207018287086069,
+          "subset_acc": 0.0734,
+          "auc": 0.8785022395378196
+        },
+        "fr": {
+          "macro_f1": 0.3668414101583909,
+          "micro_f1": 0.6379189944134078,
+          "subset_acc": 0.095,
+          "auc": 0.8812441991896032
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.3382676912373841,
+        "micro_f1": 0.6293104115610073,
+        "auc": 0.8798732193637113,
+        "subset_acc": 0.0842
+      },
+      "elapsed_s": 4006.0
+    },
+    "sst2|210m|mean": {
+      "dataset": "sst2",
+      "backbone": "210m",
+      "method": "mean",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.07824023983213262,
+        "n_estimators": 618,
+        "subsample": 0.6156751169017283,
+        "colsample_bytree": 0.29796487380348674,
+        "min_child_weight": 2,
+        "reg_lambda": 0.015295398277813725,
+        "gamma": 0.5936385947712203
+      },
+      "best_value": 0.8926698499223018,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.8051312247512621,
+        "micro_f1": 0.8079742011140428,
+        "accuracy": 0.8079742011140428,
+        "auc": 0.8942170936527011
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 889.8
+    },
+    "sst2|210m|pc": {
+      "dataset": "sst2",
+      "backbone": "210m",
+      "method": "pc",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.07824023983213262,
+        "n_estimators": 618,
+        "subsample": 0.6156751169017283,
+        "colsample_bytree": 0.29796487380348674,
+        "min_child_weight": 2,
+        "reg_lambda": 0.015295398277813725,
+        "gamma": 0.5936385947712203
+      },
+      "best_value": 0.8920419623084919,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.8094987548547736,
+        "micro_f1": 0.8119319847552038,
+        "accuracy": 0.8119319847552038,
+        "auc": 0.8942805153660573
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 854.4
+    },
+    "mel|610m|inlp": {
+      "dataset": "mel",
+      "backbone": "610m",
+      "method": "inlp",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "inlp",
+      "inlp_dirs": 30,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9474211231715924,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.49498743411122786,
+        "micro_f1": 0.7045144527443975,
+        "subset_acc": 0.1384,
+        "auc": 0.9088754229525388
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.32663593937771457,
+          "micro_f1": 0.6359427609427609,
+          "subset_acc": 0.077,
+          "auc": 0.8810300224274213
+        },
+        "fr": {
+          "macro_f1": 0.3707524210995572,
+          "micro_f1": 0.641973587929893,
+          "subset_acc": 0.111,
+          "auc": 0.8815542970762478
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.34869418023863585,
+        "micro_f1": 0.638958174436327,
+        "auc": 0.8812921597518346,
+        "subset_acc": 0.094
+      },
+      "elapsed_s": 4726.2
+    },
+    "sst2|210m|inlp": {
+      "dataset": "sst2",
+      "backbone": "210m",
+      "method": "inlp",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "inlp",
+      "inlp_dirs": 0,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.07824023983213262,
+        "n_estimators": 618,
+        "subsample": 0.6156751169017283,
+        "colsample_bytree": 0.29796487380348674,
+        "min_child_weight": 2,
+        "reg_lambda": 0.015295398277813725,
+        "gamma": 0.5936385947712203
+      },
+      "best_value": 0.8926698499223018,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.8051312247512621,
+        "micro_f1": 0.8079742011140428,
+        "accuracy": 0.8079742011140428,
+        "auc": 0.8942170936527011
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 850.9
+    },
+    "sst2|210m|D": {
+      "dataset": "sst2",
+      "backbone": "210m",
+      "method": "D",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.07824023983213262,
+        "n_estimators": 618,
+        "subsample": 0.6156751169017283,
+        "colsample_bytree": 0.29796487380348674,
+        "min_child_weight": 2,
+        "reg_lambda": 0.015295398277813725,
+        "gamma": 0.5936385947712203
+      },
+      "best_value": 0.8926698499223018,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.8051312247512621,
+        "micro_f1": 0.8079742011140428,
+        "accuracy": 0.8079742011140428,
+        "auc": 0.8942170936527011
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 860.3
+    },
+    "sst2|610m|mean": {
+      "dataset": "sst2",
+      "backbone": "610m",
+      "method": "mean",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8581189966313345,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.764829280374357,
+        "micro_f1": 0.7698622104954559,
+        "accuracy": 0.7698622104954559,
+        "auc": 0.8558888622535046
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1160.3
+    },
+    "mel|610m|D": {
+      "dataset": "mel",
+      "backbone": "610m",
+      "method": "D",
+      "kind": "multilabel",
+      "n_classes": 21,
+      "langs": [
+        "en",
+        "de",
+        "fr"
+      ],
+      "targets": [
+        "de",
+        "fr"
+      ],
+      "dim": 1152,
+      "n_train": 10000,
+      "n_val": 1000,
+      "n_test": 5000,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9483296936003869,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.5013800212456893,
+        "micro_f1": 0.7105416801816412,
+        "subset_acc": 0.1418,
+        "auc": 0.9118771524290568
+      },
+      "per_target": {
+        "de": {
+          "macro_f1": 0.3110609162034125,
+          "micro_f1": 0.6122013651877133,
+          "subset_acc": 0.0744,
+          "auc": 0.8810307612814366
+        },
+        "fr": {
+          "macro_f1": 0.34785469940172853,
+          "micro_f1": 0.6308847260225917,
+          "subset_acc": 0.0956,
+          "auc": 0.8808321474776858
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.3294578078025705,
+        "micro_f1": 0.6215430456051525,
+        "auc": 0.8809314543795612,
+        "subset_acc": 0.08499999999999999
+      },
+      "elapsed_s": 4286.6
+    },
+    "sst2|610m|pc": {
+      "dataset": "sst2",
+      "backbone": "610m",
+      "method": "pc",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.855588847248923,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7621179132278046,
+        "micro_f1": 0.7670771034887129,
+        "accuracy": 0.7670771034887129,
+        "auc": 0.8529040507561109
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1007.7
+    },
+    "sst2|610m|inlp": {
+      "dataset": "sst2",
+      "backbone": "610m",
+      "method": "inlp",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "inlp",
+      "inlp_dirs": 0,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8581189966313345,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.764829280374357,
+        "micro_f1": 0.7698622104954559,
+        "accuracy": 0.7698622104954559,
+        "auc": 0.8558888622535046
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1033.5
+    },
+    "emotion|210m|mean": {
+      "dataset": "emotion",
+      "backbone": "210m",
+      "method": "mean",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8203236507284508,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.36530450932205943,
+        "micro_f1": 0.5595,
+        "accuracy": 0.5595,
+        "auc": 0.8235454216797954
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1023.5
+    },
+    "sst2|610m|D": {
+      "dataset": "sst2",
+      "backbone": "610m",
+      "method": "D",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 54577,
+      "n_val": 6822,
+      "n_test": 6822,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8581189966313345,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.764829280374357,
+        "micro_f1": 0.7698622104954559,
+        "accuracy": 0.7698622104954559,
+        "auc": 0.8558888622535046
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1142.4
+    },
+    "emotion|210m|pc": {
+      "dataset": "emotion",
+      "backbone": "210m",
+      "method": "pc",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8184230014836266,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.3735196082007743,
+        "micro_f1": 0.56,
+        "accuracy": 0.56,
+        "auc": 0.8263073703286427
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1244.7
+    },
+    "emotion|210m|D": {
+      "dataset": "emotion",
+      "backbone": "210m",
+      "method": "D",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8203236507284508,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.36530450932205943,
+        "micro_f1": 0.5595,
+        "accuracy": 0.5595,
+        "auc": 0.8235454216797954
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1270.5
+    },
+    "emotion|210m|inlp": {
+      "dataset": "emotion",
+      "backbone": "210m",
+      "method": "inlp",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 768,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "inlp",
+      "inlp_dirs": 0,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8203236507284508,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.36530450932205943,
+        "micro_f1": 0.5595,
+        "accuracy": 0.5595,
+        "auc": 0.8235454216797954
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1359.6
+    },
+    "emotion|610m|mean": {
+      "dataset": "emotion",
+      "backbone": "610m",
+      "method": "mean",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8307500843740775,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.35755755920923576,
+        "micro_f1": 0.5645,
+        "accuracy": 0.5645,
+        "auc": 0.8315795774533629
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 2139.0
+    },
+    "emotion|610m|pc": {
+      "dataset": "emotion",
+      "backbone": "610m",
+      "method": "pc",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 4,
+        "learning_rate": 0.04421291893432151,
+        "n_estimators": 589,
+        "subsample": 0.624090188651708,
+        "colsample_bytree": 0.5667367008119675,
+        "min_child_weight": 7,
+        "reg_lambda": 0.0069427294924301495,
+        "gamma": 0.6446314882742665
+      },
+      "best_value": 0.8312484900129794,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.3991038065367573,
+        "micro_f1": 0.577,
+        "accuracy": 0.577,
+        "auc": 0.8301114738454488
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1871.6
+    },
+    "toxic|210m|mean": {
+      "dataset": "toxic",
+      "backbone": "210m",
+      "method": "mean",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 768,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9067750786500787,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7698081734778983,
+        "micro_f1": 0.9233333333333333,
+        "accuracy": 0.9233333333333333,
+        "auc": 0.9082332268804499
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.44620637066306196,
+          "micro_f1": 0.7125541125541126,
+          "accuracy": 0.7125541125541126,
+          "auc": 0.6651492639828792
+        },
+        "de": {
+          "macro_f1": 0.532238547968885,
+          "micro_f1": 0.7227642276422764,
+          "accuracy": 0.7227642276422764,
+          "auc": 0.7161582717354678
+        },
+        "fr": {
+          "macro_f1": 0.46719233037293834,
+          "micro_f1": 0.6543585839360487,
+          "accuracy": 0.6543585839360487,
+          "auc": 0.7816702580975251
+        },
+        "es": {
+          "macro_f1": 0.4354602255650991,
+          "micro_f1": 0.6858513189448441,
+          "accuracy": 0.6858513189448441,
+          "auc": 0.6594084122222598
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.47027436864249617,
+        "micro_f1": 0.6938820607693204,
+        "auc": 0.705596551509533
+      },
+      "elapsed_s": 180.9
+    },
+    "emotion|610m|inlp": {
+      "dataset": "emotion",
+      "backbone": "610m",
+      "method": "inlp",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "inlp",
+      "inlp_dirs": 0,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8307500843740775,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.35755755920923576,
+        "micro_f1": 0.5645,
+        "accuracy": 0.5645,
+        "auc": 0.8315795774533629
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 2034.8
+    },
+    "toxic|210m|pc": {
+      "dataset": "toxic",
+      "backbone": "210m",
+      "method": "pc",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 768,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 6,
+        "learning_rate": 0.023666956347875266,
+        "n_estimators": 426,
+        "subsample": 0.6977702368006411,
+        "colsample_bytree": 0.21127870855186381,
+        "min_child_weight": 2,
+        "reg_lambda": 0.4220057397195018,
+        "gamma": 0.690914756743069
+      },
+      "best_value": 0.9065823636136134,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7504276418918547,
+        "micro_f1": 0.9193333333333333,
+        "accuracy": 0.9193333333333333,
+        "auc": 0.9069743875825167
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.4306108213743334,
+          "micro_f1": 0.70995670995671,
+          "accuracy": 0.70995670995671,
+          "auc": 0.6639427526172711
+        },
+        "de": {
+          "macro_f1": 0.522333304608346,
+          "micro_f1": 0.7178861788617886,
+          "accuracy": 0.7178861788617886,
+          "auc": 0.7245207423277037
+        },
+        "fr": {
+          "macro_f1": 0.4309320660480192,
+          "micro_f1": 0.6425580510087552,
+          "accuracy": 0.6425580510087552,
+          "auc": 0.7302493087896069
+        },
+        "es": {
+          "macro_f1": 0.41751740483667577,
+          "micro_f1": 0.6868790681740322,
+          "accuracy": 0.6868790681740322,
+          "auc": 0.6467858199770896
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.45034839921684355,
+        "micro_f1": 0.6893200020003214,
+        "auc": 0.6913746559279178
+      },
+      "elapsed_s": 143.6
+    },
+    "toxic|210m|inlp": {
+      "dataset": "toxic",
+      "backbone": "210m",
+      "method": "inlp",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 768,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "inlp",
+      "inlp_dirs": 30,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9067091645216645,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7669001589317098,
+        "micro_f1": 0.923,
+        "accuracy": 0.923,
+        "auc": 0.9099506806611988
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.4588636677618736,
+          "micro_f1": 0.712987012987013,
+          "accuracy": 0.712987012987013,
+          "auc": 0.6528419442998438
+        },
+        "de": {
+          "macro_f1": 0.5537626978094119,
+          "micro_f1": 0.7268292682926829,
+          "accuracy": 0.7268292682926829,
+          "auc": 0.7216085621806109
+        },
+        "fr": {
+          "macro_f1": 0.46313700481854736,
+          "micro_f1": 0.652455272173582,
+          "accuracy": 0.652455272173582,
+          "auc": 0.76641010032354
+        },
+        "es": {
+          "macro_f1": 0.4516713560336978,
+          "micro_f1": 0.6861939020212402,
+          "accuracy": 0.6861939020212402,
+          "auc": 0.6493313050989419
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.48185868160588263,
+        "micro_f1": 0.6946163638686296,
+        "auc": 0.6975479779757341
+      },
+      "elapsed_s": 247.8
+    },
+    "toxic|210m|D": {
+      "dataset": "toxic",
+      "backbone": "210m",
+      "method": "D",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 768,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9067750786500787,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7698081734778983,
+        "micro_f1": 0.9233333333333333,
+        "accuracy": 0.9233333333333333,
+        "auc": 0.9082332268804499
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.44709354478856395,
+          "micro_f1": 0.7116883116883117,
+          "accuracy": 0.7116883116883117,
+          "auc": 0.6499725258835097
+        },
+        "de": {
+          "macro_f1": 0.4663924160906664,
+          "micro_f1": 0.6983739837398374,
+          "accuracy": 0.6983739837398374,
+          "auc": 0.6474159811295672
+        },
+        "fr": {
+          "macro_f1": 0.4497312073308751,
+          "micro_f1": 0.6505519604111153,
+          "accuracy": 0.6505519604111153,
+          "auc": 0.7678809064099261
+        },
+        "es": {
+          "macro_f1": 0.42405213146829857,
+          "micro_f1": 0.6882494004796164,
+          "accuracy": 0.6882494004796164,
+          "auc": 0.6746343663423748
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.446817324919601,
+        "micro_f1": 0.6872159140797202,
+        "auc": 0.6849759449413445
+      },
+      "elapsed_s": 152.8
+    },
+    "toxic|610m|mean": {
+      "dataset": "toxic",
+      "backbone": "610m",
+      "method": "mean",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 1152,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "mean",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9121722168597169,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7836973865792651,
+        "micro_f1": 0.9286666666666666,
+        "accuracy": 0.9286666666666666,
+        "auc": 0.9131745628798064
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.5189732394601014,
+          "micro_f1": 0.7242424242424242,
+          "accuracy": 0.7242424242424242,
+          "auc": 0.7166306972641563
+        },
+        "de": {
+          "macro_f1": 0.5513681067962751,
+          "micro_f1": 0.7276422764227642,
+          "accuracy": 0.7276422764227642,
+          "auc": 0.7325678813116557
+        },
+        "fr": {
+          "macro_f1": 0.4806706288617732,
+          "micro_f1": 0.6600685192234488,
+          "accuracy": 0.6600685192234488,
+          "auc": 0.7969422420736438
+        },
+        "es": {
+          "macro_f1": 0.45069891270499174,
+          "micro_f1": 0.6913326481671805,
+          "accuracy": 0.6913326481671805,
+          "auc": 0.675234428150379
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.5004277219557853,
+        "micro_f1": 0.7008214670139544,
+        "auc": 0.7303438121999588
+      },
+      "elapsed_s": 316.5
+    },
+    "toxic|610m|pc": {
+      "dataset": "toxic",
+      "backbone": "610m",
+      "method": "pc",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 1152,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "pc",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9112807003432002,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7742268281299198,
+        "micro_f1": 0.9256666666666666,
+        "accuracy": 0.9256666666666666,
+        "auc": 0.9119804937366215
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.45788304789815915,
+          "micro_f1": 0.716017316017316,
+          "accuracy": 0.716017316017316,
+          "auc": 0.7042944574584997
+        },
+        "de": {
+          "macro_f1": 0.5354835708724509,
+          "micro_f1": 0.7227642276422764,
+          "accuracy": 0.7227642276422764,
+          "auc": 0.7114375720702757
+        },
+        "fr": {
+          "macro_f1": 0.4388964771237636,
+          "micro_f1": 0.6452226874762086,
+          "accuracy": 0.6452226874762086,
+          "auc": 0.7360534843103643
+        },
+        "es": {
+          "macro_f1": 0.42615982015123643,
+          "micro_f1": 0.6885919835560124,
+          "accuracy": 0.6885919835560124,
+          "auc": 0.6658927925970173
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.4646057290114025,
+        "micro_f1": 0.6931490536729534,
+        "auc": 0.7044195766090392
+      },
+      "elapsed_s": 323.3
+    },
+    "toxic|610m|D": {
+      "dataset": "toxic",
+      "backbone": "610m",
+      "method": "D",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 1152,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.9121722168597169,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7836973865792651,
+        "micro_f1": 0.9286666666666666,
+        "accuracy": 0.9286666666666666,
+        "auc": 0.9131745628798064
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.44176516942474386,
+          "micro_f1": 0.7112554112554113,
+          "accuracy": 0.7112554112554113,
+          "auc": 0.7275263534617387
+        },
+        "de": {
+          "macro_f1": 0.47653896542803975,
+          "micro_f1": 0.7097560975609756,
+          "accuracy": 0.7097560975609756,
+          "auc": 0.7182450250255821
+        },
+        "fr": {
+          "macro_f1": 0.45193940913717906,
+          "micro_f1": 0.6532165968785687,
+          "accuracy": 0.6532165968785687,
+          "auc": 0.769090913617685
+        },
+        "es": {
+          "macro_f1": 0.43620200941776005,
+          "micro_f1": 0.6896197327852004,
+          "accuracy": 0.6896197327852004,
+          "auc": 0.6960591391215183
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.4516113883519307,
+        "micro_f1": 0.690961959620039,
+        "auc": 0.727730357806631
+      },
+      "elapsed_s": 319.7
+    },
+    "emotion|610m|D": {
+      "dataset": "emotion",
+      "backbone": "610m",
+      "method": "D",
+      "kind": "multiclass",
+      "n_classes": 6,
+      "langs": [
+        "en"
+      ],
+      "targets": [],
+      "dim": 1152,
+      "n_train": 16000,
+      "n_val": 2000,
+      "n_test": 2000,
+      "transform": "D",
+      "inlp_dirs": null,
+      "best_params": {
+        "max_depth": 8,
+        "learning_rate": 0.036845938035010996,
+        "n_estimators": 654,
+        "subsample": 0.8115579679011617,
+        "colsample_bytree": 0.49763119276575263,
+        "min_child_weight": 10,
+        "reg_lambda": 0.0019237305096546497,
+        "gamma": 0.43564649850770354
+      },
+      "best_value": 0.8307500843740775,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.35755755920923576,
+        "micro_f1": 0.5645,
+        "accuracy": 0.5645,
+        "auc": 0.8315795774533629
+      },
+      "per_target": {},
+      "xl_mean": {
+        "macro_f1": NaN,
+        "micro_f1": NaN,
+        "auc": NaN
+      },
+      "elapsed_s": 1502.9
+    },
+    "toxic|610m|inlp": {
+      "dataset": "toxic",
+      "backbone": "610m",
+      "method": "inlp",
+      "kind": "binary",
+      "n_classes": null,
+      "langs": [
+        "en",
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "targets": [
+        "it",
+        "de",
+        "fr",
+        "es"
+      ],
+      "dim": 1152,
+      "n_train": 24000,
+      "n_val": 3000,
+      "n_test": 3000,
+      "transform": "inlp",
+      "inlp_dirs": 30,
+      "best_params": {
+        "max_depth": 4,
+        "learning_rate": 0.04421291893432151,
+        "n_estimators": 589,
+        "subsample": 0.624090188651708,
+        "colsample_bytree": 0.5667367008119675,
+        "min_child_weight": 7,
+        "reg_lambda": 0.0069427294924301495,
+        "gamma": 0.6446314882742665
+      },
+      "best_value": 0.9085491741741741,
+      "n_trials": 10,
+      "en": {
+        "macro_f1": 0.7879689387583618,
+        "micro_f1": 0.928,
+        "accuracy": 0.928,
+        "auc": 0.91278280791157
+      },
+      "per_target": {
+        "it": {
+          "macro_f1": 0.4868450009065731,
+          "micro_f1": 0.7220779220779221,
+          "accuracy": 0.7220779220779221,
+          "auc": 0.7108873416623285
+        },
+        "de": {
+          "macro_f1": 0.5569390921801999,
+          "micro_f1": 0.7252032520325203,
+          "accuracy": 0.7252032520325203,
+          "auc": 0.6829928061112501
+        },
+        "fr": {
+          "macro_f1": 0.4691842781434077,
+          "micro_f1": 0.6539779215835554,
+          "accuracy": 0.6539779215835554,
+          "auc": 0.7497581852879556
+        },
+        "es": {
+          "macro_f1": 0.46351664740859994,
+          "micro_f1": 0.6896197327852004,
+          "accuracy": 0.6896197327852004,
+          "auc": 0.6763684849067256
+        }
+      },
+      "xl_mean": {
+        "macro_f1": 0.49412125465969514,
+        "micro_f1": 0.6977197071197996,
+        "auc": 0.7050017044920649
+      },
+      "elapsed_s": 416.8
+    }
+  }
+}

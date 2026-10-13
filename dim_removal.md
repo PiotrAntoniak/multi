@@ -29,7 +29,7 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.428 | 0.178 | 0.695 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.247 / AUC 0.771 (dirs=5); `random` XL macro-F1 0.201 / AUC 0.756.
-- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.362->0.371; fr 0.400->0.395; it 0.376->0.330
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: it 0.376->0.330; de 0.362->0.371; fr 0.400->0.395
 - safe k (XL macro-F1 stays within 0.02 of k=0): **4**
 
 ### flores_sent / 610m (1152-d)
@@ -44,7 +44,7 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.409 | 0.281 | 0.778 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.307 / AUC 0.795 (dirs=5); `random` XL macro-F1 0.232 / AUC 0.798.
-- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.400->0.403; fr 0.362->0.372; it 0.355->0.339
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: it 0.355->0.339; de 0.400->0.403; fr 0.362->0.372
 - safe k (XL macro-F1 stays within 0.02 of k=0): **5**
 
 ## FLORES URL-agg (11-class topic)
@@ -61,7 +61,7 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.505 | 0.269 | 0.752 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.334 / AUC 0.834 (dirs=5); `random` XL macro-F1 0.216 / AUC 0.802.
-- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.499->0.450; fr 0.458->0.492; it 0.459->0.455
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: it 0.459->0.455; de 0.499->0.450; fr 0.458->0.492
 - safe k (XL macro-F1 stays within 0.02 of k=0): **5**
 
 ### flores_agg / 610m (1152-d)
@@ -76,7 +76,7 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.418 | 0.283 | 0.777 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.277 / AUC 0.828 (dirs=5); `random` XL macro-F1 0.268 / AUC 0.818.
-- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.407->0.411; fr 0.482->0.437; it 0.426->0.456
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: it 0.426->0.456; de 0.407->0.411; fr 0.482->0.437
 - safe k (XL macro-F1 stays within 0.02 of k=0): **5**
 
 ## MultiEURLEX (21-label topic)
@@ -123,7 +123,7 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.764 | 0.458 | 0.674 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.466 / AUC 0.699 (dirs=5); `random` XL macro-F1 0.470 / AUC 0.703.
-- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.776->0.777; es 0.675->0.682; fr 0.775->0.766; it 0.723->0.716
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.776->0.777; it 0.723->0.716; fr 0.775->0.766; es 0.675->0.682
 - safe k (XL macro-F1 stays within 0.02 of k=0): **5**
 
 ### toxic / 610m (1152-d)
@@ -138,7 +138,7 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.771 | 0.463 | 0.683 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.488 / AUC 0.726 (dirs=5); `random` XL macro-F1 0.501 / AUC 0.730.
-- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.793->0.785; es 0.671->0.671; fr 0.782->0.775; it 0.727->0.718
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.793->0.785; it 0.727->0.718; fr 0.782->0.775; es 0.671->0.671
 - safe k (XL macro-F1 stays within 0.02 of k=0): **0**
 
 ## XNLI (3-class NLI)
@@ -155,6 +155,7 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.436 | 0.381 | 0.596 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.361 / AUC 0.576 (dirs=5); `random` XL macro-F1 0.313 / AUC 0.568.
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.421->0.431; fr 0.439->0.440; es 0.436->0.440
 - safe k (XL macro-F1 stays within 0.02 of k=0): **5**
 
 ## PAWS-X (binary paraphrase)
@@ -171,7 +172,42 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | 5 | 0.554 | 0.540 | 0.565 |
 
 - controls @ k=5: `inlp` XL macro-F1 0.526 / AUC 0.558 (dirs=5); `random` XL macro-F1 0.516 / AUC 0.550.
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.529->0.534; fr 0.547->0.531; es 0.543->0.528
 - safe k (XL macro-F1 stays within 0.02 of k=0): **5**
+
+## SIB-200 (topic)
+
+### sib200 / 210m (768-d)
+
+| k (PCs removed) | EN-self macro-F1 | XL-mean macro-F1 | XL-mean AUC |
+|---:|---:|---:|---:|
+| 0 | 0.821 | 0.486 | 0.899 |
+| 1 | 0.794 | 0.640 | 0.923 |
+| 2 | 0.837 | 0.677 | 0.938 |
+| 3 | 0.828 | 0.687 | 0.928 |
+| 4 | 0.793 | 0.625 | 0.904 |
+| 5 | 0.799 | 0.433 | 0.794 |
+
+- controls @ k=5: `inlp` XL macro-F1 0.693 / AUC 0.934 (dirs=5); `random` XL macro-F1 0.514 / AUC 0.909.
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.786->0.747; fr 0.785->0.748; es 0.776->0.756
+- safe k (XL macro-F1 stays within 0.02 of k=0): **4**
+
+## textdetox (binary toxicity)
+
+### textdetox / 210m (768-d)
+
+| k (PCs removed) | EN-self macro-F1 | XL-mean macro-F1 | XL-mean AUC |
+|---:|---:|---:|---:|
+| 0 | 0.920 | 0.591 | 0.672 |
+| 1 | 0.905 | 0.567 | 0.672 |
+| 2 | 0.914 | 0.596 | 0.686 |
+| 3 | 0.909 | 0.654 | 0.719 |
+| 4 | 0.917 | 0.651 | 0.714 |
+| 5 | 0.908 | 0.586 | 0.641 |
+
+- controls @ k=5: `inlp` XL macro-F1 0.578 / AUC 0.659 (dirs=5); `random` XL macro-F1 0.608 / AUC 0.687.
+- in-language (train tgt / test tgt) macro-F1, k=0 -> k=5: de 0.880->0.875; it 0.774->0.776; fr 0.872->0.865; es 0.828->0.840
+- safe k (XL macro-F1 stays within 0.02 of k=0): **0**
 
 ## Safe / harmful removal summary
 
@@ -187,6 +223,8 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 | toxic | 610m | 0.501 | 0.463 | -0.038 | 0 | 0.727 | 0.683 | 0 | 0.488 | 0.501 |
 | xnli | 210m | 0.284 | 0.381 | 0.097 | 5 | 0.557 | 0.596 | 5 | 0.361 | 0.313 |
 | pawsx | 210m | 0.522 | 0.540 | 0.019 | 5 | 0.554 | 0.565 | 5 | 0.526 | 0.516 |
+| sib200 | 210m | 0.486 | 0.433 | -0.053 | 4 | 0.899 | 0.794 | 4 | 0.693 | 0.514 |
+| textdetox | 210m | 0.591 | 0.586 | -0.005 | 0 | 0.672 | 0.641 | 4 | 0.578 | 0.608 |
 
 ## Interpretation
 
@@ -200,8 +238,10 @@ How cross-lingual and in-language performance changes as LEADING dimensions of t
 - **toxic / 610m**: XL macro-F1 peaks at k=0 (0.501, +0.000 vs k=0); EN-self range 0.014 over k; random-control gain 0.001 => effect **representation-wide**.
 - **xnli / 210m**: XL macro-F1 peaks at k=3 (0.388, +0.104 vs k=0); EN-self range 0.007 over k; random-control gain 0.029 => effect **language-specific**.
 - **pawsx / 210m**: XL macro-F1 peaks at k=3 (0.551, +0.029 vs k=0); EN-self range 0.017 over k; random-control gain -0.006 => effect **language-specific**.
+- **sib200 / 210m**: XL macro-F1 peaks at k=3 (0.687, +0.201 vs k=0); EN-self range 0.044 over k; random-control gain 0.028 => effect **language-specific**.
+- **textdetox / 210m**: XL macro-F1 peaks at k=3 (0.654, +0.062 vs k=0); EN-self range 0.015 over k; random-control gain 0.017 => effect **language-specific**.
 
 One-line: removing the few leading (language-aligned) PCs *helps* cross-lingual transfer up to k~2-3 and only hurts once many task directions are also removed; the gain disappears under the random-direction control and EN-self stays flat, so the effect is language-subspace-specific, not representation-wide.
 
-*Generated 2026-10-13 00:09:58.*
+*Generated 2026-10-13 00:16:13.*
 
