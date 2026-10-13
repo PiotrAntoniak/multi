@@ -53,8 +53,12 @@ def main():
         for t in chunk:
             msgs = (build_messages("crosslingual", t, src=SRC, tgt=TGT) if MODE == "crosslingual"
                     else build_messages("paraphrase", t, lang=LANG))
-            prompts.append(tok.apply_chat_template(
-                msgs, add_generation_prompt=True, tokenize=False, enable_thinking=False))
+            try:   # Qwen3-style: disable the reasoning block
+                p = tok.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False,
+                                            enable_thinking=False)
+            except Exception:  # templates that don't take enable_thinking (e.g. SmolLM3)
+                p = tok.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False)
+            prompts.append(p)
         enc = tok(prompts, return_tensors="pt", padding=True, truncation=True,
                   max_length=1024).to(device)
         with torch.inference_mode():
