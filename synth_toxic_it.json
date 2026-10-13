@@ -1,0 +1,197 @@
+{
+  "config": {
+    "dataset": "toxi_clean (FredZhang7/toxi-text-3M, leakage-corrected)",
+    "task": "binary is_toxic",
+    "generator": "HuggingFaceTB/SmolLM3-3B",
+    "prompt": "paraphrase_prompts.build_messages('crosslingual', src='English', tgt='Italian')",
+    "gen_batch": 32,
+    "gen_max_new": 256,
+    "decode": "greedy",
+    "en_cap": 160,
+    "seed": 0,
+    "n_en_train": 24000,
+    "n_it_train": 18472,
+    "n_it_val": 2310,
+    "n_it_test": 2310,
+    "it_test_pos_rate": 0.2935064935064935,
+    "feature": "RAW EuroBERT mean (bf16 forward -> fp32), emb_bf16/toxic/<bb>/",
+    "xgb": {
+      "objective": "binary:logistic",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "device": "cuda",
+    "smoke": false,
+    "python": "3.13.5"
+  },
+  "gen_samples": [
+    {
+      "en": "When I went to University a couple of decades ago, a seat in my program was based purely on my high school grades. A meritocratic system (unlike say job interviews, where there is a lot more scope for discrimination).\n\nSo immigrant kids study harder, because their parents push them hard. Half the American kids today are from single parent or divorced families, and don't have a parent who can or wants to push them to study.",
+      "gen_it": "\"\"\" Quando sono andato all'università un paio di decenni fa, un posto nella mia classe era basato esclusivamente sui miei voti al liceo. Un sistema meritocratico (a differenza delle interviste di lavoro, dove c'è molto più spazio per la discriminazione). Quindi i bambini immigrati studiano di più, perché i loro genitori li spingono molto. Metà dei bambini americani oggi provengono da famiglie con un solo genitore o divorziati e non hanno un genitore che possa o voglia spingerli a studiare. \"\"\""
+    },
+    {
+      "en": "Don't be a sore loser, John.\n\nBernie wants the Superdelegates to vote for him. But if they vote for Hillary, then it's corrupt. You can't have it both ways.",
+      "gen_it": "\"\"\" Non essere un perdente amareggiato, John. Bernie vuole che i Superdelegati votino per lui. Ma se votano per Hillary, allora è corrotto. Non puoi avere le due cose. \"\"\""
+    },
+    {
+      "en": "Hmm...good to hear from the heads that believe 8th century stories.",
+      "gen_it": "\"\"\" Hmm...buona cosa sentire dai capi che credono alle storie del VIII secolo. \"\"\""
+    },
+    {
+      "en": "Is he talking about cutting oil tax credits? Boondoggles? the LIO? Legislative perks? Gas line executives and the gas marketing office in Houston, Texas?\n\nI have the feeling he is talking about cutting troopers...and schools....again.\n\nDid you notice how the legislature just had to cut $13M for schools at the last minute to save the budget, but had no problem spending $13M on another LIO they don't need? \n\nThey have the wrong priorities and we must hold them accountable for the money they do have.\n\nAnd I agree no new taxes.  The only way to get the amount of money we need is to get our historical share of oil tax profits.",
+      "gen_it": "\"Sta parlando di tagliare i crediti fiscali sull'olio? Boondoggle? LIO? Permessi legislativi? Esecutivi della linea di gas a Houston, Texas? Ho l'impressione che stia parlando di tagliare i poliziotti...e le scuole...di nuovo. Hai notato come il legislatore abbia dovuto tagliare 13 milioni di dollari alle scuole all'ultimo momento per salvare il bilancio, ma non ha avuto problemi a spendere 13 milioni di dollari per un altro LIO che non serve? Hanno le priorità sbagliate e dobbiamo tenere conto del denaro che hanno. E concordo che non ci siano nuove tasse. L'unico modo per ottenere l'importo di denaro di cui abbiamo bisogno è ottenere la nostra quota storica dei profitti dell'olio.\""
+    },
+    {
+      "en": "I don't &#128683; keep friends &#128109;&#128107;&#128108; they come &#128072; and go &#128073;, don't fuck &#128581; with these bitches &#128109;&#128109;. FAKE ALL THEY KNOW. &#128175;&#10004;&#65039;",
+      "gen_it": "\"I non &#128683; conservo amici &#128109;&#128107;&#128108; perché vengono e vanno &#128072; e non mi fai schifo con queste puttane &#128109;&#128109;. Fingi tutto quello che sanno. &#128175;&#10004;&#65039; \""
+    }
+  ],
+  "backbones": {
+    "210m": {
+      "backbone": "210m",
+      "model": "EuroBERT/EuroBERT-210m",
+      "emb_dir": "emb_bf16/toxic/210m",
+      "n_train_synth": 160,
+      "n_train_real_it": 18472,
+      "xgb_params": {
+        "objective": "binary:logistic",
+        "tree_method": "hist",
+        "max_bin": 64,
+        "device": "cpu",
+        "n_jobs": 2,
+        "seed": 0,
+        "max_depth": 8,
+        "min_child_weight": 5,
+        "learning_rate": 0.1,
+        "n_estimators": 400
+      },
+      "arms": {
+        "synth_it": {
+          "accuracy": 0.706926406926407,
+          "f1_pos": 0.0636237897648686,
+          "auc": 0.5708701161142924,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.09292035398230089,
+          "recall_at_fpr_10": 0.15339233038348082,
+          "fpr_for_recall_90": 0.8321078431372549,
+          "val_threshold": 0.039326898753643036,
+          "f1_pos_val_thr": 0.46153846153846156,
+          "accuracy_val_thr": 0.41818181818181815
+        },
+        "real_it": {
+          "accuracy": 0.7965367965367965,
+          "f1_pos": 0.5811051693404634,
+          "auc": 0.8419542411359825,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.415929203539823,
+          "recall_at_fpr_10": 0.551622418879056,
+          "fpr_for_recall_90": 0.4583333333333333,
+          "val_threshold": 0.21173156797885895,
+          "f1_pos_val_thr": 0.649645390070922,
+          "accuracy_val_thr": 0.7861471861471861
+        },
+        "en_transfer": {
+          "accuracy": 0.7082251082251082,
+          "f1_pos": 0.020348837209302327,
+          "auc": 0.6210768046156515,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.12094395280235988,
+          "recall_at_fpr_10": 0.20353982300884957,
+          "fpr_for_recall_90": 0.7867647058823529,
+          "val_threshold": 0.07683524489402771,
+          "f1_pos_val_thr": 0.46653346653346656,
+          "accuracy_val_thr": 0.5376623376623376
+        },
+        "mixed": {
+          "accuracy": 0.7090909090909091,
+          "f1_pos": 0.13402061855670103,
+          "auc": 0.5971250686852912,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.11799410029498525,
+          "recall_at_fpr_10": 0.19174041297935104,
+          "fpr_for_recall_90": 0.8382352941176471,
+          "val_threshold": 0.03904685378074646,
+          "f1_pos_val_thr": 0.452,
+          "accuracy_val_thr": 0.5255411255411255
+        }
+      }
+    },
+    "610m": {
+      "backbone": "610m",
+      "model": "EuroBERT/EuroBERT-610m",
+      "emb_dir": "emb_bf16/toxic/610m",
+      "n_train_synth": 160,
+      "n_train_real_it": 18472,
+      "xgb_params": {
+        "objective": "binary:logistic",
+        "tree_method": "hist",
+        "max_bin": 64,
+        "device": "cpu",
+        "n_jobs": 2,
+        "seed": 0,
+        "max_depth": 8,
+        "min_child_weight": 5,
+        "learning_rate": 0.1,
+        "n_estimators": 400
+      },
+      "arms": {
+        "synth_it": {
+          "accuracy": 0.7095238095238096,
+          "f1_pos": 0.08207934336525308,
+          "auc": 0.6258359722945225,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.10176991150442478,
+          "recall_at_fpr_10": 0.17994100294985252,
+          "fpr_for_recall_90": 0.7892156862745098,
+          "val_threshold": 0.07407572120428085,
+          "f1_pos_val_thr": 0.4750254841997961,
+          "accuracy_val_thr": 0.5541125541125541
+        },
+        "real_it": {
+          "accuracy": 0.7978354978354978,
+          "f1_pos": 0.587819947043248,
+          "auc": 0.8429610229047371,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.38495575221238937,
+          "recall_at_fpr_10": 0.556047197640118,
+          "fpr_for_recall_90": 0.4270833333333333,
+          "val_threshold": 0.18696379661560059,
+          "f1_pos_val_thr": 0.6396148555708391,
+          "accuracy_val_thr": 0.7731601731601732
+        },
+        "en_transfer": {
+          "accuracy": 0.706926406926407,
+          "f1_pos": 0.0687757909215956,
+          "auc": 0.626390877147319,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.12389380530973451,
+          "recall_at_fpr_10": 0.20206489675516223,
+          "fpr_for_recall_90": 0.7806372549019608,
+          "val_threshold": 0.12855134904384613,
+          "f1_pos_val_thr": 0.46959960454770144,
+          "accuracy_val_thr": 0.5354978354978355
+        },
+        "mixed": {
+          "accuracy": 0.7194805194805195,
+          "f1_pos": 0.21927710843373494,
+          "auc": 0.6828890479495633,
+          "threshold": 0.5,
+          "recall_at_fpr_5": 0.17256637168141592,
+          "recall_at_fpr_10": 0.2713864306784661,
+          "fpr_for_recall_90": 0.7107843137254902,
+          "val_threshold": 0.06638480722904205,
+          "f1_pos_val_thr": 0.49707602339181284,
+          "accuracy_val_thr": 0.6277056277056277
+        }
+      }
+    }
+  },
+  "verdict": "On EuroBERT-210m, synthetic-Italian training reaches only **11%** of the real-Italian ceiling (F1 0.064 vs 0.581) -- a large gap remains. It changes EN-transfer by +0.043 F1 (0.020) and mixing EN + synthetic IT gives 0.134 (-0.447 vs ceiling, +0.114 vs EN-transfer)."
+}
