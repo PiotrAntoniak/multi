@@ -1,0 +1,239 @@
+{
+  "config": {
+    "generators": [
+      "Qwen/Qwen3.5-0.8B",
+      "Qwen/Qwen3.5-2B",
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+    ],
+    "datasets": [
+      "flores",
+      "toxic"
+    ],
+    "backbones": [
+      "210m"
+    ],
+    "prompt": "paraphrase_prompts.build_messages('crosslingual', src='English', tgt='Italian')",
+    "src_lang": "English",
+    "tgt_lang": "Italian",
+    "decode": "greedy",
+    "gen_batch": 16,
+    "start_batch": 16,
+    "batch_candidates": [
+      32,
+      24,
+      16,
+      12,
+      8,
+      4,
+      1
+    ],
+    "torch_compile": true,
+    "compile_mode": "reduce-overhead (dynamic)",
+    "duty": 1.0,
+    "mem_fraction": 1.0,
+    "below_normal_priority": true,
+    "gen_max_new": 384,
+    "seed": 0,
+    "toxic_en_cap": 8000,
+    "xgb": {
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "device": "cuda",
+    "smoke": false,
+    "python": "3.13.5",
+    "flores_n_test": 505,
+    "toxic_n_test": 2310
+  },
+  "generators": [
+    "Qwen/Qwen3.5-0.8B",
+    "Qwen/Qwen3.5-2B",
+    "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+  ],
+  "datasets": [
+    "flores",
+    "toxic"
+  ],
+  "backbones": [
+    "210m"
+  ],
+  "samples": {
+    "flores": {
+      "Qwen/Qwen3.5-0.8B": [
+        {
+          "en": "On Monday, scientists from the Stanford University School of Medicine announced the invention of a new diagnostic tool that can sort cells by type: a tiny printable chip that can be manufactured using standard inkjet printers for possibly about one U.S. cent each.",
+          "gen_it": "Il 1º gennaio, i ricercatori del Dipartimento di Medicina dell'Università di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico che permette di classificare i tessuti in base al loro tipo: una piccola chip stampabile che può essere prodotta utilizzando i normali impressori a inchiostro per un costo stimato di circa un centesimo americano.",
+          "ref_it": "Nella giornata di lunedì, alcuni scienziati della Scuola di Medicina dell'Università di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico capace di ordinare le cellule in base al tipo: un chip minuscolo che può essere stampato utilizzando stampanti a getto di inchiostro al costo di circa 1 centesimo di dollaro l'uno."
+        },
+        {
+          "en": "The Sun doesn't have a crust like the Earth that you can stand on. The whole Sun is made out of gases, fire, and plasma.",
+          "gen_it": "Il Sole non ha una crosta simile a quella dell'aria su cui si può fermarsi. L'intero Sole è composto da gas, fuoco e plasma.",
+          "ref_it": "Il Sole, diversamente dalla Terra, non ha una crosta su cui poggiarsi. L'intero Sole è formato da gas, fuoco e plasma."
+        },
+        {
+          "en": "Unlike larger vehicles, you are probably already familiar with driving your car and know its limitations.",
+          "gen_it": "- Confrontate con veicoli più grandi, poiché probabilmente già vieni familiarizzato con il conducente del tuo auto e con le sue limitazioni.",
+          "ref_it": "Rispetto ai mezzi più grandi, avrete sicuramente già una certa dimestichezza con la vostra auto, e ne conoscete i limiti."
+        },
+        {
+          "en": "Entertainment news website TMZ understands the photographer stopped his vehicle on the other side of Sepulveda Boulevard and attempted to take pictures of the police stop before crossing the road and continuing, prompting the California Highway Patrol police officer conducting the traffic stop to order him back across, twice.",
+          "gen_it": "La newsela TMZ di TMZ comprende che il fotografo ha fermato il proprio veicolo sulla strada opposta a Sepulveda Boulevard e ha tentato di prendere foto della stop della polizia prima di attraversare la strada e continuare, il che ha portato all'ordine del poliziotto della California Highway Patrol che lo ha portato indietro, due volte.",
+          "ref_it": "Da quanto appreso dal sito web di notizie di intrattenimento TMZ, il fotografo ha fermato il suo veicolo dalla parte opposta di Sepulveda Boulevard e ha cercato di fotografare l'ufficiale di polizia che dirigeva il traffico allo stop, poi ha attraversato la strada e ha proseguito, costringendo l'ufficiale di polizia della California Highway Patrol che stava effettuando il controllo del traffico allo stop a intimargli per due volte di tornare indietro."
+        },
+        {
+          "en": "This too can be borrowed from the stock at the entrance but that clothing isn't washed after every user so you may not feel comfortable wearing these skirts. One size fits all for men!",
+          "gen_it": "Questo stesso vestito può essere preso dal magazzino all'ingresso, ma la vestita non viene lavata dopo ogni utente, quindi non si sentirà confortevole indossando queste sciarpe. Uno per tutti per gli uomini!",
+          "ref_it": "Anche questi possono essere presi in prestito presso il magazzino all'ingresso; tuttavia gli indumenti non vengono lavati dopo ogni utente, per cui indossando queste gonne potreste non sentirvi a vostro agio. Per gli uomini, una taglia unica per tutti!"
+        }
+      ],
+      "Qwen/Qwen3.5-2B": [
+        {
+          "en": "On Monday, scientists from the Stanford University School of Medicine announced the invention of a new diagnostic tool that can sort cells by type: a tiny printable chip that can be manufactured using standard inkjet printers for possibly about one U.S. cent each.",
+          "gen_it": "\"Il 1° lunedì, scienziati della Stanford University School of Medicine hanno annunciato l'invenzione di un nuovo strumento diagnostico in grado di classificare le cellule per tipo: un chip di stampa microscopico che può essere prodotto utilizzando stampanti a inchiostro standard per circa un centesimo di dollaro a pezzo.\"",
+          "ref_it": "Nella giornata di lunedì, alcuni scienziati della Scuola di Medicina dell'Università di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico capace di ordinare le cellule in base al tipo: un chip minuscolo che può essere stampato utilizzando stampanti a getto di inchiostro al costo di circa 1 centesimo di dollaro l'uno."
+        },
+        {
+          "en": "The Sun doesn't have a crust like the Earth that you can stand on. The whole Sun is made out of gases, fire, and plasma.",
+          "gen_it": "Il Sole non ha una crosta come la Terra su cui si può camminare. L'intero Sole è composto da gas, fuoco e plasma.",
+          "ref_it": "Il Sole, diversamente dalla Terra, non ha una crosta su cui poggiarsi. L'intero Sole è formato da gas, fuoco e plasma."
+        },
+        {
+          "en": "Unlike larger vehicles, you are probably already familiar with driving your car and know its limitations.",
+          "gen_it": "A differenza dei veicoli più grandi, è probabile che tu sia già familiare con il conduzione del tuo auto e ne conosca i limiti.",
+          "ref_it": "Rispetto ai mezzi più grandi, avrete sicuramente già una certa dimestichezza con la vostra auto, e ne conoscete i limiti."
+        },
+        {
+          "en": "Entertainment news website TMZ understands the photographer stopped his vehicle on the other side of Sepulveda Boulevard and attempted to take pictures of the police stop before crossing the road and continuing, prompting the California Highway Patrol police officer conducting the traffic stop to order him back across, twice.",
+          "gen_it": "Il sito web TMZ di intrattenimento ha capito che il fotografo ha fermato il suo veicolo sul lato opposto della Boulevard di Sepulveda e ha tentato di scattare foto della fermazione dei poliziotti prima di attraversare la strada e continuare, costringendo l'ufficiale della California Highway Patrol che conduceva la fermata di traffico a ordinarlo di tornare indietro, due volte.",
+          "ref_it": "Da quanto appreso dal sito web di notizie di intrattenimento TMZ, il fotografo ha fermato il suo veicolo dalla parte opposta di Sepulveda Boulevard e ha cercato di fotografare l'ufficiale di polizia che dirigeva il traffico allo stop, poi ha attraversato la strada e ha proseguito, costringendo l'ufficiale di polizia della California Highway Patrol che stava effettuando il controllo del traffico allo stop a intimargli per due volte di tornare indietro."
+        },
+        {
+          "en": "This too can be borrowed from the stock at the entrance but that clothing isn't washed after every user so you may not feel comfortable wearing these skirts. One size fits all for men!",
+          "gen_it": "\"Questo può essere preso in prestito dal vestito d'ingresso, ma quel capo non viene lavato dopo ogni utente, quindi non si sentirà a suo agio indossando queste felpette. Una taglia unica per i maschi!\"",
+          "ref_it": "Anche questi possono essere presi in prestito presso il magazzino all'ingresso; tuttavia gli indumenti non vengono lavati dopo ogni utente, per cui indossando queste gonne potreste non sentirvi a vostro agio. Per gli uomini, una taglia unica per tutti!"
+        }
+      ],
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct": [
+        {
+          "en": "On Monday, scientists from the Stanford University School of Medicine announced the invention of a new diagnostic tool that can sort cells by type: a tiny printable chip that can be manufactured using standard inkjet printers for possibly about one U.S. cent each.",
+          "gen_it": "\"Domenica, gli scienziati dall'Università di Stanford della Scuola di Medicina hanno annunciato l'invenzione di un nuovo strumento di diagnosi che può separare le cellule da tipo: un chip tessile a base di inkjet printer, producibile utilizzando standard per uno sconto di un dollaro americano.\"",
+          "ref_it": "Nella giornata di lunedì, alcuni scienziati della Scuola di Medicina dell'Università di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico capace di ordinare le cellule in base al tipo: un chip minuscolo che può essere stampato utilizzando stampanti a getto di inchiostro al costo di circa 1 centesimo di dollaro l'uno."
+        },
+        {
+          "en": "The Sun doesn't have a crust like the Earth that you can stand on. The whole Sun is made out of gases, fire, and plasma.",
+          "gen_it": "Il Sole non ha un crusto come il pianeta Terra che puoi stare sulla. Tutta l'Urano è composta da gas, fuoco e plasma.",
+          "ref_it": "Il Sole, diversamente dalla Terra, non ha una crosta su cui poggiarsi. L'intero Sole è formato da gas, fuoco e plasma."
+        },
+        {
+          "en": "Unlike larger vehicles, you are probably already familiar with driving your car and know its limitations.",
+          "gen_it": "\"Invece di più grandi macchinari, potrebbe essere accorto di guidare il tuo auto e saperne le loro limitazioni.\"",
+          "ref_it": "Rispetto ai mezzi più grandi, avrete sicuramente già una certa dimestichezza con la vostra auto, e ne conoscete i limiti."
+        },
+        {
+          "en": "Entertainment news website TMZ understands the photographer stopped his vehicle on the other side of Sepulveda Boulevard and attempted to take pictures of the police stop before crossing the road and continuing, prompting the California Highway Patrol police officer conducting the traffic stop to order him back across, twice.",
+          "gen_it": "Il sito di entusiasma TMZ è sicuro che il fotografo ha perso il proprio auto sulla sinistra dell'autostrada di Sepulveda e ha tentato di prendere foto del stop di polizia prima di passare l'autostrada e continuare, promissionando che l'officer di polizia California ha ordinato a volte di tornare a passare, due volte.",
+          "ref_it": "Da quanto appreso dal sito web di notizie di intrattenimento TMZ, il fotografo ha fermato il suo veicolo dalla parte opposta di Sepulveda Boulevard e ha cercato di fotografare l'ufficiale di polizia che dirigeva il traffico allo stop, poi ha attraversato la strada e ha proseguito, costringendo l'ufficiale di polizia della California Highway Patrol che stava effettuando il controllo del traffico allo stop a intimargli per due volte di tornare indietro."
+        },
+        {
+          "en": "This too can be borrowed from the stock at the entrance but that clothing isn't washed after every user so you may not feel comfortable wearing these skirts. One size fits all for men!",
+          "gen_it": "\"\"\" Questo è anche possibile prenotare dall'argento nell'entrata, ma questa veste non è lavata ogni volta, così potresti non sentire bene wearin' queste scarpe. Un'unita' è disponibile per i loro. \"\"\"",
+          "ref_it": "Anche questi possono essere presi in prestito presso il magazzino all'ingresso; tuttavia gli indumenti non vengono lavati dopo ogni utente, per cui indossando queste gonne potreste non sentirvi a vostro agio. Per gli uomini, una taglia unica per tutti!"
+        }
+      ]
+    }
+  },
+  "results": {
+    "flores": {
+      "210m": {
+        "generators": {
+          "Qwen/Qwen3.5-0.8B": {
+            "accuracy": 0.5465346534653466,
+            "macro_f1": 0.4066712571329764,
+            "auc": 0.8532942917449419,
+            "n_train": 1501
+          },
+          "Qwen/Qwen3.5-2B": {
+            "accuracy": 0.5227722772277228,
+            "macro_f1": 0.39675676416545885,
+            "auc": 0.8822505465030751,
+            "n_train": 1501
+          },
+          "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
+            "accuracy": 0.5247524752475248,
+            "macro_f1": 0.4124920125620036,
+            "auc": 0.8647521769763474,
+            "n_train": 1501
+          }
+        },
+        "baselines": {
+          "real_it": {
+            "accuracy": 0.5544554455445545,
+            "macro_f1": 0.41492172800364885,
+            "auc": 0.8837947121670661,
+            "n_train": 1501
+          },
+          "en_transfer": {
+            "accuracy": 0.4158415841584158,
+            "macro_f1": 0.23320345638901863,
+            "auc": 0.7920247786907598,
+            "n_train": 1501
+          }
+        }
+      }
+    }
+  },
+  "verdicts": {
+    "flores": "best generator **SmolLM2-1.7B** reaches 0.4125 macro-F1 = **99%** of the real-Italian ceiling (0.4149); EN-transfer floor 0.2332. Ranking: SmolLM2-1.7B (0.4125) > Qwen3.5-0.8B (0.4067) > Qwen3.5-2B (0.3968)."
+  },
+  "gen_stats": {
+    "Qwen/Qwen3.5-0.8B": {},
+    "Qwen/Qwen3.5-2B": {
+      "bench": {
+        "eager_rows_per_s": 1.0861808188744293,
+        "eager_tok_per_s": 79.29119977783334,
+        "compiled_rows_per_s": 1.2164243302107622,
+        "compiled_tok_per_s": 88.79897610538563,
+        "n": 16
+      },
+      "bench_eager_rows_per_s": 1.0861808188744293,
+      "flores": {
+        "batch": 16,
+        "rows_per_s": 2.544210602629757,
+        "tok_per_s": 151.1152617296807,
+        "n": 1501,
+        "duty": 1.0,
+        "gpu_busy_fraction": 0.9999971266927941,
+        "wall_s": 589.9668834209442
+      }
+    },
+    "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
+      "bench": {
+        "eager_rows_per_s": 1.4629551404930492,
+        "eager_tok_per_s": 152.14733461127713,
+        "compiled_rows_per_s": 1.1622934872082855,
+        "compiled_tok_per_s": 120.87852266966169,
+        "n": 16
+      },
+      "bench_eager_rows_per_s": 1.4629551404930492,
+      "flores": {
+        "batch": 16,
+        "rows_per_s": 0.6615179608207336,
+        "tok_per_s": 81.1124148016074,
+        "n": 1501,
+        "duty": 1.0,
+        "gpu_busy_fraction": 0.9999991928107932,
+        "wall_s": 2269.0238041877747
+      }
+    }
+  },
+  "completed_datasets": [
+    "flores"
+  ]
+}
