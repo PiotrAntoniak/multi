@@ -1,0 +1,115 @@
+{
+  "config": {
+    "generators": [
+      "Qwen/Qwen3.5-0.8B",
+      "Qwen/Qwen3.5-2B",
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+    ],
+    "datasets": [
+      "flores",
+      "toxic"
+    ],
+    "backbone": "210m",
+    "xgb": {
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "src_lang": "English",
+    "tgt_lang": "Italian",
+    "embed": "EuroBERT-210m mean (per-text)",
+    "flores_emb": {
+      "dtype": "float32",
+      "max_len": 511
+    },
+    "toxic_emb": {
+      "dtype": "bf16",
+      "max_len": 512
+    },
+    "seed": 0,
+    "toxic_en_cap": 8000,
+    "python": "3.13.5",
+    "flores_n_test": 505
+  },
+  "generators": [
+    "Qwen/Qwen3.5-0.8B",
+    "Qwen/Qwen3.5-2B",
+    "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+  ],
+  "results": {
+    "flores": {
+      "order": [
+        "Qwen/Qwen3.5-0.8B",
+        "Qwen/Qwen3.5-2B",
+        "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+        "all_combined"
+      ],
+      "gaps": [],
+      "real_it": {
+        "accuracy": 0.5544554455445545,
+        "macro_f1": 0.41492172800364885,
+        "auc": 0.8837947121670661,
+        "n_train": 1501
+      },
+      "en_transfer": {
+        "accuracy": 0.4158415841584158,
+        "macro_f1": 0.23320345638901863,
+        "auc": 0.7920247786907598,
+        "n_train": 1501
+      },
+      "Qwen/Qwen3.5-0.8B": {
+        "accuracy": 0.5465346534653466,
+        "macro_f1": 0.4066712571329764,
+        "auc": 0.8532942917449419,
+        "n_train": 1501
+      },
+      "Qwen/Qwen3.5-2B": {
+        "accuracy": 0.5227722772277228,
+        "macro_f1": 0.39675676416545885,
+        "auc": 0.8822505465030751,
+        "n_train": 1501
+      },
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
+        "accuracy": 0.5247524752475248,
+        "macro_f1": 0.4124920125620036,
+        "auc": 0.8647521769763474,
+        "n_train": 1501
+      },
+      "all_combined": {
+        "accuracy": 0.5881188118811881,
+        "macro_f1": 0.4748662373852767,
+        "auc": 0.8820549263680469,
+        "n_train": 4503,
+        "generators": [
+          "Qwen/Qwen3.5-0.8B",
+          "Qwen/Qwen3.5-2B",
+          "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+        ]
+      }
+    }
+  },
+  "verdicts": {
+    "flores": {
+      "text": "UNION of 3 generator(s) reaches 0.4749 macro-F1 vs best single **SmolLM2-1.7B** 0.4125 (UNION WINS) and real-IT ceiling 0.4149 (114% of ceiling, +0.0599 vs ceiling); EN-transfer floor 0.2332.",
+      "beats_best_single": true,
+      "best_single": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "best_single_value": 0.4124920125620036,
+      "combined_value": 0.4748662373852767,
+      "ceiling": 0.41492172800364885,
+      "floor": 0.23320345638901863,
+      "pct_of_ceiling": 114.44718493534778
+    }
+  },
+  "completed_datasets": [
+    "flores"
+  ],
+  "pending": {
+    "toxic": "not run: toxic generations cached for {Qwen3.5-0.8B}; missing {SmolLM2-1.7B, Qwen3.5-2B} (the gen_compare run is still generating; re-run this script when they land)."
+  }
+}
