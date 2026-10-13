@@ -180,7 +180,134 @@ Use these for *pretraining-style* rephrasing; for **labeled** classification dat
 `nemotron/extract_knowledge.md`, `nemotron/diverse_qa_pairs.md`, `nemotron/knowledge_list.md`,
 `rewire/guided_rewrite_corrected.md`, `dspy/5-max_full_evals.md` (see the repo's `prompts/` tree).
 
-## 8. Prompt-design checklist (from FinePhrase)
+## 8. Ready-to-use language-pair templates (copy-paste)
+
+Fill-in-the-blank templates for **English → many languages** and **many languages → English**. Replace
+`{TEXT}` with your text; everything else is already set. Language names can be swapped per the
+[wikipedia_style_rephrasing.md](https://github.com/huggingface/finephrase/tree/main/prompts) conventions.
+
+### 8.0 Generic (any pair)
+```
+SYSTEM: You are a careful multilingual data generator. You rewrite the user's text into {TGT} while
+preserving its meaning exactly. You output only the {TGT} text, with no quotes or commentary.
+USER:   Rewrite the following {SRC} text into natural, fluent {TGT}. Preserve ALL factual content and
+        entities (names, numbers, dates). Do not add or remove information. Output ONLY the {TGT} text.
+        {SRC} text:
+        """ {TEXT} """
+```
+
+### 8.1 English → target
+
+**EN → DE**
+```
+SYSTEM: You are a careful multilingual data generator. You rewrite the user's text into German while
+preserving its meaning exactly. You output only the German text, with no quotes or commentary.
+USER:   Rewrite the following English text into natural, fluent German. Preserve ALL factual content and
+        entities (names, numbers, dates). Do not add or remove information. Output ONLY the German text.
+        English text:
+        """ {TEXT} """
+```
+
+**EN → FR**
+```
+SYSTEM: ... rewrite ... into French ... output only the French text ...
+USER:   Rewrite the following English text into natural, fluent French. Preserve ALL factual content and
+        entities. Do not add or remove information. Output ONLY the French text.
+        English text:
+        """ {TEXT} """
+```
+
+**EN → IT**
+```
+SYSTEM: ... rewrite ... into Italian ... output only the Italian text ...
+USER:   Rewrite the following English text into natural, fluent Italian. Preserve ALL factual content and
+        entities. Do not add or remove information. Output ONLY the Italian text.
+        English text:
+        """ {TEXT} """
+```
+
+**EN → ES**
+```
+SYSTEM: ... rewrite ... into Spanish ... output only the Spanish text ...
+USER:   Rewrite the following English text into natural, fluent Spanish. Preserve ALL factual content and
+        entities. Do not add or remove information. Output ONLY the Spanish text.
+        English text:
+        """ {TEXT} """
+```
+
+**EN → NL / PT / RU / ZH / JA / AR** — same block, swap the language name:
+`Dutch · Portuguese · Russian · Chinese (Simplified) · Japanese · Arabic`.
+```
+USER: Rewrite the following English text into natural, fluent {TGT}. Preserve ALL factual content and
+      entities. Do not add or remove information. Output ONLY the {TGT} text.
+      English text:
+      """ {TEXT} """
+```
+
+### 8.2 Target → English
+
+**DE → EN**
+```
+SYSTEM: You are a careful multilingual data generator. You rewrite the user's text into English while
+preserving its meaning exactly. You output only the English text, with no quotes or commentary.
+USER:   Rewrite the following German text into natural, fluent English. Preserve ALL factual content and
+        entities (names, numbers, dates). Do not add or remove information. Output ONLY the English text.
+        German text:
+        """ {TEXT} """
+```
+
+**FR → EN**
+```
+USER: Rewrite the following French text into natural, fluent English. Preserve ALL factual content and
+      entities. Do not add or remove information. Output ONLY the English text.
+      French text:
+      """ {TEXT} """
+```
+
+**IT → EN**
+```
+USER: Rewrite the following Italian text into natural, fluent English. Preserve ALL factual content and
+      entities. Do not add or remove information. Output ONLY the English text.
+      Italian text:
+      """ {TEXT} """
+```
+
+**ES → EN**
+```
+USER: Rewrite the following Spanish text into natural, fluent English. Preserve ALL factual content and
+      entities. Do not add or remove information. Output ONLY the English text.
+      Spanish text:
+      """ {TEXT} """
+```
+
+**NL / PT / RU / ZH / JA / AR → EN** — same block, swap the source-language name.
+
+### 8.3 One-liner form (when you only get a single prompt string)
+```
+Translate the following {SRC} text into {TGT}, preserving all factual content and entities exactly.
+Do not add or remove information. Output only the {TGT} text.
+{TEXT}
+```
+
+### 8.4 Language name reference (use the *name*, not the code, in the prompt)
+| code | name to put in the prompt |
+|---|---|
+| en | English |
+| de | German |
+| fr | French |
+| it | Italian |
+| es | Spanish |
+| nl | Dutch |
+| pt | Portuguese |
+| ru | Russian |
+| zh | Chinese (Simplified) |
+| ja | Japanese |
+| ar | Arabic |
+
+> For any pair, the generic 8.0 block is sufficient — the concrete blocks above are just pre-filled.
+> Pair with the **filtering** step (Section 5) and, for labeled data, keep the **label** fixed.
+
+## 9. Prompt-design checklist (from FinePhrase)
 
 - Prefer **one clear instruction** over many constraints; state the **output format explicitly**
   ("Output only the …"), which was the single biggest lever.
