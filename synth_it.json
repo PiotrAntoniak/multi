@@ -1,0 +1,162 @@
+{
+  "config": {
+    "dataset": "flores sent",
+    "n_classes": 12,
+    "classes": [
+      "business and economy",
+      "crime and law",
+      "education and society",
+      "entertainment and culture",
+      "geography",
+      "health",
+      "history",
+      "politics",
+      "safety",
+      "science and technology",
+      "sports",
+      "travel"
+    ],
+    "generator": "HuggingFaceTB/SmolLM3-3B",
+    "system_prompt": "You rewrite/translate English text into natural Italian, preserving meaning; output only the Italian text.",
+    "gen_batch": 16,
+    "gen_max_new": 384,
+    "decode": "greedy",
+    "feature": "RAW EuroBERT mean (train_flores12 'full'), aligned to current CSV",
+    "splits": {
+      "train": 997,
+      "val": 504,
+      "test": 505
+    },
+    "n_synthetic": 1501,
+    "n_empty": 0,
+    "xgb": {
+      "objective": "multi:softprob",
+      "num_class": 12,
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "learning_rate": 0.1,
+      "n_estimators": 400
+    },
+    "device": "cuda",
+    "smoke": false,
+    "seed": 0,
+    "python": "3.13.5"
+  },
+  "gen_samples": [
+    {
+      "en": "On Monday, scientists from the Stanford University School of Medicine announced the invention of a new diagnostic tool that can sort cells by type: a tiny printable chip that can be manufactured using standard inkjet printers for possibly about one U.S. cent each.",
+      "gen_it": "Il lunedì, i ricercatori della Stanford University School of Medicine hanno annunciato l'invenzione di un nuovo strumento diagnostico che può classificare le cellule per tipo: un piccolo chip stampabile che può essere prodotto utilizzando stampanti a inchiostro standard per un costo stimato di circa un centesimo statunitense.",
+      "ref_it": "Nella giornata di lunedì, alcuni scienziati della Scuola di Medicina dell'Università di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico capace di ordinare le cellule in base al tipo: un chip minuscolo che può essere stampato utilizzando stampanti a getto di inchiostro al costo di circa 1 centesimo di dollaro l'uno."
+    },
+    {
+      "en": "The Sun doesn't have a crust like the Earth that you can stand on. The whole Sun is made out of gases, fire, and plasma.",
+      "gen_it": "Il Sole non ha una crosta come la Terra, su cui potresti camminare. Il Sole è composto interamente da gas, fuoco e plasma.",
+      "ref_it": "Il Sole, diversamente dalla Terra, non ha una crosta su cui poggiarsi. L'intero Sole è formato da gas, fuoco e plasma."
+    },
+    {
+      "en": "Unlike larger vehicles, you are probably already familiar with driving your car and know its limitations.",
+      "gen_it": "A differenza dei veicoli più grandi, probabilmente sei già abituato a guidare la tua auto e conosci le sue limitazioni.",
+      "ref_it": "Rispetto ai mezzi più grandi, avrete sicuramente già una certa dimestichezza con la vostra auto, e ne conoscete i limiti."
+    },
+    {
+      "en": "Entertainment news website TMZ understands the photographer stopped his vehicle on the other side of Sepulveda Boulevard and attempted to take pictures of the police stop before crossing the road and continuing, prompting the California Highway Patrol police officer conducting the traffic stop to order him back across, twice.",
+      "gen_it": "Il sito web di notizie sull'intrattenimento TMZ ha appreso che il fotografo ha fatto fermare il suo veicolo dall'altra parte della Sepulveda Boulevard e ha cercato di scattare foto della fermata della polizia prima di attraversare la strada e proseguire. Questo ha spinto l'agente della California Highway Patrol che stava conducendo la fermata stradale a ordinargli di tornare sull'altra parte della strada, due volte.",
+      "ref_it": "Da quanto appreso dal sito web di notizie di intrattenimento TMZ, il fotografo ha fermato il suo veicolo dalla parte opposta di Sepulveda Boulevard e ha cercato di fotografare l'ufficiale di polizia che dirigeva il traffico allo stop, poi ha attraversato la strada e ha proseguito, costringendo l'ufficiale di polizia della California Highway Patrol che stava effettuando il controllo del traffico allo stop a intimargli per due volte di tornare indietro."
+    },
+    {
+      "en": "This too can be borrowed from the stock at the entrance but that clothing isn't washed after every user so you may not feel comfortable wearing these skirts. One size fits all for men!",
+      "gen_it": "Anche questo può essere preso in prestito dalla cassa all'ingresso, ma la biancheria non viene lavata dopo ogni utente, quindi potresti non sentirti a tuo agio a indossare queste gonna. Una taglia unica per uomini!",
+      "ref_it": "Anche questi possono essere presi in prestito presso il magazzino all'ingresso; tuttavia gli indumenti non vengono lavati dopo ogni utente, per cui indossando queste gonne potreste non sentirvi a vostro agio. Per gli uomini, una taglia unica per tutti!"
+    }
+  ],
+  "backbones": {
+    "210m": {
+      "backbone": "210m",
+      "model": "EuroBERT/EuroBERT-210m",
+      "emb_dir": "embeddings",
+      "n_train_rows": 1501,
+      "xgb_params": {
+        "objective": "multi:softprob",
+        "num_class": 12,
+        "tree_method": "hist",
+        "max_bin": 64,
+        "device": "cpu",
+        "n_jobs": 2,
+        "seed": 0,
+        "max_depth": 8,
+        "min_child_weight": 5,
+        "learning_rate": 0.1,
+        "n_estimators": 400
+      },
+      "arms": {
+        "synth_it": {
+          "accuracy": 0.5386138613861386,
+          "macro_f1": 0.4102666238347878,
+          "auc_ovr_macro": 0.8808526950453078
+        },
+        "real_it": {
+          "accuracy": 0.5544554455445545,
+          "macro_f1": 0.41492172800364885,
+          "auc_ovr_macro": 0.8837947121670661
+        },
+        "en_transfer": {
+          "accuracy": 0.4158415841584158,
+          "macro_f1": 0.23320345638901863,
+          "auc_ovr_macro": 0.7920247786907598
+        },
+        "mixed": {
+          "accuracy": 0.5544554455445545,
+          "macro_f1": 0.42584606643832984,
+          "auc_ovr_macro": 0.8725972896439452
+        }
+      }
+    },
+    "610m": {
+      "backbone": "610m",
+      "model": "EuroBERT/EuroBERT-610m",
+      "emb_dir": "embeddings_610",
+      "n_train_rows": 1501,
+      "xgb_params": {
+        "objective": "multi:softprob",
+        "num_class": 12,
+        "tree_method": "hist",
+        "max_bin": 64,
+        "device": "cpu",
+        "n_jobs": 2,
+        "seed": 0,
+        "max_depth": 8,
+        "min_child_weight": 5,
+        "learning_rate": 0.1,
+        "n_estimators": 400
+      },
+      "arms": {
+        "synth_it": {
+          "accuracy": 0.5603960396039604,
+          "macro_f1": 0.4690785951903524,
+          "auc_ovr_macro": 0.8804499993234248
+        },
+        "real_it": {
+          "accuracy": 0.5603960396039604,
+          "macro_f1": 0.4769793355031083,
+          "auc_ovr_macro": 0.8976177018150606
+        },
+        "en_transfer": {
+          "accuracy": 0.48316831683168315,
+          "macro_f1": 0.3275165455932951,
+          "auc_ovr_macro": 0.8565318570450612
+        },
+        "mixed": {
+          "accuracy": 0.5663366336633663,
+          "macro_f1": 0.470237176048865,
+          "auc_ovr_macro": 0.9012778553262976
+        }
+      }
+    }
+  },
+  "verdict": "On EuroBERT-210m, synthetic-Italian training reaches **99%** of the real-Italian ceiling (macro-F1 0.410 vs 0.415) -- i.e. it **approaches** the ceiling. It clearly beats EN-transfer (0.233) by +0.177 macro-F1; mixing EN + synthetic IT gives 0.426 (+0.193 vs EN-transfer)."
+}
