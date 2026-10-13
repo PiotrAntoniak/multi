@@ -11,9 +11,9 @@ Pipeline (deliberately identical for both backbones, so the comparison is purely
 embedding backbone):
 
     * data  = data/toxi_clean/{en,it}_{train,validation,test}.parquet   (label is_toxic)
-    * emb   = emb_bf16/toxic/{210m,610m}/emb_<lang>_<split>.npy         (mean pooled, bf16)
-    * transform = perlang_z = L2-normalize then per-language z-score, stats fit on the TEST
-      language's OWN TRAIN rows (transform language == test language, independent of model).
+    * emb   = emb_bf16/toxic/{210m,610m}/emb_<lang>_<split>.npy         (mean pooled, float32)
+    * features = the RAW mean embeddings, NO perlang_z -- no L2-normalize, no per-language
+      z-score, no other normalisation/alignment (matches `toxi_pr_models.py`).
     * detector  = XGBClassifier(objective=binary:logistic, tree_method=hist, max_bin=64,
       device=cpu, n_jobs=2, seed=0, max_depth=8, min_child_weight=5, learning_rate=0.1,
       n_estimators=400) -- trained FRESH for both backbones (210m no longer reuses the
@@ -21,9 +21,10 @@ embedding backbone):
     * val-tuned threshold = F1-optimal on the model's OWN-language validation split
       (grid 0.00..1.00 step 0.01), same rule as models_toxi/manifest.json.
 
-Outputs (create-only except toxi_pr.png which is overwritten by design):
+Outputs (create-only except toxi_pr.png / toxi_pr.md which are overwritten by design):
     toxi_pr_all.json -- all the numbers (per-backbone per-cell metrics + full threshold sweeps)
     toxi_pr.png      -- the combined figure
+    toxi_pr.md       -- short markdown summary (only if it already exists)
 
 Constraints: mean pooling only; CPU XGBoost; no GPU needed (embeddings already cached);
 no file deleted or moved; no console window.
@@ -51,6 +52,7 @@ SEEDS = [0]
 
 OUT_JSON = os.path.join(REPO, "toxi_pr_all.json")
 OUT_PNG = os.path.join(REPO, "toxi_pr.png")
+OUT_MD = os.path.join(REPO, "toxi_pr.md")
 
 XGB_PARAMS = dict(objective="binary:logistic", tree_method="hist", max_bin=64,
                   device="cpu", n_jobs=2, seed=0, max_depth=8, min_child_weight=5,
@@ -73,26 +75,6 @@ _T0 = time.time()
 
 def log(msg):
     print("[%7.1fs] %s" % (time.time() - _T0, msg), flush=True)
-
-
-# ------------------------------------------------------------------ transforms
-def l2norm(X):
-    X = np.asarray(X, dtype=np.float64)
-    n = np.linalg.norm(X, axis=1, keepdims=True)
-    n[n == 0] = 1.0
-    return X / n
-
-
-def fit_perlang_z(X_train):
-    Z = l2norm(X_train)
-    mu = Z.mean(0)
-    sd = Z.std(0)
-    sd = np.where(sd > 0, sd, 1.0)
-    return mu, sd
-
-
-def apply_perlang_z(X, mu, sd):
-    return (l2norm(X) - mu) / sd
 
 
 # ------------------------------------------------------------------ metrics
@@ -168,6 +150,7 @@ def load_raw(emb_dir):
         raw[lg] = {}
         for split, df in (("train", tr), ("validation", va), ("test", te)):
             e = np.load(os.path.join(emb_dir, "emb_%s_%s.npy" % (lg, split)))
+            e = np.ascontiguousarray(e, dtype=np.float32)
             assert e.shape[0] == len(df), "%s/%s row mismatch %d vs %d" % (
                 emb_dir, split, e.shape[0], len(df))
             raw[lg][split] = (e, df["is_toxic"].astype(int).to_numpy())
@@ -175,21 +158,16 @@ def load_raw(emb_dir):
 
 
 def train_backbone(emb_dir, name):
-    """Train FRESH EN and IT XGBoost detectors on this backbone's embeddings; return cells."""
+    """Train FRESH EN and IT XGBoost detectors on this backbone's RAW embeddings; return cells."""
     import xgboost as xgb
     raw = load_raw(emb_dir)
-    zstats = {lg: fit_perlang_z(raw[lg]["train"][0]) for lg in PAIR}
-
-    def feats(lg, split):
-        mu, sd = zstats[lg]
-        return apply_perlang_z(raw[lg][split][0], mu, sd).astype(np.float32)
 
     clfs, vthr, meta = {}, {}, {}
     for lg in PAIR:
         clf = xgb.XGBClassifier(**XGB_PARAMS)
-        clf.fit(feats(lg, "train"), raw[lg]["train"][1])
+        clf.fit(raw[lg]["train"][0], raw[lg]["train"][1])
         clfs[lg] = clf
-        sv = clf.predict_proba(feats(lg, "validation"))[:, 1]
+        sv = clf.predict_proba(raw[lg]["validation"][0])[:, 1]
         vthr[lg] = f1_opt_threshold(raw[lg]["validation"][1], sv)
         meta[lg] = {"n_train": int(len(raw[lg]["train"][1])),
                     "n_val": int(len(raw[lg]["validation"][1])),
@@ -204,7 +182,7 @@ def train_backbone(emb_dir, name):
     for ml in PAIR:
         for tl in PAIR:
             key = "%s_model_on_%s" % (ml, tl)
-            s = clfs[ml].predict_proba(feats(tl, "test"))[:, 1].astype(np.float64)
+            s = clfs[ml].predict_proba(raw[tl]["test"][0])[:, 1].astype(np.float64)
             y = raw[tl]["test"][1]
             prec, rec = sweep(y, s, THR_SWEEP)
             cells[key] = {
@@ -286,13 +264,54 @@ def plot(all_cells, out_png):
         axes[r, 0].set_ylabel("precision" if r == 0 else "recall")
 
     fig.suptitle("toxi_pr -- Precision (top) / Recall (bottom) vs decision threshold  --  "
-                 "EuroBERT-210m (solid) vs EuroBERT-610m (dotted), mean pooling + perlang_z\n"
+                 "EuroBERT-210m (solid) vs EuroBERT-610m (dotted), RAW mean embeddings\n"
                  "left = EN model / EN test;  right = EN model / IT test + IT model / IT test;  "
                  "circles/squares = each model's own val-tuned F1-optimal threshold", fontsize=11)
     fig.tight_layout(rect=[0, 0, 1, 0.92])
     fig.savefig(out_png, dpi=130)
     plt.close(fig)
     log("wrote %s" % out_png)
+
+
+# ------------------------------------------------------------------ markdown summary
+def write_md(all_cells, payload, out_md):
+    """Short markdown summary consistent with the figure + json (overwrites toxi_pr.md)."""
+    L = []
+    A = L.append
+    A("# toxi_pr -- precision / recall 2x2 (XGBoost, RAW mean embeddings)")
+    A("")
+    A("XGBoost toxicity precision/recall 2x2 (EN model / IT model x EN / IT test) on **RAW** "
+      "mean-pooled EuroBERT embeddings `emb_bf16/toxic/{210m,610m}/emb_<lang>_<split>.npy` "
+      "(`data/toxi_clean/`, label `is_toxic`).  **No `perlang_z`** -- no L2-normalize, no "
+      "per-language z-score, no alignment (matches `toxi_pr_models.py`).  Figure `toxi_pr.png`: "
+      "`210m` = solid, `610m` = dotted.  Val-tuned threshold = F1-optimal on the model's "
+      "own-language validation split (grid 0.00..1.00 step 0.01).  XGBoost "
+      "`binary:logistic, hist, max_bin=64, cpu, n_jobs=2, seed=0, depth=8, mcw=5, lr=0.1, n=400`; "
+      "a fresh EN and IT model per backbone.")
+    A("")
+    A("## @ val-tuned threshold and @ recall=0.90 (per backbone)")
+    A("")
+    A("| cell | backbone | P@val | R@val | F1@val | AUC | P@R90 | R@R90 | thr@R90 |")
+    A("|---|---|---|---|---|---|---|---|---|")
+    for key in ("en_model_on_en", "en_model_on_it", "it_model_on_it"):
+        for bb in BACKBONES:
+            c = all_cells[bb][key]
+            vt, r9 = c["val_thr"], c["recall90"]
+            A("| %s | %s | %.3f | %.3f | %.3f | %.3f | %.3f | %.3f | %.3f |" % (
+                CELL_LABELS[key], bb, vt["precision"], vt["recall"], vt["f1"], c["auc"],
+                r9["precision"], r9["recall"], r9["threshold"]))
+    A("")
+    A("## Interpretation")
+    A("")
+    for bb in BACKBONES:
+        ei = all_cells[bb]["en_model_on_it"]["recall90"]["precision"]
+        ii = all_cells[bb]["it_model_on_it"]["recall90"]["precision"]
+        A("- **%s**: on Italian at recall=0.90, EN-on-IT precision **%.3f** vs IT-on-IT **%.3f** "
+          "(EN-on-IT gap **%+.3f** vs native)." % (bb, ei, ii, ei - ii))
+    A("")
+    with open(out_md, "w", encoding="utf-8") as f:
+        f.write("\n".join(L) + "\n")
+    log("wrote %s" % out_md)
 
 
 # ------------------------------------------------------------------ main
@@ -311,8 +330,8 @@ def main():
             "data_dir": "data/toxi_clean",
             "emb_root": "emb_bf16/toxic",
             "backbones": {"210m": "emb_bf16/toxic/210m (solid)", "610m": "emb_bf16/toxic/610m (dotted)"},
-            "pooling": "mean", "transform": "perlang_z (L2-normalize then per-language z-score, "
-            "stats fit on the TEST language's OWN TRAIN rows)",
+            "pooling": "mean", "transform": "none (RAW mean embeddings: no perlang_z, no L2-norm, "
+            "no z-score, no alignment -- matches toxi_pr_models.py)",
             "xgb_params": XGB_PARAMS, "seeds": SEEDS, "threshold_grid": THR_GRID,
             "recall_target": RECALL_TARGET,
             "val_threshold_rule": "F1-optimal on the model's own-language validation split",
@@ -341,6 +360,11 @@ def main():
     log("wrote %s" % OUT_JSON)
 
     plot(all_cells, OUT_PNG)
+
+    # toxi_pr.md exists (from the older toxi_pr.py); refresh it so it matches the raw-feature
+    # figure.  Only overwrite when the file is present.
+    if os.path.exists(OUT_MD):
+        write_md(all_cells, payload, OUT_MD)
 
     log("=" * 70)
     for name in ("en_model_on_en", "en_model_on_it", "it_model_on_it"):
