@@ -75,3 +75,11 @@ chunk_pool_mel*
 
 # MT caches (derived, regenerated on demand)
 mt_cache_*.json
+
+# Backbone-grid / matrix / fine-tune derived embedding caches (regenerated)
+emb_bf16/
+lang_matrix_emb/
+sst2_emb_610/
+emotion_emb_610/
+toxi_emb_210/
+toxi_emb_610/
