@@ -153,6 +153,7 @@ _BENCH_N = 16
 _DUTY = DUTY              # GPU duty cycle for generation (1.0 = no throttle)
 _MEM_FRACTION = MEM_FRACTION
 _BELOW_NORMAL = True      # lower process priority so the desktop stays responsive
+_GEN_ONLY = False         # generation-only: stop after generating (no embed/train/outputs)
 
 _GEN_MODEL = {}
 _EMB_MODEL = {}
@@ -938,7 +939,7 @@ def _train_eval(bb, ds, d, gen_outs, generators):
 def main(argv=None):
     global _SMOKE, _DEVICE, GEN_BATCH, START_BATCH, GEN_MAX_NEW
     global _WAIT_GPU_MB, _WAIT_GPU_SEC, _COMPILE, _BENCH_COMPILE
-    global _DUTY, _MEM_FRACTION, _BELOW_NORMAL
+    global _DUTY, _MEM_FRACTION, _BELOW_NORMAL, _GEN_ONLY
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(description="Compare 3 generators for EN->IT synthetic data.")
     ap.add_argument("--generators", default=",".join(GENERATORS),
@@ -978,6 +979,8 @@ def main(argv=None):
     ap.add_argument("--resume", action="store_true",
                     help="no-op: completed caches and partial checkpoints are reused "
                          "automatically")
+    ap.add_argument("--gen-only", dest="gen_only", action="store_true",
+                    help="generate only: stop after generation (do not embed/train/write outputs)")
     ap.add_argument("--launch", action="store_true")
     ap.add_argument("--from-json", action="store_true")
     args = ap.parse_args(argv)
@@ -1005,6 +1008,8 @@ def main(argv=None):
         passthrough += ["--duty", str(args.duty), "--mem-fraction", str(args.mem_fraction)]
         if not args.below_normal:
             passthrough += ["--no-below-normal"]
+        if args.gen_only:
+            passthrough += ["--gen-only"]
         if args.device != "auto":
             passthrough += ["--device", args.device]
         if args.gen_limit:
@@ -1023,6 +1028,7 @@ def main(argv=None):
     _DUTY = args.duty
     _MEM_FRACTION = args.mem_fraction
     _BELOW_NORMAL = args.below_normal
+    _GEN_ONLY = args.gen_only
     generators = [g.strip() for g in args.generators.split(",") if g.strip()]
     datasets = [d.strip() for d in args.datasets.split(",") if d.strip()]
     bks = [b.strip() for b in args.backbones.split(",") if b.strip()]
@@ -1041,8 +1047,10 @@ def main(argv=None):
 
     with open(PID_PATH, "w", encoding="utf-8") as f:
         f.write(str(os.getpid()))
-    log("start pid=%d device=%s smoke=%s duty=%.2f mem_frac=%.2f generators=%s datasets=%s "
-        "backbones=%s" % (os.getpid(), _DEVICE, _SMOKE, _DUTY, _MEM_FRACTION, generators,
+    log("start pid=%d device=%s smoke=%s duty=%.2f mem_frac=%.2f gen_only=%s alloc_conf=%s "
+        "generators=%s datasets=%s "
+        "backbones=%s" % (os.getpid(), _DEVICE, _SMOKE, _DUTY, _MEM_FRACTION, _GEN_ONLY,
+                          os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "<unset>"), generators,
                           datasets, bks))
     write_status({"phase": "start", "device": _DEVICE, "generators": generators,
                   "datasets": datasets, "backbones": bks})
@@ -1147,6 +1155,11 @@ def main(argv=None):
             gen_outs[(ds, g)] = out
             _free_gen_model(g)          # one model resident at a time
         _free_emb_models()
+
+        if _GEN_ONLY:                   # generation-only mode: stop before embed/train/outputs
+            write_status({"phase": "generated", "dataset": ds, "gen_only": True})
+            log("GEN-ONLY: generations for %s complete; skipping embed/train/outputs" % ds)
+            continue
 
         # samples for this dataset
         payload["samples"][ds] = {}
