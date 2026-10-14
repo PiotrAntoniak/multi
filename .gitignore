@@ -84,3 +84,6 @@ emotion_emb_610/
 toxi_emb_210/
 toxi_emb_610/
 *.smoke
+models/*.gguf
+*.partial.json
+*.pyc
