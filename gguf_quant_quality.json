@@ -1,0 +1,106 @@
+{
+  "config": {
+    "src": "English",
+    "tgt": "Italian",
+    "n": 150,
+    "decoding": "greedy (temp 0), until EOS",
+    "prompt": "crosslingual"
+  },
+  "results": [
+    {
+      "tag": "Q4_K_M",
+      "file": "Qwen3.5-2B-Q4_K_M.gguf",
+      "size_mb": 1280.8,
+      "n": 150,
+      "chrf": 53.62038928158941,
+      "chrfpp": 50.45848214487519,
+      "bleu": 22.559376166061888,
+      "tok_per_s": 66.09948538733488,
+      "gen_seconds": 81.5,
+      "wall_seconds": 262.2,
+      "total_tokens": 5389,
+      "hyps": null
+    },
+    {
+      "tag": "Q8_0",
+      "file": "Qwen3.5-2B-Q8_0.gguf",
+      "size_mb": 2012.0,
+      "n": 150,
+      "chrf": 53.79538251055382,
+      "chrfpp": 50.604770261987895,
+      "bleu": 22.526939276154366,
+      "tok_per_s": 55.743000805307325,
+      "gen_seconds": 97.5,
+      "wall_seconds": 155.0,
+      "total_tokens": 5434,
+      "hyps": null
+    },
+    {
+      "tag": "BF16",
+      "file": "Qwen3.5-2B-BF16.gguf",
+      "size_mb": 3775.7,
+      "n": 150,
+      "chrf": 54.0122534656683,
+      "chrfpp": 50.80870702689485,
+      "bleu": 22.74471656609193,
+      "tok_per_s": 42.405602475272005,
+      "gen_seconds": 128.5,
+      "wall_seconds": 172.6,
+      "total_tokens": 5449,
+      "hyps": null
+    }
+  ],
+  "examples": {
+    "Q4_K_M": [
+      {
+        "en": "On Monday, scientists from the Stanford University School of Medicine announced the invention of a new diagnostic tool that can sort cells by type: a tiny printable chip that can be manufactured using standard inkjet printers for possibly about one U.S. cent each.",
+        "hyp": "Il 1° lunedì, ricercatori della Stanford University School of Medicine hanno annunciato l'invenzione di un nuovo strumento diagnostico in grado di classificare le cellule per tipo: un chip microscopico stampabile che può essere prodotto con una stampante a inchiostro standard per circa un centesimo di dollaro per unità.",
+        "ref": "Nella giornata di lunedÃ¬, alcuni scienziati della Scuola di Medicina dell'UniversitÃ  di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico capace di ordinare le cellule in base al tipo: un chip minuscolo che puÃ² essere stampato utilizzando stampanti a getto di inchiostro al costo di circa 1 centesimo di dollaro l'uno."
+      },
+      {
+        "en": "Lead researchers say this may bring early detection of cancer, tuberculosis, HIV and malaria to patients in low-income countries, where the survival rates for illnesses such as breast cancer can be half those of richer countries.",
+        "hyp": "I ricercatori principali affermano che questo potrebbe portare alla diagnosi precoce del cancro, della tubercolosi, dell'HIV e della malaria nei paesi a basso reddito, dove le tassi di sopravvivenza per malattie come il cancro al seno possono essere la metà di quelli dei paesi più ricchi.",
+        "ref": "Secondo i responsabili della ricerca questo strumento potrebbe consentire diagnosi precoci di cancro, tubercolosi, HIV e malaria per i malati che vivono in Paesi a basso reddito. In alcuni di questi Paesi il tasso di sopravvivenza legati a patologie come il cancro al seno puÃ² essere addirittura la metÃ  rispetto a quello registrato nei Paesi piÃ¹ abbienti."
+      },
+      {
+        "en": "The JAS 39C Gripen crashed onto a runway at around 9:30 am local time (0230 UTC) and exploded, closing the airport to commercial flights.",
+        "hyp": "Il JAS 39C Gripen ha colpito una pista a circa le 9:30 del mattino locale (0230 UTC) e ha esploduto, chiudendo l'aeroporto ai voli commerciali.",
+        "ref": "Il JAS 39C Gripen Ã¨ precipitato su una pista di atterraggio alle 9:30 circa, ora locale (02:30 UTC), ed Ã¨ esploso, con la conseguente chiusura dellâaeroporto ai voli commerciali."
+      }
+    ],
+    "Q8_0": [
+      {
+        "en": "On Monday, scientists from the Stanford University School of Medicine announced the invention of a new diagnostic tool that can sort cells by type: a tiny printable chip that can be manufactured using standard inkjet printers for possibly about one U.S. cent each.",
+        "hyp": "Il lunedì, ricercatori della Stanford University School of Medicine hanno annunciato l'invenzione di un nuovo strumento diagnostico in grado di classificare le cellule per tipo: un chip di stampa microscopico che può essere prodotto utilizzando stampanti a inchiostro standard per circa un centesimo di dollaro a pezzo.",
+        "ref": "Nella giornata di lunedÃ¬, alcuni scienziati della Scuola di Medicina dell'UniversitÃ  di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico capace di ordinare le cellule in base al tipo: un chip minuscolo che puÃ² essere stampato utilizzando stampanti a getto di inchiostro al costo di circa 1 centesimo di dollaro l'uno."
+      },
+      {
+        "en": "Lead researchers say this may bring early detection of cancer, tuberculosis, HIV and malaria to patients in low-income countries, where the survival rates for illnesses such as breast cancer can be half those of richer countries.",
+        "hyp": "I ricercatori diretti affermano che questo potrebbe portare alla rilevazione precoce del cancro, della tubercolosi, dell'HIV e della malaria nei paesi a basso reddito, dove le tassi di sopravvivenza per malattie come il cancro al seno possono essere la metà di quelli dei paesi più ricchi.",
+        "ref": "Secondo i responsabili della ricerca questo strumento potrebbe consentire diagnosi precoci di cancro, tubercolosi, HIV e malaria per i malati che vivono in Paesi a basso reddito. In alcuni di questi Paesi il tasso di sopravvivenza legati a patologie come il cancro al seno puÃ² essere addirittura la metÃ  rispetto a quello registrato nei Paesi piÃ¹ abbienti."
+      },
+      {
+        "en": "The JAS 39C Gripen crashed onto a runway at around 9:30 am local time (0230 UTC) and exploded, closing the airport to commercial flights.",
+        "hyp": "Il JAS 39C Gripen è atterrato su una pista intorno alle 9:30 del mattino (0230 UTC) e ha esploduto, chiudendo l'aeroporto ai voli commerciali.",
+        "ref": "Il JAS 39C Gripen Ã¨ precipitato su una pista di atterraggio alle 9:30 circa, ora locale (02:30 UTC), ed Ã¨ esploso, con la conseguente chiusura dellâaeroporto ai voli commerciali."
+      }
+    ],
+    "BF16": [
+      {
+        "en": "On Monday, scientists from the Stanford University School of Medicine announced the invention of a new diagnostic tool that can sort cells by type: a tiny printable chip that can be manufactured using standard inkjet printers for possibly about one U.S. cent each.",
+        "hyp": "Il lunedì, ricercatori dell'Università Stanford School of Medicine hanno annunciato l'invenzione di un nuovo strumento diagnostico in grado di classificare le cellule per tipo: un chip di stampa microscopico che può essere prodotto utilizzando stampanti a inchiostro standard per circa un centesimo di dollaro a pezzo.",
+        "ref": "Nella giornata di lunedÃ¬, alcuni scienziati della Scuola di Medicina dell'UniversitÃ  di Stanford hanno annunciato l'invenzione di un nuovo strumento diagnostico capace di ordinare le cellule in base al tipo: un chip minuscolo che puÃ² essere stampato utilizzando stampanti a getto di inchiostro al costo di circa 1 centesimo di dollaro l'uno."
+      },
+      {
+        "en": "Lead researchers say this may bring early detection of cancer, tuberculosis, HIV and malaria to patients in low-income countries, where the survival rates for illnesses such as breast cancer can be half those of richer countries.",
+        "hyp": "I ricercatori principali affermano che questo potrebbe portare alla rilevazione precoce del cancro, della tubercolosi, dell'HIV e della malaria nei paesi a basso reddito, dove le tassi di sopravvivenza per malattie come il cancro al seno possono essere la metà di quelli dei paesi più ricchi.",
+        "ref": "Secondo i responsabili della ricerca questo strumento potrebbe consentire diagnosi precoci di cancro, tubercolosi, HIV e malaria per i malati che vivono in Paesi a basso reddito. In alcuni di questi Paesi il tasso di sopravvivenza legati a patologie come il cancro al seno puÃ² essere addirittura la metÃ  rispetto a quello registrato nei Paesi piÃ¹ abbienti."
+      },
+      {
+        "en": "The JAS 39C Gripen crashed onto a runway at around 9:30 am local time (0230 UTC) and exploded, closing the airport to commercial flights.",
+        "hyp": "Il JAS 39C Gripen è atterrato su una pista intorno alle 9:30 del mattino (0230 UTC) e ha esploduto, chiudendo l'aeroporto ai voli commerciali.",
+        "ref": "Il JAS 39C Gripen Ã¨ precipitato su una pista di atterraggio alle 9:30 circa, ora locale (02:30 UTC), ed Ã¨ esploso, con la conseguente chiusura dellâaeroporto ai voli commerciali."
+      }
+    ]
+  }
+}

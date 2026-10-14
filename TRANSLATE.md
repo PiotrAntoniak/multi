@@ -37,6 +37,14 @@ its own new tokens. Same idea, two mechanisms:
 - **safetensors** (`transformers`): forward the prefix with `use_cache=True`, keep the
   `past_key_values`, `deepcopy` it per row, forward only the new tokens.
 
+With `--prefix-cache PATH` the prefix KV is also **persisted to disk** (GGUF: `LlamaState` is
+picklable — its KV is a `bytes` blob; HF: `torch.save(past_key_values)`), so a later run **skips
+prefill entirely**. Each cache carries **metadata** — model, **weights type/quant** (e.g. `Q4_K_M`,
+`BF16`), dtype, `n_ctx`, which template step, prefix token count + `prefix_sha1` — written to a
+sidecar `.meta.json` and appended to **`kvcache_meta.csv`**. On load the metadata is **validated**;
+a mismatch (different model/quant/context) means the cache is ignored and the prefix is refilled.
+Because the HEAD is language-agnostic, one cached prefix serves every language pair.
+
 **Why a two-step template (common head + language/text tail).** Templates are split into a
 **HEAD** (system prompt + instructions, containing **no** language name) and a **TAIL**
 (`Target language: … / Source language: …` + the text). Only the HEAD is prefilled and KV-cached,
