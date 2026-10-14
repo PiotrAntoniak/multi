@@ -67,14 +67,6 @@ PARA_HEAD = (
     "structure. Do not add or remove information. Output ONLY the paraphrase."
 )
 PARA_TAIL = "Language: {lang}.\n\nText:\n\"\"\" {text} \"\"\""
-PARA_MULTI_TAIL = (       # ask for all N at once, explicitly DIFFERENT, joined by a marker
-    "Language: {lang}.\n\n"
-    "Write {n} DIFFERENT paraphrases of the text below. Each must keep the meaning identical "
-    "but use different wording and sentence structure. Separate the paraphrases with the marker "
-    "exactly as shown: {sep}\n"
-    "Output ONLY the paraphrases joined by that marker, nothing else.\n\n"
-    "Text:\n\"\"\" {text} \"\"\""
-)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL = os.path.join(HERE, "models", "Qwen3.5-2B-Q4_K_M.gguf")
@@ -574,27 +566,20 @@ def _accept(p, src, min_ratio, max_ratio, seen):
     return bool(k) and k != _norm(src) and k not in seen
 
 
-def paraphrase_candidates(eng, lang, text, n, dec, sep, min_ratio=0.6, max_ratio=2.0, max_tries=4):
+def paraphrase_candidates(eng, lang, text, n, dec, min_ratio=0.6, max_ratio=2.0, max_tries=4):
     """Up to N accepted paraphrases (length-filtered, != input, deduplicated) with refill.
 
-    ``sep`` batches N per call; ``''`` (default) does one call each. Refills until N are accepted
-    or the budget (N * max_tries attempts) is spent; pads with '' if it cannot reach N."""
+    One generation per attempt; refills until N are accepted or the budget (N * max_tries) is
+    spent; pads with '' if it cannot reach N."""
     if not text:
         return [""] * n
     out, seen, tries = [], set(), 0
     while len(out) < n and tries < n * max_tries:
         tries += 1
-        if sep:
-            raw = eng.generate("para", PARA_MULTI_TAIL.format(lang=lang, n=n, sep=sep, text=text), dec)
-            cands = [p.strip() for p in raw.split(sep)]
-        else:
-            cands = [eng.generate("para", PARA_TAIL.format(lang=lang, text=text), dec)]
-        for p in cands:
-            if _accept(p, text, min_ratio, max_ratio, seen):
-                out.append(p)
-                seen.add(_norm(p))
-                if len(out) >= n:
-                    break
+        p = eng.generate("para", PARA_TAIL.format(lang=lang, text=text), dec)
+        if _accept(p, text, min_ratio, max_ratio, seen):
+            out.append(p)
+            seen.add(_norm(p))
     return out + [""] * (n - len(out))
 
 
@@ -616,8 +601,6 @@ def paraphrase_candidates(eng, lang, text, n, dec, sep, min_ratio=0.6, max_ratio
 @click.option("--kvcache-meta", "kvcache_meta", default="kvcache_meta.csv", show_default=True,
               help="CSV where each saved prefix cache appends a metadata row")
 @click.option("-n", "--n-paraphrases", default=4, show_default=True)
-@click.option("--para-sep", default="", show_default=True,
-              help="'' = one call per paraphrase (default); or a marker to ask for all N in one call")
 @click.option("--para-min-ratio", default=0.6, show_default=True,
               help="min len(out)/len(in) to accept a paraphrase")
 @click.option("--para-max-ratio", default=2.0, show_default=True,
@@ -648,7 +631,7 @@ def paraphrase_candidates(eng, lang, text, n, dec, sep, min_ratio=0.6, max_ratio
 @click.option("--encoding", default="utf-8-sig", show_default=True,
               help="input CSV encoding (e.g. latin-1 for FLORES)")
 def main(model, backend, in_csv, out_csv, text_col, out_col, src, tgt, translate_only,
-         prefix_cache, kvcache_meta, n_paraphrases, para_sep, para_min_ratio, para_max_ratio,
+         prefix_cache, kvcache_meta, n_paraphrases, para_min_ratio, para_max_ratio,
          para_max_tries, para_temp, trans_temp, para_top_p, para_top_k, trans_top_p, trans_top_k,
          para_max_new, trans_max_new, para_rep_penalty, trans_rep_penalty, seed, device, dtype,
          n_gpu_layers, n_ctx, limit, encoding):
@@ -711,7 +694,7 @@ def main(model, backend, in_csv, out_csv, text_col, out_col, src, tgt, translate
                 w.writerow({**r, out_col: out, "variant": 0})
                 fh.flush()
                 continue
-            cands = paraphrase_candidates(eng, para_lang, text, n_paraphrases, para_dec, para_sep,
+            cands = paraphrase_candidates(eng, para_lang, text, n_paraphrases, para_dec,
                                           para_min_ratio, para_max_ratio, para_max_tries)
             for v in range(n_paraphrases):
                 out = cands[v] if v < len(cands) else ""
