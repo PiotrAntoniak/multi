@@ -558,26 +558,44 @@ def build_backend(backend, model, device, dtype, n_gpu_layers, n_ctx, seed):
     return HFBackend(model, device=device, dtype=dtype, seed=seed)
 
 
-def paraphrase_candidates(eng, lang, text, n, dec, sep):
-    """Return exactly N paraphrases (deduplicated).
-    With ``sep``: ONE call asking for all N joined by ``sep`` (explicitly DIFFERENT), then top up
-    with single calls if the model returned too few. Without ``sep``: N separate calls."""
+def _norm(s):
+    """Normalised form for dedup/equality (case-, punctuation- and whitespace-insensitive)."""
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", s)).strip().lower()
+
+
+def _accept(p, src, min_ratio, max_ratio, seen):
+    """Accept a paraphrase only if non-empty, sane length, not identical to the input, and new."""
+    if not p:
+        return False
+    ratio = len(p) / max(1, len(src))
+    if ratio < min_ratio or ratio > max_ratio:      # reject truncations / rambles
+        return False
+    k = _norm(p)
+    return bool(k) and k != _norm(src) and k not in seen
+
+
+def paraphrase_candidates(eng, lang, text, n, dec, sep, min_ratio=0.6, max_ratio=2.0, max_tries=4):
+    """Up to N accepted paraphrases (length-filtered, != input, deduplicated) with refill.
+
+    ``sep`` batches N per call; ``''`` (default) does one call each. Refills until N are accepted
+    or the budget (N * max_tries attempts) is spent; pads with '' if it cannot reach N."""
     if not text:
         return [""] * n
-    if not sep:
-        return [eng.generate("para", PARA_TAIL.format(lang=lang, text=text), dec) for _ in range(n)]
-    raw = eng.generate("para", PARA_MULTI_TAIL.format(lang=lang, n=n, sep=sep, text=text), dec)
-    out, seen = [], set()
-    for part in raw.split(sep):
-        p = part.strip()
-        if p and p not in seen:
-            out.append(p)
-            seen.add(p)
-        if len(out) >= n:
-            break
-    while len(out) < n:                       # model produced fewer distinct ones -> top up
-        out.append(eng.generate("para", PARA_TAIL.format(lang=lang, text=text), dec))
-    return out[:n]
+    out, seen, tries = [], set(), 0
+    while len(out) < n and tries < n * max_tries:
+        tries += 1
+        if sep:
+            raw = eng.generate("para", PARA_MULTI_TAIL.format(lang=lang, n=n, sep=sep, text=text), dec)
+            cands = [p.strip() for p in raw.split(sep)]
+        else:
+            cands = [eng.generate("para", PARA_TAIL.format(lang=lang, text=text), dec)]
+        for p in cands:
+            if _accept(p, text, min_ratio, max_ratio, seen):
+                out.append(p)
+                seen.add(_norm(p))
+                if len(out) >= n:
+                    break
+    return out + [""] * (n - len(out))
 
 
 @click.command()
@@ -598,8 +616,14 @@ def paraphrase_candidates(eng, lang, text, n, dec, sep):
 @click.option("--kvcache-meta", "kvcache_meta", default="kvcache_meta.csv", show_default=True,
               help="CSV where each saved prefix cache appends a metadata row")
 @click.option("-n", "--n-paraphrases", default=4, show_default=True)
-@click.option("--para-sep", default="||", show_default=True,
-              help="ask for all N paraphrases in ONE call joined by this marker ('' = one call each)")
+@click.option("--para-sep", default="", show_default=True,
+              help="'' = one call per paraphrase (default); or a marker to ask for all N in one call")
+@click.option("--para-min-ratio", default=0.6, show_default=True,
+              help="min len(out)/len(in) to accept a paraphrase")
+@click.option("--para-max-ratio", default=2.0, show_default=True,
+              help="max len(out)/len(in) to accept a paraphrase")
+@click.option("--para-max-tries", default=4, show_default=True,
+              help="refill budget: generation attempts per input is N x this")
 @click.option("--para-temp", "--temp", "para_temp", default=0.8, show_default=True,
               help="paraphrase temperature (alias: --temp); 0 = greedy")
 @click.option("--trans-temp", default=0.0, show_default=True,
@@ -624,9 +648,10 @@ def paraphrase_candidates(eng, lang, text, n, dec, sep):
 @click.option("--encoding", default="utf-8-sig", show_default=True,
               help="input CSV encoding (e.g. latin-1 for FLORES)")
 def main(model, backend, in_csv, out_csv, text_col, out_col, src, tgt, translate_only,
-         prefix_cache, kvcache_meta, n_paraphrases, para_sep, para_temp, trans_temp, para_top_p,
-         para_top_k, trans_top_p, trans_top_k, para_max_new, trans_max_new, para_rep_penalty,
-         trans_rep_penalty, seed, device, dtype, n_gpu_layers, n_ctx, limit, encoding):
+         prefix_cache, kvcache_meta, n_paraphrases, para_sep, para_min_ratio, para_max_ratio,
+         para_max_tries, para_temp, trans_temp, para_top_p, para_top_k, trans_top_p, trans_top_k,
+         para_max_new, trans_max_new, para_rep_penalty, trans_rep_penalty, seed, device, dtype,
+         n_gpu_layers, n_ctx, limit, encoding):
     """Paraphrase (and translate) a CSV column with a local GGUF or safetensors LLM."""
     if backend == "auto":
         backend = detect_backend(model)
@@ -686,7 +711,8 @@ def main(model, backend, in_csv, out_csv, text_col, out_col, src, tgt, translate
                 w.writerow({**r, out_col: out, "variant": 0})
                 fh.flush()
                 continue
-            cands = paraphrase_candidates(eng, para_lang, text, n_paraphrases, para_dec, para_sep)
+            cands = paraphrase_candidates(eng, para_lang, text, n_paraphrases, para_dec, para_sep,
+                                          para_min_ratio, para_max_ratio, para_max_tries)
             for v in range(n_paraphrases):
                 out = cands[v] if v < len(cands) else ""
                 if translate and out:

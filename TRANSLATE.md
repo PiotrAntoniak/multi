@@ -65,11 +65,13 @@ trace (any leftover ` thinking…</think>` is stripped).
 **Why the `variant` column (rows, not columns).** Augmentation multiplies *examples*; N rows per
 input drop straight into a training set. A `variant` index keeps provenance.
 
-**Diversity (`--para-sep`, default `||`).** One call asks the model for all N paraphrases,
-explicitly *different*, joined by the marker; the output is split on it and deduplicated, and if
-the model returns too few, single calls top up. `--para-sep ''` falls back to N separate calls.
-Either way, the GGUF backend re-seeds per call (`load_state` otherwise restores the sampler seed and
-every variant comes out identical).
+**Diversity & filtering.** Default is **sequential** (one call per paraphrase). Each candidate must
+pass a **length-ratio** filter (`--para-min-ratio 0.6` … `--para-max-ratio 2.0`), must differ from the
+input, and must be **new** (normalised dedup); the script **refills** until N are accepted (budget
+`N × --para-max-tries`). `--para-sep '||'` instead asks for all N in one call (joined by the marker) —
+more tokens, more format drift, so not the default. The GGUF backend re-seeds per call (`load_state`
+otherwise restores the sampler seed and every variant comes out identical). Filters remove junk
+(rambles/truncations/duplicates); they cannot add semantic fidelity — that needs a stronger generator.
 
 **Why CPU by default (`--n-gpu-layers 0`).** Works anywhere; pass `-1` for GPU (needs a
 CUDA-built `llama-cpp-python`), or `--device cuda` for the HF backend.
