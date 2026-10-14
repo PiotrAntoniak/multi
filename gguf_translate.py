@@ -26,8 +26,31 @@ import sys
 import click
 from llama_cpp import Llama, llama_chat_apply_template, llama_chat_message
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from paraphrase_prompts import PARA_SYSTEM, PARA_USER, XLING_SYSTEM, XLING_USER  # noqa: E402
+try:  # use the repo's shared templates when available
+    from paraphrase_prompts import PARA_SYSTEM, PARA_USER, XLING_SYSTEM, XLING_USER  # noqa: E402
+except ImportError:  # standalone fallback (identical wording)
+    XLING_SYSTEM = (
+        "You are a careful multilingual data generator. You rewrite the user's text into {tgt} while "
+        "preserving its meaning exactly. You never add, drop, summarise, or explain information. You "
+        "output only the {tgt} text, with no quotes, labels, or commentary."
+    )
+    XLING_USER = (
+        "Rewrite the following {src} text into natural, fluent {tgt}.\n"
+        "- Preserve ALL factual content and entities (names, numbers, dates).\n"
+        "- Do not add or remove information.\n"
+        "- Do not replace proper nouns with different entities.\n"
+        "- Output ONLY the {tgt} text. No preamble, no quotes.\n\n"
+        "{src} text:\n\"\"\" {text} \"\"\""
+    )
+    PARA_SYSTEM = (
+        "You are a careful paraphrasing assistant. You restate text in different words while keeping "
+        "the meaning identical. You output only the paraphrase."
+    )
+    PARA_USER = (
+        "Paraphrase the following {lang} text. Keep the meaning identical; change the wording and "
+        "sentence structure. Do not add or remove information. Output ONLY the paraphrase.\n\n"
+        "Text:\n\"\"\" {text} \"\"\""
+    )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL = os.path.join(HERE, "models", "Qwen3.5-2B-Q4_K_M.gguf")
