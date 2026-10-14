@@ -21,8 +21,17 @@ We pool the synthetic Italian of **all available generators** into ONE training 
 - **Verdict:** UNION of 3 generator(s) reaches 0.4749 macro-F1 vs best single **SmolLM2-1.7B** 0.4125 (UNION WINS) and real-IT ceiling 0.4149 (114% of ceiling, +0.0599 vs ceiling); EN-transfer floor 0.2332.
 - Combining all generators **beats** the best single generator.
 
-## Pending
+## Dataset: toxic (real Italian test)
 
-- **toxic**: not run: toxic generations cached for {Qwen3.5-0.8B}; missing {SmolLM2-1.7B, Qwen3.5-2B} (the gen_compare run is still generating; re-run this script when they land).
+| arm | accuracy | F1 | AUC | n_train |
+|---|---|---|---|---|
+| **ALL generators** | 0.7251 | **0.2170** | 0.6836 | 16000 |
+| Qwen3.5-0.8B | 0.7186 | 0.1402 | 0.6994 | 8000 |
+| Qwen3.5-2B | 0.7234 | 0.1860 | 0.6840 | 8000 |
+| real_it (ceiling) | 0.7965 | 0.5811 | 0.8420 | 18472 |
+| en_transfer (floor) | 0.7095 | 0.0455 | 0.6535 | 8000 |
+
+- **Verdict:** UNION of 2 generator(s) reaches 0.2170 F1 vs best single **Qwen3.5-2B** 0.1860 (UNION WINS) and real-IT ceiling 0.5811 (37% of ceiling, -0.3641 vs ceiling); EN-transfer floor 0.0455. (Missing generators: SmolLM2-1.7B.)
+- Combining all generators **beats** the best single generator.
 
 ![all_paraphrases](all_paraphrases.png)

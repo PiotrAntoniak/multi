@@ -16,8 +16,8 @@
     "src_lang": "English",
     "tgt_lang": "Italian",
     "decode": "greedy",
-    "gen_batch": 16,
-    "start_batch": 16,
+    "gen_batch": 8,
+    "start_batch": 8,
     "batch_candidates": [
       32,
       24,
@@ -27,7 +27,7 @@
       4,
       1
     ],
-    "torch_compile": true,
+    "torch_compile": false,
     "compile_mode": "reduce-overhead (dynamic)",
     "duty": 1.0,
     "mem_fraction": 1.0,
@@ -147,6 +147,52 @@
           "ref_it": "Anche questi possono essere presi in prestito presso il magazzino all'ingresso; tuttavia gli indumenti non vengono lavati dopo ogni utente, per cui indossando queste gonne potreste non sentirvi a vostro agio. Per gli uomini, una taglia unica per tutti!"
         }
       ]
+    },
+    "toxic": {
+      "Qwen/Qwen3.5-0.8B": [
+        {
+          "en": "good Post by Kizla, tells Elway he's not good an selecting players, especially quarter\nbacks. Sounds ironic, but Elway is in to saving money and serving \"hamburger helper\"\nto the Denver Fans, eehhhh......",
+          "gen_it": "- Il post di Kizla, che racconta che Elway non è un buon giocatore di selezione, in particolare dei quarterbacks. Suona ironico, ma Elway sta cercando di risparmiare denaro e servire come \"assistente hamburger\" per i fans di Denver, eh..."
+        },
+        {
+          "en": "You will have to justify your horrifying allegations, Dunthorpe.  You accuse Hillary Clinton of killing over a hundred people to hide her \"crimes\".  That is a serious allegation which, if true, would have got Clinton executed. I for one, don't believe a thing you say.",
+          "gen_it": "- Permettetevi di giustificare le tue accuse horrorose, Dunthorpe. Tu accusi Hillary Clinton di uccidere più di cento persone per nascondere le sue \"crimini\". Questa è una affermazione grave, che, se vera, avrebbe portato Clinton a essere esecuzione. Per me, non credo in nulla che tu dica."
+        },
+        {
+          "en": "Yeah, Conservative politicians have just done so much for the gay community in the Western world compared to others. \n\nAnd Trump's base is definitely at the forefront of gay rights.",
+          "gen_it": "- Ieri, i politici conservatori hanno fatto molto per la comunità gay nel mondo occidentale rispetto ad altri. - E il base di Trump è sicuramente al centro dei diritti gay."
+        },
+        {
+          "en": "\"He has enormous bench strength, however. Carole James. Adrian Dix. Mike Farnworth.\"  If that's the NDP's bench strength, BC is in a lot of trouble.  \n\nAdrian Dix in 1999 created a briefing note meant to distance then premier Glen Clark from a controversial cabinet decision to award a casino license.  The memo was purportedly made July 17, 1998, months before the cabinet’s decision in principle. In fact, it was written in May 1999, around the time the RCMP raided the homes of Mssrs Clark and Pilarinos.\n\nFarnworth granted approval-in-principle to a casino-licence application from a company owned by Dimitrios Pilarinos and Steve Ng.  That set the wheels in motion for the \"casinogate\" scandal, leading to the resignation of then-premier Glen Clark the following year.\n\nHorgan was the witness who signed a government letter granting Dix a $66,000 severance payment after being replaced as Clark's principal secretary. \n\nCarole James is the only one not tainted with the stink of 1990's scandals.",
+          "gen_it": "- Preserva tutti i contenuti fattuali e le entità (nomi, numeri, date). - Non aggiungere o rimuovere informazioni. - Non sostituire i nomi propri con entità diverse. - Outputa solo il testo in italiano. Nessun preambolo, nessuna goccia. \"\"\" \"Ha una forza di terra enorme, tuttavia. Carole James. Adrian Dix. Mike Farnworth.\" Se è la forza di terra dell'NDP, BC è in molti problemi. Adrian Dix nel 1999 ha creato un nota di briefing intesa a distanziare il premier Glen Clark da una decisione controversa del governo per concedere licenza a un casinò. Il memo era puramente stato fatto il 17 luglio 1998, mesi prima della decisione del governo in principio. In realtà, era scritto nel maggio 1999, intorno al tempo in cui le forze dell'ordine hanno rinchiuso le case di Mssrs Clark e Pilarinos. Farnworth ha dato approvazione in principio a un'applicazione per un licenza di casinò da parte di una società controllata da Dimitrios Pilarinos e Steve Ng. Questo ha avviato il \"casinogate\" scandal, portando alla rinuncia del premier Glen Clark il successivo anno. Horgan era il testimone che firmò un lettera del governo per concedere a Dix un pagamento di severità di $66.000 dopo essere stato sostituito come segretario principale del Clark. Carole James è l'unica senza il \"sapore\" dei 90 del passato. \"\"\""
+        },
+        {
+          "en": "Because they can watch this and still say, “I don’t watch hentai” proudly. Just goes to show what levels of delusional hypocrisy the human mind can come up with to justify what it wants to do regardless.",
+          "gen_it": "- Permettono di osservare questo e ancora affermano: «Non ho visto hentai» con orgoglio. Questo dimostra quanto sia difficile per il cervello umano giustificare ciò che desidera, indipendentemente dalle proprie convinzioni."
+        }
+      ],
+      "Qwen/Qwen3.5-2B": [
+        {
+          "en": "good Post by Kizla, tells Elway he's not good an selecting players, especially quarter\nbacks. Sounds ironic, but Elway is in to saving money and serving \"hamburger helper\"\nto the Denver Fans, eehhhh......",
+          "gen_it": "\"\"\" Un buon post di Kizla, che dice a Elway che non è bravo a selezionare i quarterback, in particolare. Suona ironico, ma Elway è disposto a risparmiare denaro e a servire \"aiutante del hamburger\" ai tifosi di Denver, ehhhh... \"\"\""
+        },
+        {
+          "en": "You will have to justify your horrifying allegations, Dunthorpe.  You accuse Hillary Clinton of killing over a hundred people to hide her \"crimes\".  That is a serious allegation which, if true, would have got Clinton executed. I for one, don't believe a thing you say.",
+          "gen_it": "\"Avrai bisogno di giustificare le tue allagazioni orribili, Dunthorpe. Accusi Hillary Clinton di aver ucciso oltre centomila persone per nascondere i suoi 'crimi'. Tale accusa seria, se vera, avrebbe portato Clinton alla morte. Per me, non credo nulla di ciò che dici.\""
+        },
+        {
+          "en": "Yeah, Conservative politicians have just done so much for the gay community in the Western world compared to others. \n\nAnd Trump's base is definitely at the forefront of gay rights.",
+          "gen_it": "\"Beh, i politici conservatori hanno fatto così tanto per la comunità gay nel mondo occidentale rispetto agli altri. E il base di Trump è sicuramente al primo piano delle libertà gay.\""
+        },
+        {
+          "en": "\"He has enormous bench strength, however. Carole James. Adrian Dix. Mike Farnworth.\"  If that's the NDP's bench strength, BC is in a lot of trouble.  \n\nAdrian Dix in 1999 created a briefing note meant to distance then premier Glen Clark from a controversial cabinet decision to award a casino license.  The memo was purportedly made July 17, 1998, months before the cabinet’s decision in principle. In fact, it was written in May 1999, around the time the RCMP raided the homes of Mssrs Clark and Pilarinos.\n\nFarnworth granted approval-in-principle to a casino-licence application from a company owned by Dimitrios Pilarinos and Steve Ng.  That set the wheels in motion for the \"casinogate\" scandal, leading to the resignation of then-premier Glen Clark the following year.\n\nHorgan was the witness who signed a government letter granting Dix a $66,000 severance payment after being replaced as Clark's principal secretary. \n\nCarole James is the only one not tainted with the stink of 1990's scandals.",
+          "gen_it": "\"Ha una enorme forza di resistenza sul banco, tuttavia. Carole James. Adrian Dix. Mike Farnworth.\" Se questa è la forza di resistenza del NDP, la BC è in grande difficoltà. Adrian Dix nel 1999 ha creato una nota di briefing intesa a distanziare il premier Glen Clark da una decisione controversa del gabinetto che ha assegnato un licenziamento per casinò. Il memorandum era stato inteso essere stato redatto il 17 luglio 1998, mesi prima della decisione del gabinetto in principio. In realtà, è stato scritto nel maggio 1999, intorno al tempo in cui la RCMP ha fatto raid sulle case dei signori Clark e Pilarinos. Farnworth ha dato il via libera a una richiesta di licenza per un casinò da parte di un'azienda di proprietà di Dimitrios Pilarinos e Steve Ng. Questo ha messo in moto il scandalo \"casinogate\", portando alla dimissioni del premier Glen Clark l'anno successivo. Horgan è stato il testimone che ha firmato una lettera del governo che ha dato a Dix un pagamento di separazione di 66.000 dollari dopo essere stato sostituito come segretario principale di Clark. Carole James è l'unica non macchiata dal cattivo odore dei scandali degli anni '90."
+        },
+        {
+          "en": "Because they can watch this and still say, “I don’t watch hentai” proudly. Just goes to show what levels of delusional hypocrisy the human mind can come up with to justify what it wants to do regardless.",
+          "gen_it": "\"Perché possono guardare questo e ancora dire con orgoglio: 'Non guardo hentai'. Basta per mostrare i livelli di ipocrisia delirante che l'uomo può inventare per giustificare ciò che vuole fare, indipendentemente.\""
+        }
+      ]
     }
   },
   "results": {
@@ -187,53 +233,80 @@
           }
         }
       }
+    },
+    "toxic": {
+      "210m": {
+        "generators": {
+          "Qwen/Qwen3.5-0.8B": {
+            "accuracy": 0.7186147186147186,
+            "f1": 0.1402116402116402,
+            "auc": 0.6993572502747413,
+            "threshold": 0.5,
+            "n_train": 8000
+          },
+          "Qwen/Qwen3.5-2B": {
+            "accuracy": 0.7233766233766233,
+            "f1": 0.1859872611464968,
+            "auc": 0.6840322965469373,
+            "threshold": 0.5,
+            "n_train": 8000
+          },
+          "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
+            "skipped": "hung (generation incomplete)"
+          }
+        },
+        "baselines": {
+          "real_it": {
+            "accuracy": 0.7965367965367965,
+            "f1": 0.5811051693404634,
+            "auc": 0.8419542411359825,
+            "threshold": 0.5,
+            "n_train": 18472
+          },
+          "en_transfer": {
+            "accuracy": 0.7095238095238096,
+            "f1": 0.04551920341394026,
+            "auc": 0.6534560450286309,
+            "threshold": 0.5,
+            "n_train": 8000
+          }
+        }
+      }
     }
   },
   "verdicts": {
-    "flores": "best generator **SmolLM2-1.7B** reaches 0.4125 macro-F1 = **99%** of the real-Italian ceiling (0.4149); EN-transfer floor 0.2332. Ranking: SmolLM2-1.7B (0.4125) > Qwen3.5-0.8B (0.4067) > Qwen3.5-2B (0.3968)."
+    "flores": "best generator **SmolLM2-1.7B** reaches 0.4125 macro-F1 = **99%** of the real-Italian ceiling (0.4149); EN-transfer floor 0.2332. Ranking: SmolLM2-1.7B (0.4125) > Qwen3.5-0.8B (0.4067) > Qwen3.5-2B (0.3968).",
+    "toxic": "best generator **Qwen3.5-2B** reaches 0.1860 F1 (positive) = **32%** of the real-Italian ceiling (0.5811); EN-transfer floor 0.0455. Ranking: Qwen3.5-2B (0.1860) > Qwen3.5-0.8B (0.1402)."
   },
   "gen_stats": {
     "Qwen/Qwen3.5-0.8B": {},
-    "Qwen/Qwen3.5-2B": {
-      "bench": {
-        "eager_rows_per_s": 1.0861808188744293,
-        "eager_tok_per_s": 79.29119977783334,
-        "compiled_rows_per_s": 1.2164243302107622,
-        "compiled_tok_per_s": 88.79897610538563,
-        "n": 16
-      },
-      "bench_eager_rows_per_s": 1.0861808188744293,
-      "flores": {
-        "batch": 16,
-        "rows_per_s": 2.544210602629757,
-        "tok_per_s": 151.1152617296807,
-        "n": 1501,
-        "duty": 1.0,
-        "gpu_busy_fraction": 0.9999971266927941,
-        "wall_s": 589.9668834209442
-      }
-    },
-    "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
-      "bench": {
-        "eager_rows_per_s": 1.4629551404930492,
-        "eager_tok_per_s": 152.14733461127713,
-        "compiled_rows_per_s": 1.1622934872082855,
-        "compiled_tok_per_s": 120.87852266966169,
-        "n": 16
-      },
-      "bench_eager_rows_per_s": 1.4629551404930492,
-      "flores": {
-        "batch": 16,
-        "rows_per_s": 0.6615179608207336,
-        "tok_per_s": 81.1124148016074,
-        "n": 1501,
-        "duty": 1.0,
-        "gpu_busy_fraction": 0.9999991928107932,
-        "wall_s": 2269.0238041877747
-      }
-    }
+    "Qwen/Qwen3.5-2B": {},
+    "HuggingFaceTB/SmolLM2-1.7B-Instruct": {}
   },
   "completed_datasets": [
-    "flores"
-  ]
+    "flores",
+    "toxic"
+  ],
+  "unions": {
+    "toxic": {
+      "all_combined": {
+        "accuracy": 0.7251082251082251,
+        "f1": 0.21701602959309493,
+        "auc": 0.6835813233848111,
+        "threshold": 0.5,
+        "n_train": 16000,
+        "generators": [
+          "Qwen/Qwen3.5-0.8B",
+          "Qwen/Qwen3.5-2B"
+        ]
+      },
+      "available": [
+        "Qwen/Qwen3.5-0.8B",
+        "Qwen/Qwen3.5-2B"
+      ],
+      "skipped": [
+        "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+      ]
+    }
+  }
 }

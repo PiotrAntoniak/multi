@@ -35,7 +35,8 @@
     "seed": 0,
     "toxic_en_cap": 8000,
     "python": "3.13.5",
-    "flores_n_test": 505
+    "flores_n_test": 505,
+    "toxic_n_test": 2310
   },
   "generators": [
     "Qwen/Qwen3.5-0.8B",
@@ -92,6 +93,55 @@
           "HuggingFaceTB/SmolLM2-1.7B-Instruct"
         ]
       }
+    },
+    "toxic": {
+      "order": [
+        "Qwen/Qwen3.5-0.8B",
+        "Qwen/Qwen3.5-2B",
+        "all_combined"
+      ],
+      "gaps": [
+        "SmolLM2-1.7B"
+      ],
+      "real_it": {
+        "accuracy": 0.7965367965367965,
+        "f1": 0.5811051693404634,
+        "auc": 0.8419542411359825,
+        "threshold": 0.5,
+        "n_train": 18472
+      },
+      "en_transfer": {
+        "accuracy": 0.7095238095238096,
+        "f1": 0.04551920341394026,
+        "auc": 0.6534560450286309,
+        "threshold": 0.5,
+        "n_train": 8000
+      },
+      "Qwen/Qwen3.5-0.8B": {
+        "accuracy": 0.7186147186147186,
+        "f1": 0.1402116402116402,
+        "auc": 0.6993572502747413,
+        "threshold": 0.5,
+        "n_train": 8000
+      },
+      "Qwen/Qwen3.5-2B": {
+        "accuracy": 0.7233766233766233,
+        "f1": 0.1859872611464968,
+        "auc": 0.6840322965469373,
+        "threshold": 0.5,
+        "n_train": 8000
+      },
+      "all_combined": {
+        "accuracy": 0.7251082251082251,
+        "f1": 0.21701602959309493,
+        "auc": 0.6835813233848111,
+        "threshold": 0.5,
+        "n_train": 16000,
+        "generators": [
+          "Qwen/Qwen3.5-0.8B",
+          "Qwen/Qwen3.5-2B"
+        ]
+      }
     }
   },
   "verdicts": {
@@ -104,12 +154,21 @@
       "ceiling": 0.41492172800364885,
       "floor": 0.23320345638901863,
       "pct_of_ceiling": 114.44718493534778
+    },
+    "toxic": {
+      "text": "UNION of 2 generator(s) reaches 0.2170 F1 vs best single **Qwen3.5-2B** 0.1860 (UNION WINS) and real-IT ceiling 0.5811 (37% of ceiling, -0.3641 vs ceiling); EN-transfer floor 0.0455. (Missing generators: SmolLM2-1.7B.)",
+      "beats_best_single": true,
+      "best_single": "Qwen/Qwen3.5-2B",
+      "best_single_value": 0.1859872611464968,
+      "combined_value": 0.21701602959309493,
+      "ceiling": 0.5811051693404634,
+      "floor": 0.04551920341394026,
+      "pct_of_ceiling": 37.345396503597016
     }
   },
   "completed_datasets": [
-    "flores"
+    "flores",
+    "toxic"
   ],
-  "pending": {
-    "toxic": "not run: toxic generations cached for {Qwen3.5-0.8B}; missing {SmolLM2-1.7B, Qwen3.5-2B} (the gen_compare run is still generating; re-run this script when they land)."
-  }
+  "pending": {}
 }

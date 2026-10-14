@@ -3,21 +3,17 @@
 Three small instruct LLMs generate **Italian** training text from the **English** training text with the cross-lingual rewrite template (`paraphrase_prompts.build_messages('crosslingual', src='English', tgt='Italian')`). EuroBERT-**210m** mean embeddings feed the SAME fixed XGBoost classifier, trained on each generator's synthetic Italian and evaluated on the **real Italian** test.
 
 - Generators: `Qwen/Qwen3.5-0.8B`, `Qwen/Qwen3.5-2B`, `HuggingFaceTB/SmolLM2-1.7B-Instruct`.
-- Decoding: greedy (`do_sample=False`), bf16, batch 16, max_new_tokens 384, `enable_thinking=False` when supported.
+- Decoding: greedy (`do_sample=False`), bf16, batch 8, max_new_tokens 384, `enable_thinking=False` when supported.
 - XGBoost (CPU, fixed): hist, max_bin 64, cpu, n_jobs 2, seed 0, depth 8, mcw 5, lr 0.1, n 400  (FLORES `multi:softprob` 12-class; toxic `binary:logistic`).
 - Datasets: **FLORES sent** (EN train+val 997+504=1501 -> IT; real IT test 505); **toxic** (`data/toxi_clean`; EN train capped to 8000, seed 0 -> IT; real IT test 2310).
 - Reference rows: **real_it** (train on real Italian = ceiling) and **en_transfer** (train on the English source = cross-lingual floor).
-- Generation: adaptive batch from `16` (step down on OOM); `torch.compile` (reduce-overhead, dynamic) = True; **duty cycle = 1.0** (GPU busy ~that fraction of wall time); VRAM cap = 1.0; below-normal priority = True.
+- Generation: adaptive batch from `8` (step down on OOM); `torch.compile` (reduce-overhead, dynamic) = False; **duty cycle = 1.0** (GPU busy ~that fraction of wall time); VRAM cap = 1.0; below-normal priority = True.
 
 ## Generation throughput (bf16)
 
 | generator | dataset | batch | duty | gpu-busy | rows/s | tok/s |
 |---|---|---|---|---|---|---|
-| Qwen3.5-2B | flores | 16 | 1.00 | 1.00 | 2.54 | 151 |
-| SmolLM2-1.7B | flores | 16 | 1.00 | 1.00 | 0.66 | 81 |
 
-- **Qwen3.5-2B** micro-bench (n=16, same prompts): eager 1.09 rows/s (79 tok/s) vs compiled 1.22 rows/s (89 tok/s).
-- **SmolLM2-1.7B** micro-bench (n=16, same prompts): eager 1.46 rows/s (152 tok/s) vs compiled 1.16 rows/s (121 tok/s).
 
 ## Dataset: flores (12-class, accuracy/macro-F1/AUC)
 
@@ -90,8 +86,76 @@ Three small instruct LLMs generate **Italian** training text from the **English*
   - IT (SmolLM2-1.7B): _""" Questo è anche possibile prenotare dall'argento nell'entrata, ma questa veste non è lavata ogni volta, così potresti non sentire bene wearin' queste scarpe. Un'unita' è disponibile per i loro. """_
   - FLORES IT ref: Anche questi possono essere presi in prestito presso il magazzino all'ingresso; tuttavia gli indumenti non vengono lavati dopo ogni utente, per cui indossando queste gonne potreste non sentirvi a vostro agio. Per gli uomini, una taglia unica per tutti!
 
+## Dataset: toxic (binary, accuracy/F1/AUC)
+
+### Backbone EuroBERT-210m (EuroBERT/EuroBERT-210m)
+
+| generator | accuracy | F1 (positive) | AUC |
+|---|---|---|---|
+| Qwen3.5-0.8B | 0.7186 | 0.1402 | 0.6994 |
+| Qwen3.5-2B | 0.7234 | 0.1860 | 0.6840 |
+| SmolLM2-1.7B | _skipped (hung (generation incomplete))_ | - | - |
+| real_it (ceiling) | 0.7965 | 0.5811 | 0.8420 |
+| en_transfer (floor) | 0.7095 | 0.0455 | 0.6535 |
+
+- Ranking by F1 (positive): Qwen3.5-2B (0.1860) > Qwen3.5-0.8B (0.1402).
+- Best generator **Qwen3.5-2B** = 0.1860 F1 (positive) vs real-IT ceiling 0.5811 (32% of ceiling) and EN-transfer floor 0.0455.
+
+### Sample generations (toxic)
+
+**Qwen3.5-0.8B**
+
+- EN: good Post by Kizla, tells Elway he's not good an selecting players, especially quarter
+backs. Sounds ironic, but Elway is in to saving money and serving "hamburger helper"
+to the Denver Fans, eehhhh......
+  - IT (Qwen3.5-0.8B): _- Il post di Kizla, che racconta che Elway non è un buon giocatore di selezione, in particolare dei quarterbacks. Suona ironico, ma Elway sta cercando di risparmiare denaro e servire come "assistente hamburger" per i fans di Denver, eh..._
+- EN: You will have to justify your horrifying allegations, Dunthorpe.  You accuse Hillary Clinton of killing over a hundred people to hide her "crimes".  That is a serious allegation which, if true, would have got Clinton executed. I for one, don't believe a thing you say.
+  - IT (Qwen3.5-0.8B): _- Permettetevi di giustificare le tue accuse horrorose, Dunthorpe. Tu accusi Hillary Clinton di uccidere più di cento persone per nascondere le sue "crimini". Questa è una affermazione grave, che, se vera, avrebbe portato Clinton a essere esecuzione. Per me, non credo in nulla che tu dica._
+- EN: Yeah, Conservative politicians have just done so much for the gay community in the Western world compared to others. 
+
+And Trump's base is definitely at the forefront of gay rights.
+  - IT (Qwen3.5-0.8B): _- Ieri, i politici conservatori hanno fatto molto per la comunità gay nel mondo occidentale rispetto ad altri. - E il base di Trump è sicuramente al centro dei diritti gay._
+- EN: "He has enormous bench strength, however. Carole James. Adrian Dix. Mike Farnworth."  If that's the NDP's bench strength, BC is in a lot of trouble.  
+
+Adrian Dix in 1999 created a briefing note meant to distance then premier Glen Clark from a controversial cabinet decision to award a casino license.  The memo was purportedly made July 17, 1998, months before the cabinet’s decision in principle. In fact, it was written in May 1999, around the time the RCMP raided the homes of Mssrs Clark and Pilarinos.
+
+Farnworth granted approval-in-principle to a casino-licence application from a company owned by Dimitrios Pilarinos and Steve Ng.  That set the wheels in motion for the "casinogate" scandal, leading to the resignation of then-premier Glen Clark the following year.
+
+Horgan was the witness who signed a government letter granting Dix a $66,000 severance payment after being replaced as Clark's principal secretary. 
+
+Carole James is the only one not tainted with the stink of 1990's scandals.
+  - IT (Qwen3.5-0.8B): _- Preserva tutti i contenuti fattuali e le entità (nomi, numeri, date). - Non aggiungere o rimuovere informazioni. - Non sostituire i nomi propri con entità diverse. - Outputa solo il testo in italiano. Nessun preambolo, nessuna goccia. """ "Ha una forza di terra enorme, tuttavia. Carole James. Adrian Dix. Mike Farnworth." Se è la forza di terra dell'NDP, BC è in molti problemi. Adrian Dix nel 1999 ha creato un nota di briefing intesa a distanziare il premier Glen Clark da una decisione controversa del governo per concedere licenza a un casinò. Il memo era puramente stato fatto il 17 luglio 1998, mesi prima della decisione del governo in principio. In realtà, era scritto nel maggio 1999, intorno al tempo in cui le forze dell'ordine hanno rinchiuso le case di Mssrs Clark e Pilarinos. Farnworth ha dato approvazione in principio a un'applicazione per un licenza di casinò da parte di una società controllata da Dimitrios Pilarinos e Steve Ng. Questo ha avviato il "casinogate" scandal, portando alla rinuncia del premier Glen Clark il successivo anno. Horgan era il testimone che firmò un lettera del governo per concedere a Dix un pagamento di severità di $66.000 dopo essere stato sostituito come segretario principale del Clark. Carole James è l'unica senza il "sapore" dei 90 del passato. """_
+- EN: Because they can watch this and still say, “I don’t watch hentai” proudly. Just goes to show what levels of delusional hypocrisy the human mind can come up with to justify what it wants to do regardless.
+  - IT (Qwen3.5-0.8B): _- Permettono di osservare questo e ancora affermano: «Non ho visto hentai» con orgoglio. Questo dimostra quanto sia difficile per il cervello umano giustificare ciò che desidera, indipendentemente dalle proprie convinzioni._
+
+**Qwen3.5-2B**
+
+- EN: good Post by Kizla, tells Elway he's not good an selecting players, especially quarter
+backs. Sounds ironic, but Elway is in to saving money and serving "hamburger helper"
+to the Denver Fans, eehhhh......
+  - IT (Qwen3.5-2B): _""" Un buon post di Kizla, che dice a Elway che non è bravo a selezionare i quarterback, in particolare. Suona ironico, ma Elway è disposto a risparmiare denaro e a servire "aiutante del hamburger" ai tifosi di Denver, ehhhh... """_
+- EN: You will have to justify your horrifying allegations, Dunthorpe.  You accuse Hillary Clinton of killing over a hundred people to hide her "crimes".  That is a serious allegation which, if true, would have got Clinton executed. I for one, don't believe a thing you say.
+  - IT (Qwen3.5-2B): _"Avrai bisogno di giustificare le tue allagazioni orribili, Dunthorpe. Accusi Hillary Clinton di aver ucciso oltre centomila persone per nascondere i suoi 'crimi'. Tale accusa seria, se vera, avrebbe portato Clinton alla morte. Per me, non credo nulla di ciò che dici."_
+- EN: Yeah, Conservative politicians have just done so much for the gay community in the Western world compared to others. 
+
+And Trump's base is definitely at the forefront of gay rights.
+  - IT (Qwen3.5-2B): _"Beh, i politici conservatori hanno fatto così tanto per la comunità gay nel mondo occidentale rispetto agli altri. E il base di Trump è sicuramente al primo piano delle libertà gay."_
+- EN: "He has enormous bench strength, however. Carole James. Adrian Dix. Mike Farnworth."  If that's the NDP's bench strength, BC is in a lot of trouble.  
+
+Adrian Dix in 1999 created a briefing note meant to distance then premier Glen Clark from a controversial cabinet decision to award a casino license.  The memo was purportedly made July 17, 1998, months before the cabinet’s decision in principle. In fact, it was written in May 1999, around the time the RCMP raided the homes of Mssrs Clark and Pilarinos.
+
+Farnworth granted approval-in-principle to a casino-licence application from a company owned by Dimitrios Pilarinos and Steve Ng.  That set the wheels in motion for the "casinogate" scandal, leading to the resignation of then-premier Glen Clark the following year.
+
+Horgan was the witness who signed a government letter granting Dix a $66,000 severance payment after being replaced as Clark's principal secretary. 
+
+Carole James is the only one not tainted with the stink of 1990's scandals.
+  - IT (Qwen3.5-2B): _"Ha una enorme forza di resistenza sul banco, tuttavia. Carole James. Adrian Dix. Mike Farnworth." Se questa è la forza di resistenza del NDP, la BC è in grande difficoltà. Adrian Dix nel 1999 ha creato una nota di briefing intesa a distanziare il premier Glen Clark da una decisione controversa del gabinetto che ha assegnato un licenziamento per casinò. Il memorandum era stato inteso essere stato redatto il 17 luglio 1998, mesi prima della decisione del gabinetto in principio. In realtà, è stato scritto nel maggio 1999, intorno al tempo in cui la RCMP ha fatto raid sulle case dei signori Clark e Pilarinos. Farnworth ha dato il via libera a una richiesta di licenza per un casinò da parte di un'azienda di proprietà di Dimitrios Pilarinos e Steve Ng. Questo ha messo in moto il scandalo "casinogate", portando alla dimissioni del premier Glen Clark l'anno successivo. Horgan è stato il testimone che ha firmato una lettera del governo che ha dato a Dix un pagamento di separazione di 66.000 dollari dopo essere stato sostituito come segretario principale di Clark. Carole James è l'unica non macchiata dal cattivo odore dei scandali degli anni '90._
+- EN: Because they can watch this and still say, “I don’t watch hentai” proudly. Just goes to show what levels of delusional hypocrisy the human mind can come up with to justify what it wants to do regardless.
+  - IT (Qwen3.5-2B): _"Perché possono guardare questo e ancora dire con orgoglio: 'Non guardo hentai'. Basta per mostrare i livelli di ipocrisia delirante che l'uomo può inventare per giustificare ciò che vuole fare, indipendentemente."_
+
 ![gen_compare](gen_compare.png)
 
 ## Verdict
 
 - **flores**: best generator **SmolLM2-1.7B** reaches 0.4125 macro-F1 = **99%** of the real-Italian ceiling (0.4149); EN-transfer floor 0.2332. Ranking: SmolLM2-1.7B (0.4125) > Qwen3.5-0.8B (0.4067) > Qwen3.5-2B (0.3968).
+- **toxic**: best generator **Qwen3.5-2B** reaches 0.1860 F1 (positive) = **32%** of the real-Italian ceiling (0.5811); EN-transfer floor 0.0455. Ranking: Qwen3.5-2B (0.1860) > Qwen3.5-0.8B (0.1402).

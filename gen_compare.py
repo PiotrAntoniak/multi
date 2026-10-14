@@ -445,24 +445,48 @@ def _clean(s):
     return s
 
 
-def generate_italian(texts, generator, dataset):
-    """Generate Italian for `texts` with `generator`; cache the outputs on disk.
+def _dump_partial(path, preds):
+    """Atomically write a partial generation checkpoint (survives sleep/crash)."""
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(preds, f, ensure_ascii=False)
+        os.replace(tmp, path)
+    except Exception as e:
+        log("  [warn] partial checkpoint write failed: %r" % e)
 
-    Adaptive batching: start at the modest ``START_BATCH`` and step down the
-    ``BATCH_CANDIDATES`` ladder on ``torch.cuda.OutOfMemoryError`` (clearing the cache
-    between attempts).  A GPU **duty cycle** ``_DUTY`` sleeps between batches so the
-    GPU is busy only ~that fraction of wall time (keeps the desktop responsive).  A
-    compiled-model failure (non-OOM) falls back to the eager model for the rest of the
-    run.
+
+def generate_italian(texts, generator, dataset):
+    """Generate Italian for `texts` with `generator`; cache outputs on disk (resumable).
+
+    Adaptive batching: start at ``START_BATCH`` and step down the ``BATCH_CANDIDATES``
+    ladder on ``torch.cuda.OutOfMemoryError`` (clearing the cache between attempts); a
+    compiled-model failure (non-OOM) falls back to eager.  When ``_DUTY < 1`` the loop
+    sleeps between batches (duty cycle).  **Robustness:** a partial checkpoint is flushed
+    every few batches and on ANY interruption (machine sleep, GPU drop, kill), and a
+    re-run resumes from it; the final cache is written only on completion.
     """
     cpath = os.path.join(CACHE, "gen_%s_%s_%d_%s.json"
                          % (generator.replace("/", "__"), dataset, len(texts),
                             _hash([generator, dataset] + list(texts))))
+    ppath = cpath + ".partial.json"
     if os.path.exists(cpath):
         with open(cpath, "r", encoding="utf-8") as f:
             out = json.load(f)
         log("  [cache] generations %s (%d lines)" % (os.path.basename(cpath), len(out)))
         return out
+
+    preds = []
+    start = 0
+    if os.path.exists(ppath):                       # resume an interrupted run
+        try:
+            with open(ppath, "r", encoding="utf-8") as f:
+                preds = json.load(f)
+            start = len(preds)
+            log("  [resume] %s partial has %d/%d rows -> continue at row %d"
+                % (os.path.basename(cpath), start, len(texts), start))
+        except Exception:
+            preds, start = [], 0
 
     import torch
     entry = _get_gen_model(generator)
@@ -473,75 +497,96 @@ def generate_italian(texts, generator, dataset):
         _BENCHED.add(generator)
         _bench_compile(generator, prompts)
 
-    preds = []
     bs = START_BATCH if START_BATCH in BATCH_CANDIDATES else max(BATCH_CANDIDATES)
-    i = 0
+    i = start
     n_tok = 0
     t_work = 0.0
     t_idle = 0.0
     t_gen0 = time.time()
-    while i < n:
-        batch = prompts[i:i + bs]
-        t_b0 = time.time()
-        try:
-            enc = tok(batch, return_tensors="pt", padding=True, truncation=True,
-                      max_length=1024).to(_DEVICE)
-            in_len = enc["input_ids"].shape[1]
-            with torch.inference_mode():
-                gen = entry["run"].generate(**enc, do_sample=False, num_beams=1,
-                                            max_new_tokens=GEN_MAX_NEW,
-                                            pad_token_id=tok.pad_token_id)
-            new_tokens = gen[:, in_len:]
-            preds.extend(_clean(s) for s in tok.batch_decode(new_tokens,
-                                                             skip_special_tokens=True))
-            n_tok += int(new_tokens.numel())
-            i += len(batch)
-            t_work += time.time() - t_b0
-            if (i // max(1, bs)) % 5 == 0 or i == n:
-                el = time.time() - t_gen0
-                busy = t_work / el if el else 0.0
-                log("    gen %s/%s %d/%d bs=%d (%.1fs, %.2f rows/s, %.0f tok/s, "
-                    "gpu-busy %.2f, duty=%.2f)"
-                    % (GEN_SHORT.get(generator, generator), dataset, i, n, bs, el,
-                       i / el if el else 0.0, n_tok / el if el else 0.0, busy, _DUTY))
-        except torch.cuda.OutOfMemoryError:
-            torch.cuda.empty_cache()
-            nxt = _next_batch(bs)
-            if nxt is None:
-                raise
-            log("    OOM at bs=%d -> stepping down to %d (position %d/%d)" % (bs, nxt, i, n))
-            bs = nxt
-            continue
-        except RuntimeError as e:
-            msg = str(e).lower()
-            if "out of memory" in msg:
+    try:
+        while i < n:
+            batch = prompts[i:i + bs]
+            t_b0 = time.time()
+            try:
+                enc = tok(batch, return_tensors="pt", padding=True, truncation=True,
+                          max_length=1024).to(_DEVICE)
+                in_len = enc["input_ids"].shape[1]
+                with torch.inference_mode():
+                    gen = entry["run"].generate(**enc, do_sample=False, num_beams=1,
+                                                max_new_tokens=GEN_MAX_NEW,
+                                                pad_token_id=tok.pad_token_id)
+                new_tokens = gen[:, in_len:]
+                preds.extend(_clean(s) for s in tok.batch_decode(new_tokens,
+                                                                 skip_special_tokens=True))
+                n_tok += int(new_tokens.numel())
+                i += len(batch)
+                t_work += time.time() - t_b0
+                if (i // max(1, bs)) % 5 == 0 or i == n:
+                    el = time.time() - t_gen0
+                    log("    gen %s/%s %d/%d bs=%d (%.1fs, %.2f rows/s, %.0f tok/s, "
+                        "gpu-busy %.2f, duty=%.2f)"
+                        % (GEN_SHORT.get(generator, generator), dataset, i, n, bs, el,
+                           i / el if el else 0.0, n_tok / el if el else 0.0,
+                           t_work / el if el else 0.0, _DUTY))
+            except torch.cuda.OutOfMemoryError:
                 torch.cuda.empty_cache()
                 nxt = _next_batch(bs)
                 if nxt is None:
                     raise
-                log("    OOM(RuntimeError) at bs=%d -> %d (position %d/%d)" % (bs, nxt, i, n))
+                log("    OOM at bs=%d -> stepping down to %d (position %d/%d)"
+                    % (bs, nxt, i, n))
                 bs = nxt
                 continue
-            if entry["compiled"]:
-                entry["run"] = entry["eager"]
-                entry["compiled"] = False
-                if _DEVICE == "cuda":
+            except RuntimeError as e:
+                msg = str(e).lower()
+                if "out of memory" in msg:
                     torch.cuda.empty_cache()
-                log("    compiled generate failed (%r); falling back to eager, retrying batch"
-                    % e)
-                continue
-            raise
-        # duty cycle: sleep so work/(work+idle) ~= _DUTY (leaves the GPU responsive)
-        if _DUTY < 1.0 and i < n:
-            idle = (time.time() - t_b0) * (1.0 - _DUTY) / max(_DUTY, 1e-9)
-            if idle > 0:
-                time.sleep(idle)
-                t_idle += idle
+                    nxt = _next_batch(bs)
+                    if nxt is None:
+                        raise
+                    log("    OOM(RuntimeError) at bs=%d -> %d (position %d/%d)"
+                        % (bs, nxt, i, n))
+                    bs = nxt
+                    continue
+                if entry["compiled"]:
+                    entry["run"] = entry["eager"]
+                    entry["compiled"] = False
+                    if _DEVICE == "cuda":
+                        torch.cuda.empty_cache()
+                    log("    compiled generate failed (%r); falling back to eager, retrying"
+                        % e)
+                    continue
+                raise
+            # checkpoint + status every few batches
+            if (i // max(1, bs)) % 5 == 0 or i == n:
+                _dump_partial(ppath, preds)
+                write_status({"phase": "generate", "generator": generator, "dataset": dataset,
+                              "rows_done": int(i), "rows_total": int(n)})
+            # duty cycle (disabled at _DUTY == 1.0)
+            if _DUTY < 1.0 and i < n:
+                idle = (time.time() - t_b0) * (1.0 - _DUTY) / max(_DUTY, 1e-9)
+                if idle > 0:
+                    time.sleep(idle)
+                    t_idle += idle
+    except BaseException as e:                          # sleep / GPU drop / kill / error
+        _dump_partial(ppath, preds)
+        log("  [guard] generation interrupted at %d/%d (%r); flushed partial -> %s"
+            % (i, n, e, os.path.basename(ppath)))
+        try:
+            write_status({"phase": "interrupted", "generator": generator, "dataset": dataset,
+                          "rows_done": int(i), "rows_total": int(n)})
+        except Exception:
+            pass
+        raise
 
     el = time.time() - t_gen0
     busy = t_work / el if el else 0.0
     with open(cpath, "w", encoding="utf-8") as f:
         json.dump(preds, f, ensure_ascii=False)
+    try:
+        os.remove(ppath)
+    except OSError:
+        pass
     log("  [save ] generations %s (bs=%d, %.2f rows/s, %.0f tok/s, gpu-busy %.2f, "
         "duty=%.2f, idle %.0fs)"
         % (os.path.basename(cpath), bs, n / el if el else 0.0, n_tok / el if el else 0.0,
@@ -645,7 +690,8 @@ PRIMARY = {"flores": ("macro_f1", "macro-F1"), "toxic": ("f1", "F1 (positive)")}
 
 def rank_generators(res, dataset):
     key = PRIMARY[dataset][0]
-    items = [(g, res["generators"][g][key]) for g in res["generators"]]
+    items = [(g, res["generators"][g][key]) for g in res["generators"]
+             if key in res["generators"][g] and not res["generators"][g].get("skipped")]
     items.sort(key=lambda t: -t[1])
     return items
 
@@ -723,7 +769,12 @@ def build_md(payload):
             L.append("| generator | accuracy | %s | AUC |" % plabel)
             L.append("|---|---|---|---|")
             for g in payload["generators"]:
-                m = res["generators"][g]
+                m = res["generators"].get(g)
+                if m is None or m.get("skipped"):
+                    note = m.get("skipped") if isinstance(m, dict) else None
+                    L.append("| %s | _skipped%s_ | - | - |"
+                             % (GEN_SHORT.get(g, g), (" (%s)" % note) if note else ""))
+                    continue
                 L.append("| %s | %.4f | %.4f | %.4f |"
                          % (GEN_SHORT.get(g, g), m[m0], m[m1], m[m2]))
             for b in BASELINES:
@@ -745,6 +796,8 @@ def build_md(payload):
         L.append("### Sample generations (%s)" % ds)
         L.append("")
         for g in payload["generators"]:
+            if g not in payload["samples"].get(ds, {}):
+                continue
             L.append("**%s**" % GEN_SHORT.get(g, g))
             L.append("")
             for e in payload["samples"][ds][g]:
@@ -771,7 +824,10 @@ def plot(payload, out_png):
 
     dss = payload.get("completed_datasets", payload["datasets"])
     fig, axes = plt.subplots(1, len(dss), figsize=(7.2 * len(dss), 5.2), squeeze=False)
-    gens = payload["generators"]
+    gens = [g for g in payload["generators"]
+            if any((payload["results"].get(d, {}).get(payload["backbones"][0], {})
+                    .get("generators", {}).get(g) or {}).get(PRIMARY[d][0]) is not None
+                   for d in dss)]
     for ax, ds in zip(axes[0], dss):
         bb = payload["backbones"][0]
         res = payload["results"][ds][bb]
@@ -783,10 +839,11 @@ def plot(payload, out_png):
             metrics = [("accuracy", "accuracy", "#4c72b0"),
                        ("f1", "F1 (pos)", "#dd8452"),
                        ("auc", "AUC", "#55a868")]
-        x = np.arange(len(gens))
+        gg = [g for g in gens if (res["generators"].get(g) or {}).get(metrics[0][0]) is not None]
+        x = np.arange(len(gg))
         w = 0.25
         for j, (mk, label, col) in enumerate(metrics):
-            vals = [res["generators"][g][mk] for g in gens]
+            vals = [res["generators"][g][mk] for g in gg]
             bars = ax.bar(x + (j - 1) * w, vals, w, label=label, color=col)
             for r in bars:
                 ax.annotate("%.3f" % r.get_height(),
@@ -797,7 +854,7 @@ def plot(payload, out_png):
             c = res["baselines"]["real_it"][mk]
             ax.axhline(c, color=col, linestyle="--", linewidth=1.0, alpha=0.7)
         ax.set_xticks(x)
-        ax.set_xticklabels([GEN_SHORT.get(g, g) for g in gens], rotation=20, ha="right",
+        ax.set_xticklabels([GEN_SHORT.get(g, g) for g in gg], rotation=20, ha="right",
                            fontsize=9)
         ax.set_ylim(0, 1.0)
         ax.set_ylabel("score")
@@ -918,6 +975,9 @@ def main(argv=None):
     ap.add_argument("--wait-gpu-sec", type=int, default=_WAIT_GPU_SEC,
                     help="max seconds to wait for GPU memory (default %d)" % _WAIT_GPU_SEC)
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--resume", action="store_true",
+                    help="no-op: completed caches and partial checkpoints are reused "
+                         "automatically")
     ap.add_argument("--launch", action="store_true")
     ap.add_argument("--from-json", action="store_true")
     args = ap.parse_args(argv)

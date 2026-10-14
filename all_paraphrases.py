@@ -485,15 +485,19 @@ def main(argv=None):
     if "toxic" in datasets:
         log("######## TOXIC ########")
         ready = toxic_ready(generators)
-        if set(generators) - ready:
-            missing = sorted(set(generators) - ready)
+        available = [g for g in generators if g in ready]
+        if not available:
             payload["pending"]["toxic"] = (
-                "not run: toxic generations cached for {%s}; missing {%s} "
-                "(the gen_compare run is still generating; re-run this script when they land)."
-                % (", ".join(sorted(GC.GEN_SHORT.get(g, g) for g in ready)) or "none",
-                   ", ".join(GC.GEN_SHORT.get(g, g) for g in missing)))
+                "not run: no toxic generations cached for {%s}."
+                % ", ".join(GC.GEN_SHORT.get(g, g) for g in generators))
             log("TOXIC pending: %s" % payload["pending"]["toxic"])
         else:
+            missing = sorted(set(generators) - ready)
+            if missing:
+                log("TOXIC: running with the %d available generator(s) %s; SKIPPING %s"
+                    % (len(available),
+                       ", ".join(GC.GEN_SHORT.get(g, g) for g in available),
+                       ", ".join(GC.GEN_SHORT.get(g, g) for g in missing)))
             struct = toxic_struct(args.en_cap, args.seed)
             payload["config"]["toxic_n_test"] = struct["n_it_test"]
             arms = run_toxic(struct, generators)
