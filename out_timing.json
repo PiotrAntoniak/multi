@@ -1,0 +1,26 @@
+{
+  "Qwen3.5-2B": {
+    "model": "models\\Qwen3.5-2B-Q4_K_M.gguf",
+    "out_csv": "out_qwen35_2b_pl.csv",
+    "rc": 0,
+    "wall_seconds": 89.35,
+    "n_paraphrases": 4,
+    "limit": 25,
+    "n_ctx": 4096,
+    "output_tokens": 8620,
+    "gen_seconds": 87.5,
+    "tok_per_s": 98.48
+  },
+  "Qwen2.5-3B-Instruct": {
+    "model": "models\\qwen2.5-3b-instruct-q4_k_m.gguf",
+    "out_csv": "out_qwen25_3b_pl.csv",
+    "rc": 0,
+    "wall_seconds": 138.59,
+    "n_paraphrases": 4,
+    "limit": 25,
+    "n_ctx": 4096,
+    "output_tokens": 9476,
+    "gen_seconds": 136.4,
+    "tok_per_s": 69.46
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "reference": "flores_en_pl.csv",
+  "n_rows": 25,
+  "chrf_vs_human_pl": {
+    "Qwen3.5-2B": {
+      "variant0_chrF": 41.77,
+      "per_variant_chrF": {
+        "0": 41.77,
+        "1": 41.77,
+        "2": 41.77,
+        "3": 41.77
+      },
+      "mean_variant_chrF": 41.77,
+      "n_variant0": 25,
+      "n_all": 100
+    },
+    "Qwen2.5-3B-Instruct": {
+      "variant0_chrF": 37.86,
+      "per_variant_chrF": {
+        "0": 37.86,
+        "1": 37.86,
+        "2": 37.86,
+        "3": 37.86
+      },
+      "mean_variant_chrF": 37.86,
+      "n_variant0": 25,
+      "n_all": 100
+    }
+  },
+  "timing": {
+    "Qwen3.5-2B": {
+      "model": "models\\Qwen3.5-2B-Q4_K_M.gguf",
+      "out_csv": "out_qwen35_2b_pl.csv",
+      "rc": 0,
+      "wall_seconds": 89.35,
+      "n_paraphrases": 4,
+      "limit": 25,
+      "n_ctx": 4096,
+      "output_tokens": 8620,
+      "gen_seconds": 87.5,
+      "tok_per_s": 98.48
+    },
+    "Qwen2.5-3B-Instruct": {
+      "model": "models\\qwen2.5-3b-instruct-q4_k_m.gguf",
+      "out_csv": "out_qwen25_3b_pl.csv",
+      "rc": 0,
+      "wall_seconds": 138.59,
+      "n_paraphrases": 4,
+      "limit": 25,
+      "n_ctx": 4096,
+      "output_tokens": 9476,
+      "gen_seconds": 136.4,
+      "tok_per_s": 69.46
+    }
+  },
+  "examples": [
+    {
+      "en": "\"We now have 4-month-old mice that are non-diabetic that used to be diabetic,\" he added.",
+      "human_pl": "„Mamy teraz myszy w wieku 4 miesięcy, które miały cukrzycę, ale zostały z niej wyleczone” – dodał.",
+      "Qwen3.5-2B": "Wyglądający na mówiącego teraz przedstawia 4-miesięczne myszy, które wcześniej miały cukrzycę i od tego czasu stały się niecukrzyste.",
+      "Qwen2.5-3B-Instruct": "Oni wspomnieni również, że 'obecnie mamy myszy o 4-miesięcznej karczmei, które były oryginalnie diabetyczne, ale obecnie nie są diabetyczne.'"
+    },
+    {
+      "en": "Dr. Ehud Ur, professor of medicine at Dalhousie University in Halifax, Nova Scotia and chair of the clinical and scientific division of the Canadian Diabetes Association cautioned that the research is still in its early days.",
+      "human_pl": "Dr Ehud Ur, będący profesorem medycyny na Uniwersytecie Dalhousie w Halifaxie w Nowej Szkocji oraz przewodniczącym oddziału klinicznego i naukowego Kanadyjskiego Stowarzyszenia Cukrzycy, przestrzegł, iż badania nadal dopiero się zaczynają.",
+      "Qwen3.5-2B": "Dr. Ehud Ur, profesor medycyny w Dalhousie University w Halifax, w Nowej Szkocji, i przewodniczący klinicznej i naukowej sekcji Canadian Diabetes Association, zaznaczył, że badanie znajduje się obecnie w fazie początkowej.",
+      "Qwen2.5-3B-Instruct": "Prof. Ehud Ur, lekarz z Dalhousie University w Halifax, Nova Scotia, i przewodniczący oddziału kliniczno-technicznego Związku Diabetycznego Kanady, zaznaczył, że badania są nadal w fazie początkowej."
+    },
+    {
+      "en": "Like some other experts, he is skeptical about whether diabetes can be cured, noting that these findings have no relevance to people who already have Type 1 diabetes.",
+      "human_pl": "Tak jak część ekspertów jest sceptyczny co do tego, czy cukrzycę da się wyleczyć; zauważa, że te ustalenia są bez znaczenia dla osób, którze już chorują na cukrzycę typu 1.",
+      "Qwen3.5-2B": "Tak jak utrzymują pewni eksperci, autor kwestionuje możliwość leczenia cukrzycy, podkreślając, że wyniki nie dotyczą osób cierpiących na cukrzycę typu 1.",
+      "Qwen2.5-3B-Instruct": "W ten sam sposób wyraża pewne ekspertyzy nieufność wobec możliwości leczenia cukrzycy, zaznaczając, że te wyniki nie są zastosowane do osób, które już mają cukrzycę typu 1."
+    },
+    {
+      "en": "On Monday, Sara Danius, permanent secretary of the Nobel Committee for Literature at the Swedish Academy, publicly announced during a radio program on Sveriges Radio in Sweden the committee, unable to reach Bob Dylan directly about winning the 2016 Nobel Prize in Literature, had abandoned its efforts to reach him.",
+      "human_pl": "W poniedziałek Sara Denius, stała sekretarz Komitetu Noblowskiego ds. Literatury przy Szwedzkiej Akademii, w czasie programu radiowego w szwedzkim Sveriges Radio, podała publicznie informację, iż komisja zaprzestała już prób nawiązania bezpośredniego kontaktu z Bobem Dylanem w kwestii zdobycia przez niego Literackiej Nagrody Nobla w roku 2016.",
+      "Qwen3.5-2B": "W poniedziałek Sara Danius, stała sekretarz generalna Komitetu Nobla poezji w Akademii Szwajcarskiej, podczas transmisji radiowej na Sveriges Radio ujawniła, że komitet zrezygnował z prób kontaktu z Bobem Dylanem po tym, jak nie udało się dotrzeć do niego w sprawie jego kandydatury na Nagrodę Nobla w dziedzinie literatury w 2016 roku.",
+      "Qwen2.5-3B-Instruct": "W poniedziałek, Sara Danius, sekretarz stowarzyszenia Nobel dla literatury na Szwedzkiej Akademii, podczas programu radiowego na Sveriges Radio, disclose, że komite wydał się niepotrzebne próbę kontaktowania Boba Dylan bezpośrednio, aby informować go o nagrodzie nagrody Nobel Literatury za 2016 roku, z powodu ich niepowodzenia w dołączeniu do niego."
+    }
+  ]
+}

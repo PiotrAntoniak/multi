@@ -287,11 +287,15 @@ def render(llm, messages):
 class _GGUFPrompt:
     """Reload the cached HEAD state, evaluate the TAIL, sample the output."""
 
-    def __init__(self, state, post, n_pre):
+    def __init__(self, state, post, n_pre, seed=0):
         self.state, self.post, self.n_pre, self.last_n = state, post, n_pre, 0
+        self.base_seed, self.calls = seed, 0
 
     def __call__(self, llm, tail, dec):
         llm.load_state(self.state)
+        # load_state() restores llama.cpp's RNG seed; re-seed per call so sampling varies
+        self.calls += 1
+        llm.set_seed(self.base_seed + self.calls)
         head = llm.tokenize(tail.encode() + self.post, add_bos=False, special=True)
         llm.eval(head)
         n = self.n_pre + len(head)
@@ -369,7 +373,7 @@ class GGUFBackend(_Backend):
                 self._persist(cache_path, state, current, meta_csv, "state")
         else:
             _warn(f"{cache_path}: reused cached prefix ({len(pre_ids)} tokens), skipped prefill")
-        self._prompts[key] = _GGUFPrompt(state, post, len(pre_ids))
+        self._prompts[key] = _GGUFPrompt(state, post, len(pre_ids), self.seed)
 
     def generate(self, key, tail, dec):
         t0 = time.perf_counter()
