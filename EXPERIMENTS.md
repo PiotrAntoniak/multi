@@ -298,6 +298,51 @@ corrected in v2.)
 
 ## PART F — Fine-tuning (in progress)
 
+### E30 — Synthetic Italian from English (`synth_it.py`, `synth_toxic_it.py`) — DONE (FLORES) / partial (toxic)
+Generate **Italian training text from the English training text** with a small instruct LLM (cross-lingual
+rewrite template), train the classifier on the synthetic Italian, evaluate on the **real Italian** test.
+Also a paper review of the FinePhrase recipe + paraphrase prompt templates (`PARAPHRASE_TEMPLATE.md`,
+`paraphrase_prompts.py`, `paraphrase_csv.py`).
+
+FLORES sent (210m, macro-F1 on real Italian test):
+
+| arm | SmolLM3-3B | real-IT ceiling | EN-transfer |
+|---|---:|---:|---:|
+| 210m | 0.410 | 0.415 | 0.233 |
+| 610m | 0.469 | 0.477 | 0.328 |
+
+**Finding:** LLM-generated Italian reaches **99% (210m) / 98% (610m)** of the real-Italian ceiling. Toxic
+pipeline validated only at cap=160 so far (full run pending).
+
+### E31 — Generator comparison (`gen_compare.py`) — FLORES done, toxic in progress
+Same pipeline with 3 generators: `Qwen3.5-0.8B`, `Qwen3.5-2B`, `SmolLM2-1.7B` (bf16, `torch.compile`).
+
+FLORES sent, real Italian test (210m macro-F1):
+
+| generator | accuracy | macro-F1 | AUC |
+|---|---:|---:|---:|
+| **SmolLM2-1.7B** | 0.5248 | **0.4125** | 0.8648 |
+| Qwen3.5-0.8B | 0.5465 | 0.4067 | 0.8533 |
+| Qwen3.5-2B | 0.5228 | 0.3968 | 0.8823 |
+| real_it (ceiling) | 0.5545 | 0.4149 | 0.8838 |
+| en_transfer | 0.4158 | 0.2332 | 0.7920 |
+
+**Finding:** SmolLM2-1.7B is best (99% of ceiling) — matching the FinePhrase family result — and
+**Qwen3.5-2B is worse than Qwen3.5-0.8B**, replicating the paper's "≈1B saturates" claim on our task.
+
+### E32 — Union of all generators' paraphrases (`all_paraphrases.py`) — FLORES done
+Train on the **pooled** synthetic Italian of all 3 generators (3×1501 = 4503 rows); FLORES, 210m:
+
+| arm | n_train | accuracy | macro-F1 | AUC |
+|---|---:|---:|---:|---:|
+| **all_combined** | 4503 | **0.5881** | **0.4749** | 0.8821 |
+| SmolLM2-1.7B (best single) | 1501 | 0.5248 | 0.4125 | 0.8648 |
+| real_it (ceiling) | 1501 | 0.5545 | 0.4149 | 0.8838 |
+| en_transfer | 1501 | 0.4158 | 0.2332 | 0.7920 |
+
+**Finding:** combining generators **beats the best single generator (+0.062 macro-F1) and the same-size
+real-Italian ceiling (114%)** — largely extra volume + cross-generator diversity (AUC ties at the top).
+
 ### E29 — Fine-tune last layer + linear head, raw (`finetune_lastlayer.py`) — DONE
 Train **only** EuroBERT's last transformer layer + a linear head (embeddings + lower layers frozen), **raw
 mean-pooled features, no `perlang_z`/alignment**, bf16 compute (fp32 master weights). EuroBERT protocol:
