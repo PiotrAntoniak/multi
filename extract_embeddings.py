@@ -193,6 +193,10 @@ def parse_args(argv=None):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     args = parse_args(argv)
     global DATA, OUT_DIR, MODEL_ID, POOLS
     DATA = Path(args.data)

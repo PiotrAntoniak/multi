@@ -422,6 +422,10 @@ def toxic_ready(generators):
 
 # ------------------------------------------------------------------ main
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     global _SMOKE, BB
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(description="Union-of-all-generators synthetic-IT comparison.")

@@ -603,6 +603,10 @@ def smoke():
 
 # --------------------------------------------------------------------------- #
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     ap = argparse.ArgumentParser()
     ap.add_argument("mode", choices=["smoke", "all", "pair"])
     ap.add_argument("--lang", default=None)

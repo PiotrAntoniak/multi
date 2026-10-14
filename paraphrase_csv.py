@@ -34,6 +34,10 @@ EVAL_KW = dict(do_sample=False)  # greedy; set do_sample=True, temperature=0.7 f
 
 
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tok = AutoTokenizer.from_pretrained(MODEL_PATH)
     model = AutoModelForCausalLM.from_pretrained(

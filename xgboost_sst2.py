@@ -284,6 +284,10 @@ def write_md(results, cfg, path):
 
 
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     ap = argparse.ArgumentParser()
     ap.add_argument("--modes", default="mean,bos")
     ap.add_argument("--trials", type=int, default=50)

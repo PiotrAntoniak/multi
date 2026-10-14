@@ -2,7 +2,8 @@
 
 For each GGUF in ``models/Qwen3.5-2B-*.gguf`` (Q4_K_M, Q8_0, BF16):
 
-  * load on CPU only (``n_gpu_layers=0``, ``n_threads=6``) so it does not fight a GPU job,
+  * load fully on GPU (``n_gpu_layers=-1`` -> offload all layers to CUDA, sm_86 here;
+    ``--n-threads`` stays modest as the CPU only assists sampling),
   * greedy-decode (temp 0) English -> Italian with the repo cross-lingual prompt
     (``paraphrase_prompts.build_messages("crosslingual", ...)`` rendered through the model's
     chat template -- the ``Prompt`` class from ``gguf_translate.py`` is reused, so the fixed
@@ -125,9 +126,10 @@ def score(hyps, refs):
 
 def run_model(tag, path, ens, its, args):
     size_mb = os.path.getsize(path) / 1e6
-    log(f"[{tag}] loading {os.path.basename(path)} ({size_mb:.0f} MB) on CPU "
-        f"(n_threads={args.n_threads}, n_ctx={args.n_ctx}) ...")
-    llm = Llama(model_path=path, n_ctx=args.n_ctx, n_gpu_layers=0,
+    dev = "GPU (all layers, CUDA)" if args.n_gpu_layers != 0 else "CPU"
+    log(f"[{tag}] loading {os.path.basename(path)} ({size_mb:.0f} MB) on {dev} "
+        f"(n_gpu_layers={args.n_gpu_layers}, n_threads={args.n_threads}, n_ctx={args.n_ctx}) ...")
+    llm = Llama(model_path=path, n_ctx=args.n_ctx, n_gpu_layers=args.n_gpu_layers,
                 n_threads=args.n_threads, verbose=False)
     llm.set_seed(0)
     promp = build_translator(llm)
@@ -187,7 +189,7 @@ def write_report(results, out_dir):
              f"- data: `{os.path.basename(DEFAULT_DATA)}` (latin-1), first "
              f"{results[0]['n'] if results else 0} sentences",
              f"- prompt: `crosslingual` (`paraphrase_prompts.build_messages`), model chat template",
-             "- decoding: greedy (temp 0) until EOS, CPU only",
+             "- decoding: greedy (temp 0) until EOS, full GPU offload (n_gpu_layers=-1)",
              "- metrics: sacrebleu chrF (char_order 6, word_order 0), chrF++ (word_order 2), BLEU",
              "",
              "| quant | size MB | chrF | chrF++ | BLEU | avg tok/s |",
@@ -213,7 +215,9 @@ def main():
     ap.add_argument("--data", default=DEFAULT_DATA)
     ap.add_argument("--n", type=int, default=150, help="number of EN sentences (default 150)")
     ap.add_argument("--n-ctx", dest="n_ctx", type=int, default=2048)
-    ap.add_argument("--n-threads", dest="n_threads", type=int, default=6)
+    ap.add_argument("--n-threads", dest="n_threads", type=int, default=4)
+    ap.add_argument("--n-gpu-layers", dest="n_gpu_layers", type=int, default=-1,
+                    help="layers to offload to GPU (-1 = all; 0 = CPU only; default -1)")
     ap.add_argument("--out-dir", dest="out_dir", default=HERE)
     ap.add_argument("--models", nargs="*", default=None,
                     help="optional tag=path overrides; default: the three Qwen3.5-2B quants")

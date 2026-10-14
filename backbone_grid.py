@@ -1072,6 +1072,10 @@ def launch_detached(passthrough):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     global _SMOKE, _LIMIT, _ENV_TRIALS
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(description="Two-backbone XGBoost grid (mean pooling).")

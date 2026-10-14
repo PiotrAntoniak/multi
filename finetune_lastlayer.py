@@ -782,6 +782,10 @@ def apply_caps(spec):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     argv = sys.argv[1:] if argv is None else argv
     args = parse_args(argv)
     global MODEL_ID, TAG, SEED, DATASET_CAPS, LOG_PATH, PID_PATH, STATUS_PATH, USE_BF16

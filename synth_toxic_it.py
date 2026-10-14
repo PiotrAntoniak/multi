@@ -647,6 +647,10 @@ def launch_detached(passthrough):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     global _SMOKE, _DEVICE, GEN_BATCH, GEN_MAX_NEW
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(description="Synthetic-Italian toxicity classifier study.")

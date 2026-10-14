@@ -374,6 +374,10 @@ def build_md(payload, margin):
 
 # --------------------------------------------------------------------------- main
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--n-rare", type=int, default=8, help="number of rarest concepts (default 8)")

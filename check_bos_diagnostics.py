@@ -39,6 +39,10 @@ ABL = ["noBOS_relD", "noBOS_cos", "noBOS_poolD"]
 
 
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     with open(os.path.join(BASE, "flores200_en_it_de_fr.csv"), encoding="utf-8-sig",
               newline="") as f:
         rows = list(csv.DictReader(f))

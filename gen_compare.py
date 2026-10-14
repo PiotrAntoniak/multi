@@ -937,6 +937,10 @@ def _train_eval(bb, ds, d, gen_outs, generators):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     global _SMOKE, _DEVICE, GEN_BATCH, START_BATCH, GEN_MAX_NEW
     global _WAIT_GPU_MB, _WAIT_GPU_SEC, _COMPILE, _BENCH_COMPILE
     global _DUTY, _MEM_FRACTION, _BELOW_NORMAL, _GEN_ONLY

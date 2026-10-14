@@ -267,6 +267,10 @@ def translate_cached(texts, labels, mt_tok, mt_model, device, out_csv):
 # Main
 # ---------------------------------------------------------------------------
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     with open(PID_PATH, "w") as f:
         f.write(str(PID))
     log(f"=== rebuild_caches start pid={PID} base={BASE} ===")

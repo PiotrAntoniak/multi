@@ -126,6 +126,10 @@ def translate(model_name, texts):
 
 
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     import sacrebleu  # imported late so install errors are obvious
 
     print(f"device={DEVICE}  fp16={USE_FP16}  threads={torch.get_num_threads()}")

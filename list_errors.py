@@ -500,6 +500,10 @@ def parse_args(argv=None):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     args = parse_args(argv)
     global MAX_SHOW
     MAX_SHOW = max(0, int(args.show))

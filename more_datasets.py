@@ -664,6 +664,10 @@ def launch(passthrough):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     global _SMOKE, OUT_JSON, OUT_MD, OUT_PNG
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="all", help="all | comma list of xnli,pawsx,textdetox,sib200")

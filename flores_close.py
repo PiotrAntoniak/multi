@@ -901,6 +901,10 @@ def launch_detached(extra):
 
 
 def main(argv=None):
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     global _SMOKE
     ap = argparse.ArgumentParser(description="Close the EN->non-EN FLORES gap (EuroBERT+XGB).")
     ap.add_argument("--launch", action="store_true", help="spawn a detached hidden copy and exit")

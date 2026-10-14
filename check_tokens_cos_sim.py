@@ -37,6 +37,10 @@ def pools(tok, model, texts):
 
 
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     tok = AutoTokenizer.from_pretrained(MODEL)
     model = AutoModel.from_pretrained(MODEL, dtype=torch.float32).eval()
 

@@ -580,6 +580,10 @@ def build_md(p):
 
 # ------------------------------------------------------------------ main
 def main():
+    try:
+        from gpu_limit import limit_gpu; limit_gpu()
+    except Exception:
+        pass
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
