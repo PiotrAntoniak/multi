@@ -65,6 +65,12 @@ trace (any leftover ` thinking…</think>` is stripped).
 **Why the `variant` column (rows, not columns).** Augmentation multiplies *examples*; N rows per
 input drop straight into a training set. A `variant` index keeps provenance.
 
+**Diversity (`--para-sep`, default `||`).** One call asks the model for all N paraphrases,
+explicitly *different*, joined by the marker; the output is split on it and deduplicated, and if
+the model returns too few, single calls top up. `--para-sep ''` falls back to N separate calls.
+Either way, the GGUF backend re-seeds per call (`load_state` otherwise restores the sampler seed and
+every variant comes out identical).
+
 **Why CPU by default (`--n-gpu-layers 0`).** Works anywhere; pass `-1` for GPU (needs a
 CUDA-built `llama-cpp-python`), or `--device cuda` for the HF backend.
 

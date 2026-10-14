@@ -67,6 +67,14 @@ PARA_HEAD = (
     "structure. Do not add or remove information. Output ONLY the paraphrase."
 )
 PARA_TAIL = "Language: {lang}.\n\nText:\n\"\"\" {text} \"\"\""
+PARA_MULTI_TAIL = (       # ask for all N at once, explicitly DIFFERENT, joined by a marker
+    "Language: {lang}.\n\n"
+    "Write {n} DIFFERENT paraphrases of the text below. Each must keep the meaning identical "
+    "but use different wording and sentence structure. Separate the paraphrases with the marker "
+    "exactly as shown: {sep}\n"
+    "Output ONLY the paraphrases joined by that marker, nothing else.\n\n"
+    "Text:\n\"\"\" {text} \"\"\""
+)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL = os.path.join(HERE, "models", "Qwen3.5-2B-Q4_K_M.gguf")
@@ -550,6 +558,28 @@ def build_backend(backend, model, device, dtype, n_gpu_layers, n_ctx, seed):
     return HFBackend(model, device=device, dtype=dtype, seed=seed)
 
 
+def paraphrase_candidates(eng, lang, text, n, dec, sep):
+    """Return exactly N paraphrases (deduplicated).
+    With ``sep``: ONE call asking for all N joined by ``sep`` (explicitly DIFFERENT), then top up
+    with single calls if the model returned too few. Without ``sep``: N separate calls."""
+    if not text:
+        return [""] * n
+    if not sep:
+        return [eng.generate("para", PARA_TAIL.format(lang=lang, text=text), dec) for _ in range(n)]
+    raw = eng.generate("para", PARA_MULTI_TAIL.format(lang=lang, n=n, sep=sep, text=text), dec)
+    out, seen = [], set()
+    for part in raw.split(sep):
+        p = part.strip()
+        if p and p not in seen:
+            out.append(p)
+            seen.add(p)
+        if len(out) >= n:
+            break
+    while len(out) < n:                       # model produced fewer distinct ones -> top up
+        out.append(eng.generate("para", PARA_TAIL.format(lang=lang, text=text), dec))
+    return out[:n]
+
+
 @click.command()
 @click.option("--model", default=DEFAULT_MODEL, show_default=True,
               help="path to a .gguf OR HF id / local safetensors dir")
@@ -568,6 +598,8 @@ def build_backend(backend, model, device, dtype, n_gpu_layers, n_ctx, seed):
 @click.option("--kvcache-meta", "kvcache_meta", default="kvcache_meta.csv", show_default=True,
               help="CSV where each saved prefix cache appends a metadata row")
 @click.option("-n", "--n-paraphrases", default=4, show_default=True)
+@click.option("--para-sep", default="||", show_default=True,
+              help="ask for all N paraphrases in ONE call joined by this marker ('' = one call each)")
 @click.option("--para-temp", "--temp", "para_temp", default=0.8, show_default=True,
               help="paraphrase temperature (alias: --temp); 0 = greedy")
 @click.option("--trans-temp", default=0.0, show_default=True,
@@ -592,8 +624,8 @@ def build_backend(backend, model, device, dtype, n_gpu_layers, n_ctx, seed):
 @click.option("--encoding", default="utf-8-sig", show_default=True,
               help="input CSV encoding (e.g. latin-1 for FLORES)")
 def main(model, backend, in_csv, out_csv, text_col, out_col, src, tgt, translate_only,
-         prefix_cache, kvcache_meta, n_paraphrases, para_temp, trans_temp, para_top_p, para_top_k,
-         trans_top_p, trans_top_k, para_max_new, trans_max_new, para_rep_penalty,
+         prefix_cache, kvcache_meta, n_paraphrases, para_sep, para_temp, trans_temp, para_top_p,
+         para_top_k, trans_top_p, trans_top_k, para_max_new, trans_max_new, para_rep_penalty,
          trans_rep_penalty, seed, device, dtype, n_gpu_layers, n_ctx, limit, encoding):
     """Paraphrase (and translate) a CSV column with a local GGUF or safetensors LLM."""
     if backend == "auto":
@@ -654,9 +686,9 @@ def main(model, backend, in_csv, out_csv, text_col, out_col, src, tgt, translate
                 w.writerow({**r, out_col: out, "variant": 0})
                 fh.flush()
                 continue
+            cands = paraphrase_candidates(eng, para_lang, text, n_paraphrases, para_dec, para_sep)
             for v in range(n_paraphrases):
-                out = eng.generate("para", PARA_TAIL.format(lang=para_lang, text=text),
-                                   para_dec) if text else ""
+                out = cands[v] if v < len(cands) else ""
                 if translate and out:
                     out = eng.generate("xlat", XLING_TAIL.format(src=src, tgt=tgt, text=out),
                                        trans_dec)
