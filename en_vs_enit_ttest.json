@@ -1,0 +1,323 @@
+{
+  "experiment": "E42-F_translate_test",
+  "arm_name": "F",
+  "status": "done",
+  "created": "2026-10-20T09:36:02",
+  "reproduction_status": "REPRODUCIBLE (deterministic seed 0; cache md5-verified)",
+  "host": {
+    "python": "3.13.5",
+    "xgboost": "3.2.0",
+    "optuna": "4.8.0",
+    "numpy": "2.5.4",
+    "threads": {
+      "OMP_NUM_THREADS": "2",
+      "MKL_NUM_THREADS": "2",
+      "OPENBLAS_NUM_THREADS": "2",
+      "NUMEXPR_NUM_THREADS": "2"
+    }
+  },
+  "data": {
+    "csv": "flores200_en_it_de_fr.csv",
+    "dataset": "sent",
+    "embeddings": "embeddings/mean/emb_{en,it}.npy",
+    "backbone": "EuroBERT-210m mean",
+    "n_kept": 2006,
+    "n_train": 997,
+    "n_val": 504,
+    "n_test": 505,
+    "n_classes": 12,
+    "seed": 0
+  },
+  "features": {
+    "kind": "raw",
+    "l2": false,
+    "zscore": false,
+    "perlang_z": false,
+    "pca_or_inlp": false,
+    "dtype": "float32"
+  },
+  "mt_test": {
+    "model": "Helsinki-NLP/opus-mt-it-en",
+    "mt_json": "C:\\Users\\pedro\\AppData\\Local\\Temp\\opencode\\translate_test_eval\\mt_it_505_b649a1e26ee0.json",
+    "emb": "C:\\Users\\pedro\\AppData\\Local\\Temp\\opencode\\translate_test_eval\\translemb_210m_it_505_9e50ebbf6a1d.npy",
+    "direction": "it->en",
+    "n_items": 505,
+    "test_labels_used": false,
+    "translating_test_text_is": "the definition of translate-test"
+  },
+  "cache_check": {
+    "n_translated": 505,
+    "n_test": 505,
+    "md5_source_it_test_in_te_order": "b649a1e26ee0",
+    "mt_json_tag": "b649a1e26ee0",
+    "source_tag_matches": true,
+    "md5_translated": "9e50ebbf6a1d",
+    "npy_tag": "9e50ebbf6a1d",
+    "translated_tag_matches": true,
+    "emb_shape": [
+      505,
+      768
+    ],
+    "emb_dtype": "float32",
+    "emb_rows_match": true,
+    "mt_model": "Helsinki-NLP/opus-mt-it-en",
+    "path": "C:\\Users\\pedro\\AppData\\Local\\Temp\\opencode\\translate_test_eval\\translemb_210m_it_505_9e50ebbf6a1d.npy",
+    "fresh_vs_cached_cos_probe": [
+      1.0000001192092896,
+      0.9999999403953552,
+      1.0,
+      1.0000001192092896
+    ],
+    "min_fresh_vs_cached_cos": 0.9999999403953552,
+    "translation_sample": {
+      "it": "Nelle terre gli arabi portarono anche l'Islam, che intraprese un lungo viaggio verso le Comore e Mayotte.",
+      "en": "In the lands the Arabs also brought Islam, which undertook a long journey to the Comoros and Mayotte."
+    }
+  },
+  "protocol": {
+    "model": "xgboost.XGBClassifier",
+    "base_params": {
+      "objective": "multi:softprob",
+      "num_class": 12,
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0
+    },
+    "sampler": "TPESampler(seed=0)",
+    "direction": "maximize",
+    "objective": "auc_ovr_macro on the raw EN val",
+    "trials": 10,
+    "note": "identical to arm A's protocol; F differs only in test representation"
+  },
+  "arm": {
+    "name": "F (translate-test)",
+    "n_train_rows": 997,
+    "tuned_on": "raw EN val (504 rows)",
+    "n_trials": 10,
+    "best_value": 0.8880671069943283,
+    "best_params": {
+      "max_depth": 8,
+      "learning_rate": 0.034462495812955816,
+      "n_estimators": 567,
+      "min_child_weight": 7,
+      "subsample": 0.6841530244295364,
+      "colsample_bytree": 0.477355778592912,
+      "reg_lambda": 1.5771417546209192
+    },
+    "best_params_equal_A": true,
+    "trials": [
+      {
+        "number": 0,
+        "state": "COMPLETE",
+        "value": 0.8662812961184713,
+        "params": {
+          "max_depth": 7,
+          "learning_rate": 0.15570789053085488,
+          "n_estimators": 522,
+          "min_child_weight": 6,
+          "subsample": 0.7694619197355619,
+          "colsample_bytree": 0.7875364678399936,
+          "reg_lambda": 2.1879360563134624
+        }
+      },
+      {
+        "number": 1,
+        "state": "COMPLETE",
+        "value": 0.8612249824344643,
+        "params": {
+          "max_depth": 10,
+          "learning_rate": 0.2759205297770435,
+          "n_estimators": 368,
+          "min_child_weight": 8,
+          "subsample": 0.8115579679011617,
+          "colsample_bytree": 0.7408267366563595,
+          "reg_lambda": 4.627983191463305
+        }
+      },
+      {
+        "number": 2,
+        "state": "COMPLETE",
+        "value": 0.85515654028934,
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.03666490418612682,
+          "n_estimators": 114,
+          "min_child_weight": 9,
+          "subsample": 0.9112627003799402,
+          "colsample_bytree": 0.9220072889480915,
+          "reg_lambda": 4.89309171116382
+        }
+      },
+      {
+        "number": 3,
+        "state": "COMPLETE",
+        "value": 0.8631451322530633,
+        "params": {
+          "max_depth": 9,
+          "learning_rate": 0.08681616889493068,
+          "n_estimators": 647,
+          "min_child_weight": 2,
+          "subsample": 0.8559684085310095,
+          "colsample_bytree": 0.4860119724454279,
+          "reg_lambda": 4.7233445852479194
+        }
+      },
+      {
+        "number": 4,
+        "state": "COMPLETE",
+        "value": 0.8807946944205164,
+        "params": {
+          "max_depth": 7,
+          "learning_rate": 0.07794409066399026,
+          "n_estimators": 285,
+          "min_child_weight": 8,
+          "subsample": 0.7824601328866194,
+          "colsample_bytree": 0.7410603693211891,
+          "reg_lambda": 0.09394900218177571
+        }
+      },
+      {
+        "number": 5,
+        "state": "COMPLETE",
+        "value": 0.8748662220751947,
+        "params": {
+          "max_depth": 7,
+          "learning_rate": 0.12280526240898489,
+          "n_estimators": 532,
+          "min_child_weight": 10,
+          "subsample": 0.8727281196413934,
+          "colsample_bytree": 0.6157047403442716,
+          "reg_lambda": 2.1851597689967073
+        }
+      },
+      {
+        "number": 6,
+        "state": "COMPLETE",
+        "value": 0.8880671069943283,
+        "params": {
+          "max_depth": 8,
+          "learning_rate": 0.034462495812955816,
+          "n_estimators": 567,
+          "min_child_weight": 7,
+          "subsample": 0.6841530244295364,
+          "colsample_bytree": 0.477355778592912,
+          "reg_lambda": 1.5771417546209192
+        }
+      },
+      {
+        "number": 7,
+        "state": "COMPLETE",
+        "value": 0.8682447664420998,
+        "params": {
+          "max_depth": 5,
+          "learning_rate": 0.11151108079611328,
+          "n_estimators": 407,
+          "min_child_weight": 10,
+          "subsample": 0.6408179242992113,
+          "colsample_bytree": 0.5253260536569009,
+          "reg_lambda": 0.8065475894249813
+        }
+      },
+      {
+        "number": 8,
+        "state": "COMPLETE",
+        "value": 0.887732572392741,
+        "params": {
+          "max_depth": 8,
+          "learning_rate": 0.05375425624632299,
+          "n_estimators": 426,
+          "min_child_weight": 3,
+          "subsample": 0.6635878334582078,
+          "colsample_bytree": 0.4662250846985831,
+          "reg_lambda": 3.281647947326367
+        }
+      },
+      {
+        "number": 9,
+        "state": "COMPLETE",
+        "value": 0.885226533743642,
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.04717409924714915,
+          "n_estimators": 358,
+          "min_child_weight": 9,
+          "subsample": 0.6388405103172244,
+          "colsample_bytree": 0.9027669444992823,
+          "reg_lambda": 0.48049203946981534
+        }
+      }
+    ],
+    "seconds": 104.4,
+    "metrics": {
+      "mt_en_test": {
+        "accuracy": 0.5386138613861386,
+        "micro_f1": 0.5386138613861386,
+        "macro_f1": 0.42715637157007186,
+        "auc_ovr_macro": 0.8609303503539799
+      },
+      "en_test": {
+        "accuracy": 0.5445544554455446,
+        "micro_f1": 0.5445544554455446,
+        "macro_f1": 0.4149336947698607,
+        "auc_ovr_macro": 0.8738560544303869
+      },
+      "it_test": {
+        "accuracy": 0.3900990099009901,
+        "micro_f1": 0.3900990099009901,
+        "macro_f1": 0.1798550995718431,
+        "auc_ovr_macro": 0.7879784620306323
+      },
+      "en_val": {
+        "accuracy": 0.5853174603174603,
+        "micro_f1": 0.5853174603174603,
+        "macro_f1": 0.45384328424026504,
+        "auc_ovr_macro": 0.8880671069943283
+      }
+    }
+  },
+  "reference": {
+    "A_IT": 0.7879784620306323,
+    "A_EN": 0.8738560544303869,
+    "A_IT_macro": 0.1798550995718431,
+    "A_IT_acc": 0.3900990099009901,
+    "B_IT": 0.837006482368932,
+    "C_IT": 0.8423116873890897,
+    "E_IT": 0.8418045885762692,
+    "E_IT_macro": 0.3547349602269798,
+    "E_IT_acc": 0.5108910891089109,
+    "E_EN": 0.8826578267887303
+  },
+  "ratios": {
+    "bar": 0.975,
+    "f_over_e": 1.0227199542949248,
+    "f_over_a": 1.0925810689486988,
+    "e_over_a": 1.068309134245784,
+    "passes_f_e": true,
+    "passes_f_a": true,
+    "passes_e_a": true,
+    "macro_f": 0.42715637157007186,
+    "macro_e": 0.3547349602269798,
+    "macro_a": 0.1798550995718431,
+    "f_over_e_macro": 1.2041563969244888,
+    "f_over_a_macro": 2.375002836099425
+  },
+  "winner_auc": "F (translate-test)",
+  "winner_macro_f1": "F (translate-test)",
+  "operational_cost": {
+    "translate_test": "MT at inference for every test item (505 here), re-run per new item",
+    "translate_train": "MT once over 997 training items; no inference MT; serving = encoder + XGBoost"
+  },
+  "verdict": "On the same 505 Italian documents with identical raw features, **translate-test wins on both metrics -- narrowly on AUC (1.9 pp, about 1-2 SE) and clearly on macro-F1 (+20%)**: F = 0.8609 AUC / 0.4272 macro-F1 vs E (translate-train) = 0.8418 / 0.3547 and A (no translation) = 0.7880 / 0.1799. F/E = **1.0227**, F/A = **1.0926**, E/A = **1.0683** on AUC; on macro-F1 F/E = **1.2042**. The winner on AUC is **F (translate-test)** and on macro-F1 **F (translate-test)**. The price is operational: translate-test runs MT at inference on every test item (505 translations here, re-run for every new item), while translate-train pays MT once on 997 training items and serves with no MT in the loop. Translate-test buys roughly 1.9 AUC points over translate-train for that inference-time cost.",
+  "caveats": [
+    "Translate-test changes the test-time representation: the documents are the same 505, the text the model sees is MT English. Label noise is unchanged (labels are human), but MT artifacts are part of the input.",
+    "F is not a new model: its training protocol equals A's, and with seed 0 it selects the same hyperparameters, so F's raw EN/IT test numbers reproduce A's exactly. The comparison is therefore a pure test-representation swap.",
+    "E (translate-train) trains on 1994 rows vs F's 997, so F wins despite having half the training rows.",
+    "Single seed, 505-row test; AUC SE ~0.01-0.02. The F/E AUC gap is only 1.9 pp (about 1-2 SE), so the AUC win is a weak margin; the macro-F1 gap is 7.3 pp (+20% relative) and is the decisive effect. F/A and E/A (7-9 pp AUC) are well outside the noise band.",
+    "MT is opus-mt-it-en for the test and opus-mt-en-it for the training arm, i.e. different directions/models; a weaker MT system on either side would move that arm.",
+    "Inference-time MT also needs the encoder run over 505 translated strings, so serving cost is MT + encoder + XGBoost rather than encoder + XGBoost.",
+    "E23's translate-test cell used this same cache but 1501 train+val rows and fixed params, scoring 0.8969 vs F's 0.8609. The gap is training rows (1501 vs 997), not the cache: F's raw EN test (0.8739) also sits below E23's EN test (0.9038)."
+  ],
+  "runtime_seconds": 104.4
+}

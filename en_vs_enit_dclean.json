@@ -1,0 +1,303 @@
+{
+  "experiment": "E42-D_clean",
+  "arm_name": "E",
+  "status": "done",
+  "created": "2026-10-20T09:26:18",
+  "reproduction_status": "REPRODUCIBLE (deterministic seed 0, fresh study)",
+  "host": {
+    "python": "3.13.5",
+    "xgboost": "3.2.0",
+    "optuna": "4.8.0",
+    "numpy": "2.5.4",
+    "threads": {
+      "OMP_NUM_THREADS": "2",
+      "MKL_NUM_THREADS": "2",
+      "OPENBLAS_NUM_THREADS": "2",
+      "NUMEXPR_NUM_THREADS": "2"
+    }
+  },
+  "data": {
+    "csv": "flores200_en_it_de_fr.csv",
+    "dataset": "sent (no flores_agg)",
+    "embeddings": "embeddings/mean/emb_{en,it}.npy",
+    "backbone": "EuroBERT-210m mean",
+    "n_source": 2009,
+    "n_kept": 2006,
+    "n_train": 997,
+    "n_val": 504,
+    "n_test": 505,
+    "n_classes": 12,
+    "seed": 0
+  },
+  "features": {
+    "kind": "raw",
+    "l2": false,
+    "zscore": false,
+    "perlang_z": false,
+    "centering": "none",
+    "pca_or_inlp": false,
+    "dtype": "float32",
+    "test_time_mt": false
+  },
+  "mt": {
+    "model": "Helsinki-NLP/opus-mt-en-it",
+    "cache": "C:\\Users\\pedro\\AppData\\Local\\Temp\\opencode\\flores_close_cache\\tt_emb_sent_it.npy",
+    "reused_cache": true,
+    "rows_translated": 997,
+    "rows_referenced": "MT[:997] (train slice only)"
+  },
+  "protocol": {
+    "model": "xgboost.XGBClassifier",
+    "base_params": {
+      "objective": "multi:softprob",
+      "num_class": 12,
+      "tree_method": "hist",
+      "max_bin": 64,
+      "device": "cpu",
+      "n_jobs": 2,
+      "seed": 0
+    },
+    "search_space": "max_depth 3-10; learning_rate 0.03-0.3 (log); n_estimators 100-800; min_child_weight 1-10; subsample 0.6-1.0; colsample_bytree 0.4-1.0; reg_lambda 0-5",
+    "sampler": "TPESampler(seed=0)",
+    "direction": "maximize",
+    "objective": "auc_ovr_macro on the unseen real IT val",
+    "trials": 10,
+    "final_fit": "best params on EN train + MT-IT train (1994 rows)"
+  },
+  "held_out": {
+    "n_train": 997,
+    "n_val": 504,
+    "n_test": 505,
+    "disjoint": true,
+    "val_rows_in_training": 0,
+    "train_matrix_rows": 1994,
+    "mt_rows_used": 997,
+    "val_mt_rows_used": 0,
+    "val_mt_slice_untouched": "MT[997:] never referenced",
+    "note": "every training row derives from a train index; the 504 val indices appear in no fit and no MT slice"
+  },
+  "arm": {
+    "name": "E (D_clean)",
+    "train_langs": [
+      "en",
+      "mt-it"
+    ],
+    "n_train_rows": 1994,
+    "tuned_on": "real IT val (504 rows), held out from every fit",
+    "n_trials": 10,
+    "best_value": 0.8692522927888507,
+    "best_params": {
+      "max_depth": 7,
+      "learning_rate": 0.07794409066399026,
+      "n_estimators": 285,
+      "min_child_weight": 8,
+      "subsample": 0.7824601328866194,
+      "colsample_bytree": 0.7410603693211891,
+      "reg_lambda": 0.09394900218177571
+    },
+    "trials": [
+      {
+        "number": 0,
+        "state": "COMPLETE",
+        "value": 0.8479168156975311,
+        "params": {
+          "max_depth": 7,
+          "learning_rate": 0.15570789053085488,
+          "n_estimators": 522,
+          "min_child_weight": 6,
+          "subsample": 0.7694619197355619,
+          "colsample_bytree": 0.7875364678399936,
+          "reg_lambda": 2.1879360563134624
+        }
+      },
+      {
+        "number": 1,
+        "state": "COMPLETE",
+        "value": 0.8516784104735399,
+        "params": {
+          "max_depth": 10,
+          "learning_rate": 0.2759205297770435,
+          "n_estimators": 368,
+          "min_child_weight": 8,
+          "subsample": 0.8115579679011617,
+          "colsample_bytree": 0.7408267366563595,
+          "reg_lambda": 4.627983191463305
+        }
+      },
+      {
+        "number": 2,
+        "state": "COMPLETE",
+        "value": 0.8414487320256568,
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.03666490418612682,
+          "n_estimators": 114,
+          "min_child_weight": 9,
+          "subsample": 0.9112627003799402,
+          "colsample_bytree": 0.9220072889480915,
+          "reg_lambda": 4.89309171116382
+        }
+      },
+      {
+        "number": 3,
+        "state": "COMPLETE",
+        "value": 0.8569775721151595,
+        "params": {
+          "max_depth": 9,
+          "learning_rate": 0.08681616889493068,
+          "n_estimators": 647,
+          "min_child_weight": 2,
+          "subsample": 0.8559684085310095,
+          "colsample_bytree": 0.4860119724454279,
+          "reg_lambda": 4.7233445852479194
+        }
+      },
+      {
+        "number": 4,
+        "state": "COMPLETE",
+        "value": 0.8692522927888507,
+        "params": {
+          "max_depth": 7,
+          "learning_rate": 0.07794409066399026,
+          "n_estimators": 285,
+          "min_child_weight": 8,
+          "subsample": 0.7824601328866194,
+          "colsample_bytree": 0.7410603693211891,
+          "reg_lambda": 0.09394900218177571
+        }
+      },
+      {
+        "number": 5,
+        "state": "COMPLETE",
+        "value": 0.8686434086707894,
+        "params": {
+          "max_depth": 7,
+          "learning_rate": 0.12280526240898489,
+          "n_estimators": 532,
+          "min_child_weight": 10,
+          "subsample": 0.8727281196413934,
+          "colsample_bytree": 0.6157047403442716,
+          "reg_lambda": 2.1851597689967073
+        }
+      },
+      {
+        "number": 6,
+        "state": "COMPLETE",
+        "value": 0.867807841596273,
+        "params": {
+          "max_depth": 8,
+          "learning_rate": 0.034462495812955816,
+          "n_estimators": 567,
+          "min_child_weight": 7,
+          "subsample": 0.6841530244295364,
+          "colsample_bytree": 0.477355778592912,
+          "reg_lambda": 1.5771417546209192
+        }
+      },
+      {
+        "number": 7,
+        "state": "COMPLETE",
+        "value": 0.8543695980007217,
+        "params": {
+          "max_depth": 5,
+          "learning_rate": 0.11151108079611328,
+          "n_estimators": 407,
+          "min_child_weight": 10,
+          "subsample": 0.6408179242992113,
+          "colsample_bytree": 0.5253260536569009,
+          "reg_lambda": 0.8065475894249813
+        }
+      },
+      {
+        "number": 8,
+        "state": "COMPLETE",
+        "value": 0.8665062648652769,
+        "params": {
+          "max_depth": 8,
+          "learning_rate": 0.05375425624632299,
+          "n_estimators": 426,
+          "min_child_weight": 3,
+          "subsample": 0.6635878334582078,
+          "colsample_bytree": 0.4662250846985831,
+          "reg_lambda": 3.281647947326367
+        }
+      },
+      {
+        "number": 9,
+        "state": "COMPLETE",
+        "value": 0.8674882388438326,
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.04717409924714915,
+          "n_estimators": 358,
+          "min_child_weight": 9,
+          "subsample": 0.6388405103172244,
+          "colsample_bytree": 0.9027669444992823,
+          "reg_lambda": 0.48049203946981534
+        }
+      }
+    ],
+    "seconds": 141.5,
+    "metrics": {
+      "it_test": {
+        "accuracy": 0.5108910891089109,
+        "micro_f1": 0.5108910891089109,
+        "macro_f1": 0.3547349602269798,
+        "auc_ovr_macro": 0.8418045885762692
+      },
+      "en_test": {
+        "accuracy": 0.5405940594059406,
+        "micro_f1": 0.5405940594059406,
+        "macro_f1": 0.4242870875791234,
+        "auc_ovr_macro": 0.8826578267887303
+      },
+      "it_val": {
+        "accuracy": 0.5416666666666666,
+        "micro_f1": 0.5416666666666666,
+        "macro_f1": 0.46562869984897554,
+        "auc_ovr_macro": 0.8692522927888507
+      }
+    }
+  },
+  "reference": {
+    "A_IT": 0.7879784620306323,
+    "A_EN": 0.8738560544303869,
+    "B_IT": 0.837006482368932,
+    "B_EN": 0.8729054938864653,
+    "C_IT": 0.8423116873890897,
+    "D_IT": 0.8860168094449712,
+    "D_EN": 0.9161035610759211,
+    "Dprime_IT": 0.8418045885762692,
+    "Dprime_EN": 0.8826578267887303
+  },
+  "ratios": {
+    "bar": 0.975,
+    "e_it_over_b": 1.0057324600327555,
+    "e_it_over_c": 0.999397967735207,
+    "e_en_over_a_en": 1.0100723366436828,
+    "e_it_over_d": 0.9501000202282867,
+    "e_it_over_dprime": 1.0,
+    "passes_e_b": true,
+    "passes_e_c": true,
+    "passes_e_en": true,
+    "d_inflation_it": 0.044212220868702024,
+    "dprime_gap_it": 0.0
+  },
+  "verdict": "Clean translate-train scores **0.8418** AUC on real Italian vs **0.8370** for B (real Italian train) and **0.8423** for the Italian-only ceiling C: E/B = **1.0057** (above the 0.975 bar) and E/C = **0.9994** (above). On English it scores **0.8827** vs A's **0.8739** (E/A = **1.0101**, within the bar). So with an honest held-out objective and matched rows, MT Italian is a genuine substitute for real Italian training data. D's raw 0.8860 is **not comparable**, but not because of in-sample tuning: D's Optuna objective was scored on a 1994-row train-only fit, exactly as E does here, which is why E's 10 trials and best params reproduce D's bitwise. The gap is a final-fit row-count effect -- D refits on 3002 rows (1501 EN train+val + MT-IT of those same 1501, i.e. 1.5x B and 3x A, and the 504 IT-val rows are inside it), while E refits on the 1994 clean rows. That is +0.0442 AUC, and it is why D/C = 1.0519 was misleading.",
+  "caveats": [
+    "Single seed (0); 505-row test. AUC SE ~0.01-0.02, so E/B and E/C differences under ~0.02 AUC are not resolved.",
+    "E trains on 1994 rows, the same size as B, so E/B and E/C are size-matched -- unlike D/B (3002 vs 1994) and D/C (3002 vs 997).",
+    "Only EN train rows were translated; the 504 val and 505 test texts are the original human Italian and are never translated or trained on.",
+    "MT output is synthetic; a different MT system would move E. The number is specific to Helsinki-NLP/opus-mt-en-it.",
+    "10 Optuna trials: enough to beat defaults, not to exhaust the space. E's params happen to coincide with D's because both tuned the same 1994-row matrix with the same seed -- a cross-check, not a copy.",
+    "The parent E42 JSON is read-only for reference numbers and asserted against expected values, so E cannot silently inherit a drifted baseline."
+  ],
+  "runtime_seconds": 141.5,
+  "cross_check": {
+    "e_trials_equal_d_trials": true,
+    "e_best_params_equal_d": true,
+    "e_test_equals_dprime": true,
+    "d_minus_e_it": 0.044212220868702024,
+    "note": "identical TPE seed/space and an identical 1994-row tuning matrix reproduce D's trial sequence exactly; only the final-fit row count differs (3002 vs 1994)"
+  }
+}
