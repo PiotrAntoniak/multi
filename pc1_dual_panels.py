@@ -74,17 +74,11 @@ def main():
         a.grid(alpha=.25)
         return sc
 
-    # row 0: a
-    a = fig.add_subplot(gs[0, 0])
-    sc = diag(a, amb, ama, "(a mean) all-rows mean, top-%d" % n)
-    a.text(0.03, 0.97, "mean %.3f -> %.3f" % (amb.mean(), ama.mean()),
-           transform=a.transAxes, va="top", fontsize=8,
-           bbox=dict(facecolor="white", alpha=.8, edgecolor="none"))
+    # row 0: a (variance only; the global mean is invariant)
+    a = fig.add_subplot(gs[0, :])
+    sc = diag(a, avb, ava, "(a) all-rows variance, top-%d" % n)
     a.set_xlabel("before"); a.set_ylabel("after PC1-3")
     fig.colorbar(sc, ax=a, label="|PC1 loading|")
-    a = fig.add_subplot(gs[0, 1])
-    diag(a, avb, ava, "(a var) all-rows variance, top-%d" % n)
-    a.set_xlabel("before"); a.set_ylabel("after PC1-3")
 
     # row 1: b
     for col, (data_b, data_a, title) in enumerate([
@@ -101,18 +95,14 @@ def main():
         a.legend(fontsize=7)
         a.grid(alpha=.25)
 
-    # row 2: c
+    # row 2: c (variance only)
+    a = fig.add_subplot(gs[2, :])
     x = np.arange(n)
-    for col, (b_, a_, title) in enumerate([
-            (amb, ama, "(c mean) all-rows mean"),
-            (avb, ava, "(c var) all-rows variance")]):
-        ax = fig.add_subplot(gs[2, col])
-        ax.bar(x - .2, b_, .4, label="before", color="#4c72b0")
-        ax.bar(x + .2, a_, .4, label="after PC1-3", color="#c44e52")
-        ax.set_xticks(x); ax.set_xticklabels(dim, rotation=90, fontsize=6)
-        ax.set_title(title, fontsize=9)
-        ax.legend(fontsize=7)
-        ax.grid(axis="y", alpha=.25)
+    a.bar(x - .2, avb, .4, label="before", color="#4c72b0")
+    a.bar(x + .2, ava, .4, label="after PC1-3", color="#c44e52")
+    a.set_xticks(x); a.set_xticklabels(dim, rotation=90, fontsize=6)
+    a.set_title("(c) all-rows variance, top-%d" % n, fontsize=9)
+    a.legend(fontsize=7); a.grid(axis="y", alpha=.25)
 
     # row 3: d
     a = fig.add_subplot(gs[3, 0])
@@ -211,11 +201,20 @@ def main():
 
     fig.suptitle("%s PC1: means (left) and variances (right) before vs after PC1-3"
                  % args.dataset.upper(), fontsize=13)
-    fig.text(0.012, 0.004,
-             "Panel key: rows a-f compare the mean version (left) and variance version (right); "
-             "(g)-(i) Pearson r on the top-16/64/128 dims; (j) PC1 loading histogram.",
-             fontsize=7.4, va="bottom", ha="left")
-    fig.subplots_adjust(top=.95, bottom=.055, left=.06, right=.90)
+    legend = [
+        "Panel key:",
+        "(a) all-rows variance before vs after; variance only.",
+        "(b) per-language mean (left) and per-language variance (right), before vs after.",
+        "(c) all-rows variance per dimension, before vs after; variance only.",
+        "(d) mean change per dimension (left) and variance retention (right).",
+        "(e) mean-change heatmap (left) and variance-retention heatmap (right).",
+        "(f) mean value vs top-k (left) and mean variance vs top-k (right); solid = before, dashed = after.",
+        "(g)-(i) Pearson r on the top-16/64/128 dims; each cell before (top) / after (bottom); shared scale.",
+        "(j) PC1 loading histogram (counts).",
+    ]
+    fig.text(0.012, 0.006, "\n".join(legend), fontsize=7.6, va="bottom",
+             ha="left", linespacing=1.35)
+    fig.subplots_adjust(top=.95, bottom=.11, left=.06, right=.90)
     out = os.path.join(args.outdir, "%s_pc1_mean_var_panels_210m.png" % args.dataset)
     fig.savefig(out, dpi=160)
     print("wrote", out)
