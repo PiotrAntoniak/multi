@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 from pc1_dimension_plots import _add_density, _add_pearson, COLORS
 
@@ -74,35 +75,51 @@ def main():
         a.grid(alpha=.25)
         return sc
 
-    # row 0: a (variance only; the global mean is invariant)
+    # row 0: a ? per-language variance
     a = fig.add_subplot(gs[0, :])
-    sc = diag(a, avb, ava, "(a) all-rows variance, top-%d" % n)
-    a.set_xlabel("before"); a.set_ylabel("after PC1-3")
-    fig.colorbar(sc, ax=a, label="|PC1 loading|")
+    for lg in langs:
+        a.scatter(vb[lg], va[lg], s=35, alpha=.8, color=COLORS.get(lg), label=lg)
+    lo = min(min(vb[lg].min(), va[lg].min()) for lg in langs)
+    hi = max(max(vb[lg].max(), va[lg].max()) for lg in langs)
+    a.plot([lo, hi], [lo, hi], "k--", lw=1)
+    a.set_xlabel("variance within language, before")
+    a.set_ylabel("after PC1-3")
+    a.set_title("(a) per-language variance, top-%d dims" % n, fontsize=9)
+    a.legend(fontsize=8)
+    a.grid(alpha=.25)
 
-    # row 1: b
-    for col, (data_b, data_a, title) in enumerate([
-            (mb, ma, "(b mean) per-language means"),
-            (vb, va, "(b var) per-language variance")]):
-        a = fig.add_subplot(gs[1, col])
-        for lg in langs:
-            a.scatter(data_b[lg], data_a[lg], s=32, alpha=.75,
-                      color=COLORS.get(lg), label=lg)
-        lo = min(min(data_b[lg].min(), data_a[lg].min()) for lg in langs)
-        hi = max(max(data_b[lg].max(), data_a[lg].max()) for lg in langs)
-        a.plot([lo, hi], [lo, hi], "k--", lw=1)
-        a.set_title(title, fontsize=9)
-        a.legend(fontsize=7)
-        a.grid(alpha=.25)
+    # row 1: b ? per-language means (full width)
+    a = fig.add_subplot(gs[1, :])
+    for lg in langs:
+        a.scatter(mb[lg], ma[lg], s=40, alpha=.8, color=COLORS.get(lg), label=lg)
+    lo = min(min(mb[lg].min(), ma[lg].min()) for lg in langs)
+    hi = max(max(mb[lg].max(), ma[lg].max()) for lg in langs)
+    a.plot([lo, hi], [lo, hi], "k--", lw=1)
+    a.set_xlabel("per-language mean before")
+    a.set_ylabel("after PC1-3")
+    a.set_title("(b) per-language means, top-%d dims" % n, fontsize=9)
+    a.legend(fontsize=8, ncol=2)
+    a.grid(alpha=.25)
 
-    # row 2: c (variance only)
+    # row 2: c ? one graph, one bar per language per dimension, before/after
     a = fig.add_subplot(gs[2, :])
-    x = np.arange(n)
-    a.bar(x - .2, avb, .4, label="before", color="#4c72b0")
-    a.bar(x + .2, ava, .4, label="after PC1-3", color="#c44e52")
-    a.set_xticks(x); a.set_xticklabels(dim, rotation=90, fontsize=6)
-    a.set_title("(c) all-rows variance, top-%d" % n, fontsize=9)
-    a.legend(fontsize=7); a.grid(axis="y", alpha=.25)
+    L = len(langs)
+    width = 0.18 if L <= 4 else 0.13
+    centers = np.arange(n)
+    for j, lg in enumerate(langs):
+        off = (j - (L - 1) / 2.0) * width * 1.2
+        a.bar(centers + off, vb[lg], width, color=COLORS.get(lg), alpha=.35,
+              edgecolor=COLORS.get(lg), linewidth=.5)
+        a.bar(centers + off, va[lg], width * 0.45, color=COLORS.get(lg), alpha=1.0)
+    a.set_xticks(centers)
+    a.set_xticklabels(dim, rotation=90, fontsize=7)
+    a.set_ylabel("variance")
+    a.set_title("(c) per-language variance per dimension, before (wide) / after (narrow)", fontsize=9)
+    handles = [Patch(facecolor=COLORS.get(lg), alpha=.7, label=lg) for lg in langs]
+    handles += [Patch(facecolor="gray", alpha=.35, label="before"),
+                Patch(facecolor="gray", alpha=1.0, label="after")]
+    a.legend(handles=handles, fontsize=7, ncol=3, loc="best")
+    a.grid(axis="y", alpha=.25)
 
     # row 3: d
     a = fig.add_subplot(gs[3, 0])
@@ -203,9 +220,9 @@ def main():
                  % args.dataset.upper(), fontsize=13)
     legend = [
         "Panel key:",
-        "(a) all-rows variance before vs after; variance only.",
-        "(b) per-language mean (left) and per-language variance (right), before vs after.",
-        "(c) all-rows variance per dimension, before vs after; variance only.",
+        "(a) per-language variance, before vs after; variance only.",
+        "(b) per-language means, before vs after.",
+        "(c) one bar per language per dimension: wide/light = before, narrow/solid = after.",
         "(d) mean change per dimension (left) and variance retention (right).",
         "(e) mean-change heatmap (left) and variance-retention heatmap (right).",
         "(f) mean value vs top-k (left) and mean variance vs top-k (right); solid = before, dashed = after.",
