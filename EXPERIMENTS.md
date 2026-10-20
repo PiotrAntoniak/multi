@@ -72,9 +72,12 @@ below the bar (0.8959). Never read a rounded table cell as a pass.
 ## How to read this document
 
 Every entry starts with a `**Script to reproduce:**` line directly under its heading, giving the
-script, the command (or the reason no command exists), and the reproduction status.
-The pre-audit file sometimes carried that line above the heading; here it has been moved under it.
-Duplicate headings and duplicate script lines were removed at assembly.
+script, the command (or the reason no command exists), and the reproduction status. A
+`> **DO NOT QUOTE:**` callout may appear between the heading and the script line; it names the rows in
+that entry that are not defensible. The coverage index carries a **Defensibility** column, and the
+register above it names every undefendable claim. The pre-audit file sometimes carried the script line
+above the heading; here it has been moved under it. Duplicate headings and duplicate script lines
+were removed at assembly.
 
 **Reproduction status legend**
 
@@ -87,6 +90,8 @@ Duplicate headings and duplicate script lines were removed at assembly.
 Other conventions:
 
 - `->` marks a direction or a change; `>=` marks a comparison.
+- **DO NOT QUOTE** means the number, row or table is not defensible. The entry callout and the
+  register give the reason and the defensible alternative.
 - `†` in a table marks an omitted or non-reproducible cell, as noted in that entry.
 - A "ceiling" or "in-language reference" is a target-trained model, **not** an upper bound. Several
   methods exceed it, which is why E14 and E19 both warn against the word "ceiling".
@@ -100,51 +105,87 @@ Other conventions:
 
 ## Coverage index
 
-| ID | experiment | script to reproduce | status | 0.975 result |
+| ID | experiment | script to reproduce | status | 0.975 result | Defensibility |
+|---|---|---|---|---|---|
+| E1 | Language-dimension census (4-way probe, η²) | NOT AVAILABLE: `langdims_probe.py` | NOT AVAILABLE (UNK) | N/A; probe 1.000 full, 0.999 after zeroing top-557 η² dims | DEFENSIBLE (caveat) |
+| E1b | INLP language-subspace removal | NOT AVAILABLE: `lang_inlp.py` | NOT AVAILABLE (UNK) | N/A; INLP claim (~30 dirs) unverified | DO NOT QUOTE |
+| E2 | Translated SST-2 / emotion eval sets | `rebuild_caches.py` | PARTIAL | N/A (data prep); supports E4 | DEFENSIBLE (caveat) |
+| E3 | FLORES topic cross-lingual (+ neutralization) | NOT AVAILABLE: `crosslingual_topic*.py` | NOT AVAILABLE (UNK) | N/A; claims 0.234 -> 0.334 unverified | DO NOT QUOTE |
+| E4 | Sentiment / emotion cross-lingual | NOT AVAILABLE: `crosslingual_sentiment.py` | NOT AVAILABLE (UNK) | 0/12 cells; best SST-2 fr centroid 0.819 | DO NOT QUOTE |
+| E6 | FLORES topic, INLP arm | NOT AVAILABLE: `crosslingual_inlp.py` | NOT AVAILABLE (UNK) | N/A; no separate claim | DO NOT QUOTE |
+| E7 | FLORES topic, second variant | NOT AVAILABLE: `crosslingual_topic*.py` | NOT AVAILABLE (UNK) | N/A; no separate claim | DO NOT QUOTE |
+| E9 | MultiEURLEX long-doc, 210m + 610m | `mel_close.py` | PARTIAL | 610m 0.996 / 0.993 vs native ceiling (numerator unverified); 0.946 / 0.940 vs EN self; 210m fails | PARTLY NOT DEFENSIBLE |
+| E10 | MultiEURLEX, threshold calibration | `mel_close.py` | PARTIAL | 210m l2_thenZ+qm: 0.922 / 0.923 vs EN self — fail | PARTLY NOT DEFENSIBLE |
+| E11 | MultiEURLEX, 610m arm | NOT AVAILABLE: `multieurlex_*.py` | NOT AVAILABLE (UNK) | 610m 0.711 / 0.707 text-only; only passes vs unverified ceiling | DO NOT QUOTE |
+| E12 | Leading-PC removal (global PCA k=0..5) | `dim_removal.py` | PARTIAL | N/A; best headline XL/EN-self 0.895 (FLORES-agg 610m) | DEFENSIBLE (caveat) |
+| E13 | PC-ablation cascade (original) | NOT AVAILABLE: `pc_ablation*.py` | NOT AVAILABLE (UNK) | N/A; no separate artifact survives | DO NOT QUOTE |
+| E14 | FLORES gap-closers, primary micro-F1 | `flores_close.py` | REPRODUCIBLE | 5 methods 3/3 on both datasets (micro); no pure EN transform passes | DEFENSIBLE (caveat) |
+| E14b | FLORES gap-closers, macro-F1 view | `flores_close.py` | REPRODUCIBLE | kNN / translate-train / `mlp_align` 6/6 target cells | DEFENSIBLE (caveat) |
+| E15 | Recall-first (FPR at 90% recall) | `imbalanced_recall.py` / `imbalanced_recall_mel.py` | REPRODUCIBLE | FLORES PASS 1.005 (12/24 cells); MultiEURLEX FAIL 1.196 (2/16) | PARTLY NOT DEFENSIBLE |
+| E16 | Alias for the MultiEURLEX gap-closers | `mel_close.py` | PARTIAL | Same as E9/E10/E11; `multieurlex_*.py` missing | DO NOT QUOTE |
+| E17 | Language dims vs SHAP contribution | `lang_shap_dims.py` | REPRODUCIBLE | N/A; Spearman −0.076 / −0.059 / −0.019 | DEFENSIBLE (caveat) |
+| E18 | Headline out-of-the-box transfer | `proof_mean_alllangs.py` | REPRODUCIBLE | 0/8 target cells; best FLORES-agg IT 0.967 | DEFENSIBLE |
+| E19 | Calibration and ceiling feasibility | `flores_calib.py` + `flores_ceiling.py` | PARTIAL | sent 6/6 infeasible; agg 3/6 infeasible vs 0.975 bar | DEFENSIBLE (caveat) |
+| E20 | Toxicity, clean split | `toxi_proof_clean.py` | REPRODUCIBLE | 0/4 on both bars; best fr EN/native 0.896 | DEFENSIBLE |
+| E21 | Non-XGBoost classifiers | `models_compare.py` | PARTIAL | F1 3/34, AUC 5/34; no non-degenerate both-metric pass | DEFENSIBLE (caveat) |
+| E22 | Bilingual vs multilingual MT | `mt_compare.py` | PARTIAL | 0/3 BLEU (0.778 / 0.719 / 0.756); chrF 0/3 | DEFENSIBLE (caveat) |
+| E23 | Translate-test | `translate_test_eval.py` | REPRODUCIBLE | 4/6 macro-F1, 6/6 AUC vs EN; 6/6 both vs in-language | DEFENSIBLE |
+| E24 | XNLI, PAWS-X, textdetox, SIB-200 | `more_datasets.py` | PARTIAL | 1/13 cells (SIB-200 fr 0.995); 0/4 datasets | DEFENSIBLE (caveat) |
+| E25 | Full language × language matrices | `lang_matrix.py` | REPRODUCIBLE | 2/16 rows (PAWS-X 1.024 / 0.994, near chance); gap shrinks on 8/8 by absolute value | DEFENSIBLE (caveat) |
+| E25b | All-languages vs per-language training | `alllang_vs_perlang.py` | REPRODUCIBLE | 6/6 cells; FLORES 1.032–1.227, toxicity 0.979 / 0.981 | DEFENSIBLE (caveat) |
+| E26 | Leading-dimension removal (third ID) | `dim_removal.py` | PARTIAL | N/A; shares E12's artifact; no separate claim | DO NOT QUOTE |
+| E27 | Toxicity precision/recall, XGBoost | `toxi_pr.py` / `toxi_pr_all.py` | PARTIAL | 0/2 backbones; 0.708 / 0.771 (JSON); reverse 0.720 / 0.789 | DO NOT QUOTE |
+| E28 | Backbone × dataset × method grid | `backbone_grid.py` | PARTIAL | N/A (absolute); mel gain largest, toxic none | DEFENSIBLE (caveat) |
+| E29 | Fine-tune last layer + linear head | `finetune_lastlayer.py` | PARTIAL | FT/frozen 20/26; target/EN-self 0/20 | PARTLY NOT DEFENSIBLE |
+| E30 | Synthetic Italian from English | `synth_it.py` / `synth_toxic_it.py` | REPRODUCIBLE (FLORES) | FLORES synth 0.989 / 0.983 and mixed 1.026 / 0.986 pass; toxic 0/8 | PARTLY NOT DEFENSIBLE |
+| E31 | Generator comparison | `gen_compare.py` | PARTIAL | 2/3 generators (0.994, 0.980; Qwen3.5-2B 0.956); toxic NOT DONE | PARTLY NOT DEFENSIBLE |
+| E32 | Union of all generators' paraphrases | `all_paraphrases.py` | REPRODUCIBLE (FLORES) | 1.145 vs real-IT, 1.151 vs best single; 3× volume confound; toxic 2/3 | PARTLY NOT DEFENSIBLE |
+| E33 | FLORES-agg P/R vs threshold, 210m vs 610m | NOT AVAILABLE for full rerun: `agg_pr_2models.py` | PARTIAL (re-emit only) | N/A; derived IT/EN tops at 0.9595, 0/10 cells | DO NOT QUOTE |
+| E34 | Full-document chunk pooling vs truncation | `chunk_pool_mel.py` | PARTIAL | 0/24 cells; best `concat` FR AUC 0.9638 | DEFENSIBLE (caveat) |
+| E35 | EN- vs IT-trained error buckets | `it_errors.py` / `list_errors.py` | REPRODUCIBLE | N/A; accuracy ratio EN/IT 0.857 (sent), 0.753 (agg) | DEFENSIBLE (caveat) |
+| E36 | Toxicity on the ORIGINAL leaky splits | `toxi_proof.py` | PARTIAL (provenance only) | target/EN 1/4 (es 0.986); EN/native 1/4 (de 1.062); both are artifacts, do not quote | DO NOT QUOTE |
+| E37 | Seven classifiers at the toxicity bar | `toxi_pr_models.py` | PARTIAL | 13/14 fail; GaussianNB 610m 1.0675 nominal only | DEFENSIBLE (caveat) |
+| E38 | GGUF quantization + EN→PL paraphrase→translate | `gguf_quant_quality.py` | PARTIAL | 6/6 quant cells (min 0.9904); EN→PL N/A | PARTLY NOT DEFENSIBLE |
+| E39 | Exact-translation retrieval | `table1.py` / `table1_agg.py` / `table1_europarl_multilang.py` | PARTIAL | N/A; FLORES mean +D top-1 83.9–90.0% | PARTLY NOT DEFENSIBLE |
+| E40 | Legacy pre-E18 XGBoost suite | NOT AVAILABLE for the tables; archived at `aa3f6f6` | NOT AVAILABLE (UNK), superseded | N/A | DO NOT QUOTE |
+| E41 | PCA / η² / SHAP diagnostics | `pca_plots.py`, `lang_dims.py`, `shap_flores_*.py` | PARTIAL | N/A | DO NOT QUOTE |
+| E42 | Raw EN vs EN+IT, IT control, translate-train, translate-test | `en_vs_enit_raw.py`, `en_vs_enit_dclean.py`, `en_vs_enit_ttest.py` | REPRODUCIBLE | A(IT)/B 0.9414 fail; E/B 1.0057, E/C 0.9994; F/E 1.0227 (F best), F/E macro 1.2042 | DEFENSIBLE |
+
+
+### Defensibility markers
+
+| marker | meaning |
+|---|---|
+| **DEFENSIBLE** | Numbers were re-derived or re-run; a script survives; the denominator is stated. |
+| **DEFENSIBLE (caveat)** | Numbers verify, but protocol/noise/confound limits the claim; caveats are in the entry. |
+| **PARTLY NOT DEFENSIBLE** | Some rows are defensible; the rows named below are not. |
+| **DO NOT QUOTE** | No surviving script/artifact, or the numbers are known broken, leaky, stale or non-reproducible. |
+
+**Register of undefendable claims.** Each row names a specific number or table that must not be quoted, with the defensible alternative.
+
+| ID | undefendable claim | why | marker | use instead |
 |---|---|---|---|---|
-| E1 | Language-dimension census (4-way probe, η²) | NOT AVAILABLE: `langdims_probe.py` | NOT AVAILABLE (UNK) | N/A; probe 1.000 full, 0.999 after zeroing top-557 η² dims |
-| E1b | INLP language-subspace removal | NOT AVAILABLE: `lang_inlp.py` | NOT AVAILABLE (UNK) | N/A; INLP claim (~30 dirs) unverified |
-| E2 | Translated SST-2 / emotion eval sets | `rebuild_caches.py` | PARTIAL | N/A (data prep); supports E4 |
-| E3 | FLORES topic cross-lingual (+ neutralization) | NOT AVAILABLE: `crosslingual_topic*.py` | NOT AVAILABLE (UNK) | N/A; claims 0.234 -> 0.334 unverified |
-| E4 | Sentiment / emotion cross-lingual | NOT AVAILABLE: `crosslingual_sentiment.py` | NOT AVAILABLE (UNK) | 0/12 cells; best SST-2 fr centroid 0.819 |
-| E6 | FLORES topic, INLP arm | NOT AVAILABLE: `crosslingual_inlp.py` | NOT AVAILABLE (UNK) | N/A; no separate claim |
-| E7 | FLORES topic, second variant | NOT AVAILABLE: `crosslingual_topic*.py` | NOT AVAILABLE (UNK) | N/A; no separate claim |
-| E9 | MultiEURLEX long-doc, 210m + 610m | `mel_close.py` | PARTIAL | 610m 0.996 / 0.993 vs native ceiling (numerator unverified); 0.946 / 0.940 vs EN self; 210m fails |
-| E10 | MultiEURLEX, threshold calibration | `mel_close.py` | PARTIAL | 210m l2_thenZ+qm: 0.922 / 0.923 vs EN self — fail |
-| E11 | MultiEURLEX, 610m arm | NOT AVAILABLE: `multieurlex_*.py` | NOT AVAILABLE (UNK) | 610m 0.711 / 0.707 text-only; only passes vs unverified ceiling |
-| E12 | Leading-PC removal (global PCA k=0..5) | `dim_removal.py` | PARTIAL | N/A; best headline XL/EN-self 0.895 (FLORES-agg 610m) |
-| E13 | PC-ablation cascade (original) | NOT AVAILABLE: `pc_ablation*.py` | NOT AVAILABLE (UNK) | N/A; no separate artifact survives |
-| E14 | FLORES gap-closers, primary micro-F1 | `flores_close.py` | REPRODUCIBLE | 5 methods 3/3 on both datasets (micro); no pure EN transform passes |
-| E14b | FLORES gap-closers, macro-F1 view | `flores_close.py` | REPRODUCIBLE | kNN / translate-train / `mlp_align` 6/6 target cells |
-| E15 | Recall-first (FPR at 90% recall) | `imbalanced_recall.py` / `imbalanced_recall_mel.py` | REPRODUCIBLE | FLORES PASS 1.005 (12/24 cells); MultiEURLEX FAIL 1.196 (2/16) |
-| E16 | Alias for the MultiEURLEX gap-closers | `mel_close.py` | PARTIAL | Same as E9/E10/E11; `multieurlex_*.py` missing |
-| E17 | Language dims vs SHAP contribution | `lang_shap_dims.py` | REPRODUCIBLE | N/A; Spearman −0.076 / −0.059 / −0.019 |
-| E18 | Headline out-of-the-box transfer | `proof_mean_alllangs.py` | REPRODUCIBLE | 0/8 target cells; best FLORES-agg IT 0.967 |
-| E19 | Calibration and ceiling feasibility | `flores_calib.py` + `flores_ceiling.py` | PARTIAL | sent 6/6 infeasible; agg 3/6 infeasible vs 0.975 bar |
-| E20 | Toxicity, clean split | `toxi_proof_clean.py` | REPRODUCIBLE | 0/4 on both bars; best fr EN/native 0.896 |
-| E21 | Non-XGBoost classifiers | `models_compare.py` | PARTIAL | F1 3/34, AUC 5/34; no non-degenerate both-metric pass |
-| E22 | Bilingual vs multilingual MT | `mt_compare.py` | PARTIAL | 0/3 BLEU (0.778 / 0.719 / 0.756); chrF 0/3 |
-| E23 | Translate-test | `translate_test_eval.py` | REPRODUCIBLE | 4/6 macro-F1, 6/6 AUC vs EN; 6/6 both vs in-language |
-| E24 | XNLI, PAWS-X, textdetox, SIB-200 | `more_datasets.py` | PARTIAL | 1/13 cells (SIB-200 fr 0.995); 0/4 datasets |
-| E25 | Full language × language matrices | `lang_matrix.py` | REPRODUCIBLE | 2/16 rows (PAWS-X 1.024 / 0.994, near chance); gap shrinks on 8/8 by absolute value |
-| E25b | All-languages vs per-language training | `alllang_vs_perlang.py` | REPRODUCIBLE | 6/6 cells; FLORES 1.032–1.227, toxicity 0.979 / 0.981 |
-| E26 | Leading-dimension removal (third ID) | `dim_removal.py` | PARTIAL | N/A; shares E12's artifact; no separate claim |
-| E27 | Toxicity precision/recall, XGBoost | `toxi_pr.py` / `toxi_pr_all.py` | PARTIAL | 0/2 backbones; 0.708 / 0.771 (JSON); reverse 0.720 / 0.789 |
-| E28 | Backbone × dataset × method grid | `backbone_grid.py` | PARTIAL | N/A (absolute); mel gain largest, toxic none |
-| E29 | Fine-tune last layer + linear head | `finetune_lastlayer.py` | PARTIAL | FT/frozen 20/26; target/EN-self 0/20 |
-| E30 | Synthetic Italian from English | `synth_it.py` / `synth_toxic_it.py` | REPRODUCIBLE (FLORES) | FLORES synth 0.989 / 0.983 and mixed 1.026 / 0.986 pass; toxic 0/8 |
-| E31 | Generator comparison | `gen_compare.py` | PARTIAL | 2/3 generators (0.994, 0.980; Qwen3.5-2B 0.956); toxic NOT DONE |
-| E32 | Union of all generators' paraphrases | `all_paraphrases.py` | REPRODUCIBLE (FLORES) | 1.145 vs real-IT, 1.151 vs best single; 3× volume confound; toxic 2/3 |
-| E33 | FLORES-agg P/R vs threshold, 210m vs 610m | NOT AVAILABLE for full rerun: `agg_pr_2models.py` | PARTIAL (re-emit only) | N/A; derived IT/EN tops at 0.9595, 0/10 cells |
-| E34 | Full-document chunk pooling vs truncation | `chunk_pool_mel.py` | PARTIAL | 0/24 cells; best `concat` FR AUC 0.9638 |
-| E35 | EN- vs IT-trained error buckets | `it_errors.py` / `list_errors.py` | REPRODUCIBLE | N/A; accuracy ratio EN/IT 0.857 (sent), 0.753 (agg) |
-| E36 | Toxicity on the ORIGINAL leaky splits | `toxi_proof.py` | PARTIAL (provenance only) | target/EN 1/4 (es 0.986); EN/native 1/4 (de 1.062); both are artifacts, do not quote |
-| E37 | Seven classifiers at the toxicity bar | `toxi_pr_models.py` | PARTIAL | 13/14 fail; GaussianNB 610m 1.0675 nominal only |
-| E38 | GGUF quantization + EN→PL paraphrase→translate | `gguf_quant_quality.py` | PARTIAL | 6/6 quant cells (min 0.9904); EN→PL N/A |
-| E39 | Exact-translation retrieval | `table1.py` / `table1_agg.py` / `table1_europarl_multilang.py` | PARTIAL | N/A; FLORES mean +D top-1 83.9–90.0% |
-| E40 | Legacy pre-E18 XGBoost suite | NOT AVAILABLE for the tables; archived at `aa3f6f6` | NOT AVAILABLE (UNK), superseded | N/A |
-| E41 | PCA / η² / SHAP diagnostics | `pca_plots.py`, `lang_dims.py`, `shap_flores_*.py` | PARTIAL | N/A |
-| E42 | Raw EN vs EN+IT, IT control, translate-train, translate-test | `en_vs_enit_raw.py`, `en_vs_enit_dclean.py`, `en_vs_enit_ttest.py` | REPRODUCIBLE | A(IT)/B 0.9414 fail; E/B 1.0057, E/C 0.9994; F/E 1.0227 (F best), F/E macro 1.2042 |
+| E1b | INLP ~30 directions to chance | no FLORES basis/curve; only a 2-dir mel basis (probe 0.546) | DO NOT QUOTE | E1 probe claims 1-3 (1.000 / 0.999 / 0.250) |
+| E3/E6/E7 | raw 0.234 -> 0.334 (sent); 0.246 -> 0.356 (agg) | no script, no artifact, never in git | DO NOT QUOTE | E14/E18 for verified FLORES numbers |
+| E4 | SST-2 / emotion transfer table | no script; centroid definition lost | DO NOT QUOTE | E2 data + partial raw-arm re-run |
+| E9/E10/E11 | 610m 0.711 / 0.707; ceiling 0.714 / 0.712 | text-only; no 610m artifact; ceiling has an EN-label bug | DO NOT QUOTE | 210m `mel_close` 0.661 / 0.662 (qm) |
+| E9 | 210m 0.688 / 0.683 | old depth-8 recipe; not reproducible | DO NOT QUOTE | 0.661 / 0.662 (qm) |
+| E12/E13/E26 | FLORES INLP k=5 | 20/129 stale checkpoint hits; fresh 0.2364 vs stored 0.2469 | DO NOT QUOTE | rerun with a clean checkpoint |
+| E14/E14b | XGB method rows as held-out | threshold tuned on val in the fit set; val F1 = 1.000, t = 0.04 | DO NOT QUOTE as held-out | kNN row, or re-run |
+| E15 | MultiEURLEX v1 "English >> native" | v1 outputs gone; label bug confirmed | DO NOT QUOTE | v2 0.426 / 0.357 (fail) |
+| E16 | 610m alias row | same as E9/E10/E11 | DO NOT QUOTE | none |
+| E21 | QDA / GaussianNB both-metric passes | QDA at chance and not reproducible; GNB weak, AUC fails | DO NOT QUOTE as a pass | no non-degenerate pass |
+| E27 | 0.324 / 0.448 / 0.276 and 0.359 / 0.460 / 0.278 | matches no committed artifact; deltas wrong | DO NOT QUOTE | `toxi_pr_all.json` 0.318 / 0.449 and 0.360 / 0.467 |
+| E28 | INLP ranking | INLP not bit-reproducible (up to +0.022) | DO NOT QUOTE the ranking | mean/pc/D cells |
+| E29 | toxic fine-tune columns | 400 steps = 53% of one epoch; no early stop; F1 is macro-F1 | DO NOT QUOTE | FLORES frozen cells; retrain toxic |
+| E30/E31/E32 | toxic arms | E30 cap=160; E31 4,800/8,000; E32 2/3 generators | DO NOT QUOTE | FLORES arms only |
+| E32 | "diversity beats real Italian" | 3x volume; matched-volume control 0.4089 < best single | DO NOT QUOTE | volume-matched control |
+| E33 | fresh full-grid numbers | `agg_pr_methods` missing; only re-emit; thresholds test-selected | DO NOT QUOTE as fresh | re-emitted `agg_pr2.json` |
+| E36 | all toxicity numbers | leaky splits: 84.7-99.9% of eval-test texts in the train pool | DO NOT QUOTE | E20 |
+| E38 | absolute chrF/chrF++/BLEU; EN->PL per-variant block | Latin-1 refs; 0/25 inputs have distinct variants | DO NOT QUOTE absolute | quant/BF16 ratios 0.9904-0.9960 |
+| E39 | Europarl table | embedding directories empty; no output committed | DO NOT QUOTE | FLORES table with the `196bbd3` CSV |
+| E40 | published tables from the worktree | current 2006-row CSV aborts; only `aa3f6f6` archive | DO NOT QUOTE | archived tables at `aa3f6f6` |
+| E41 | SHAP numbers | JSON/MD deleted; 3/4 scripts crash on the 2006-row CSV | DO NOT QUOTE | eta^2 recompute; PNGs qualitative |
 
 **ID gaps.** E5 and E8 have no heading in `EXPERIMENTS.md`, `REPORT.md` or `REPRODUCE.md`; they are
 free IDs, not lost experiments. E16 has no heading in `EXPERIMENTS.md` but is used by `REPORT.md:109`
@@ -163,6 +204,8 @@ E recall/toxicity = E15, E27, E36, E37; F fine-tuning/generation/translation = E
 ---
 
 ## E1/E1b — Language-dimension census + INLP — DONE (partially verified 2026-10-19)
+
+> **DO NOT QUOTE:** The INLP ~30-direction claim is unverified; only probe claims 1-3 are defensible.
 
 **Script to reproduce:** NOT AVAILABLE — `langdims_probe.py` and `lang_inlp.py` never existed in git
 and no complete artifact survives. **(UNK)**
@@ -353,6 +396,8 @@ deletion of 310 MB of artifacts).
 
 ## E3/E6/E7 — FLORES topic cross-lingual — UNVERIFIED (no script, no artifact)
 
+> **DO NOT QUOTE:** All four numbers are documentation-only: no script and no artifact survive.
+
 **Script to reproduce:** NOT AVAILABLE — `crosslingual_topic*.py` and `crosslingual_inlp.py` never
 existed in git; no result artifact survives. **(UNK)**
 
@@ -426,6 +471,8 @@ reproduced" and keep them out of verified result tables.
 ---
 
 ## E4 — Sentiment / emotion cross-lingual — UNVERIFIABLE (audited 2026-10-19)
+
+> **DO NOT QUOTE:** The published table is not defensible: no script or artifact survives and the centroid definition is lost.
 
 **Script to reproduce:** NOT AVAILABLE — `crosslingual_sentiment.py` never existed in git; no result
 artifact survives. **(UNK)**
@@ -546,6 +593,8 @@ in every cell.
 ---
 
 ## E9/E10/E11 — MultiEURLEX long-document transfer — PARTIAL (audited 2026-10-19)
+
+> **DO NOT QUOTE:** Do not quote the 610m row, the 0.714/0.712 ceiling, or the 210m 0.688/0.683 row. They are unverified prose or do not reproduce.
 
 **Script to reproduce:** `mel_close.py` — `python mel_close.py --launch` (foreground: `python
 mel_close.py`). Reproduction status: **PARTIAL**; `multieurlex_*.py` is **NOT AVAILABLE (UNK)**.
@@ -673,6 +722,8 @@ against that ceiling.
 ---
 
 ## E12/E13/E26 — Leading-dimension removal (global PCA / INLP / random) — DONE (verified 2026-10-19)
+
+> **DO NOT QUOTE:** Do not quote the FLORES INLP k=5 row: 20/129 units are stale checkpoint hits; fresh 0.2364 vs stored 0.2469.
 
 **Script to reproduce:** `dim_removal.py` — `python dim_removal.py` (exact flags from the docstring).
 Reproduction status: **PARTIAL**; `pc_ablation*.py` is **NOT AVAILABLE (UNK)**.
@@ -803,6 +854,8 @@ The 8 PNGs are valid 1625x624 RGBA files from the same run.
 
 ## E14/E14b — FLORES English→non-English gap-closers — DONE (audited 2026-10-19)
 
+> **DO NOT QUOTE:** Do not quote the XGB rows as held-out: the threshold is tuned on the val split that is in the fit set (val F1 = 1.000, t = 0.04).
+
 **Script to reproduce:** `flores_close.py` — `python flores_close.py --launch` (detached hidden full
 run; foreground `python flores_close.py`). Reproduction status: **REPRODUCIBLE**. 11 cells re-ran
 exactly; the MD was rebuilt byte-identically from the JSON.
@@ -930,6 +983,8 @@ rows for the transform, but its threshold is still tuned on in-sample val labels
 
 ## E15 — English vs native at high recall — DONE (audited 2026-10-20)
 
+> **DO NOT QUOTE:** The MultiEURLEX v1 "English >> native" claim is not defensible; v1 outputs are gone and the label bug is confirmed.
+
 **Script to reproduce:** `imbalanced_recall.py` / `imbalanced_recall_mel.py` — `python
 imbalanced_recall.py` and `python imbalanced_recall_mel.py --launch --n-rare 8 --device auto`.
 Reproduction status: **REPRODUCIBLE**.
@@ -1039,6 +1094,8 @@ the reported "English >> native" v1 result. The v1 outputs (`imbalanced_recall_m
 ---
 
 ### E16 (alias) — MultiEURLEX gap-closers
+
+> **DO NOT QUOTE:** Alias for E9/E10/E11; the 610m numbers are unverified.
 
 **Script to reproduce:** same script as E9/E10/E11 — `mel_close.py` — `python mel_close.py --launch`.
 Reproduction status: **PARTIAL**; `multieurlex_*.py` is **NOT AVAILABLE (UNK)**.
@@ -1444,6 +1501,8 @@ test rows (max AUC shift 0.013).
 ---
 
 ## E21 — Non-XGBoost classifiers — DONE (audited 2026-10-19; 0.975 claim not supported)
+
+> **DO NOT QUOTE:** Do not quote QDA or GaussianNB as a working classifier: QDA is at chance and not reproducible; GNB is weak and fails AUC.
 
 **Script to reproduce:** `models_compare.py` — `python models_compare.py`. Reproduction status:
 **PARTIAL** (GaussianNB, MLP, XGBoost and SVC_linear cells re-ran exactly; QDA rows do not reproduce).
@@ -1857,6 +1916,8 @@ ceiling** in all six macro-F1 and all six AUC cells in this pipeline.
 
 ## E24 — More datasets: XNLI, PAWS-X, textdetox, SIB-200 — DONE (numbers verified 2026-10-19; interpretation qualified)
 
+> **DO NOT QUOTE:** Do not quote PAWS-X as a working transfer result (near chance), and note textdetox train/test duplicates.
+
 **Script to reproduce:** `more_datasets.py` — `python more_datasets.py --dataset
 xnli,pawsx,textdetox,sib200` (or `--launch` for a detached run). Reproduction status: **PARTIAL** —
 all numbers reproduce the shipped JSON, but the dataset caches and HF revisions live outside the repo,
@@ -1982,6 +2043,8 @@ observed parallel structure, so task and data source are not separated.
 ---
 
 ## E25 — Full language × language matrices — DONE (verified 2026-10-19)
+
+> **DO NOT QUOTE:** Do not quote PAWS-X parity as a working system (near chance); textdetox has 12.4% de train/test duplicates.
 
 **Script to reproduce:** `lang_matrix.py` — `python lang_matrix.py --launch` (full 66-row grid,
 ~4353 s) or `python lang_matrix.py --render`. Reproduction status: **REPRODUCIBLE** for the stored
@@ -2235,6 +2298,8 @@ drops on toxicity.
 
 ## E27 — Toxicity precision/recall, XGBoost (two pipelines) — PARTIAL (audited 2026-10-20)
 
+> **DO NOT QUOTE:** The E27 table matches no committed artifact and its deltas are wrong. Use `toxi_pr_all.json`.
+
 **Script to reproduce:** `toxi_pr.py` / `toxi_pr_all.py` — `python toxi_pr.py`;
 `python toxi_pr_all.py` (both from `C:\Users\pedro\Documents\random_projects\multi`). Reproduction
 status: **PARTIAL**.
@@ -2332,6 +2397,8 @@ native on Italian, and 610m helps. Its exact cells, deltas, and provenance do no
 ---
 
 ## E28 — Backbone × dataset × method grid — DONE (verified 2026-10-19)
+
+> **DO NOT QUOTE:** Do not rank INLP: it is not bit-reproducible (up to +0.022). Mean/pc/D reproduce.
 
 **Script to reproduce:** `backbone_grid.py` — `python backbone_grid.py --launch` (all 48 cells;
 `--datasets/--backbones/--methods/--trials` narrow it). Reproduction status: **PARTIAL** —
@@ -2511,6 +2578,8 @@ Full per-metric tables are in `backbone_grid.md`; the JSON also contains per-tar
 
 ## E29 — Fine-tune last layer + linear head, raw — DONE (verified 2026-10-20)
 
+> **DO NOT QUOTE:** Do not quote the toxic columns: 400 steps = 53% of one epoch, early stopping cannot trigger, and "F1" is macro-F1, not F1(pos).
+
 **Script to reproduce:** `finetune_lastlayer.py` — `python finetune_lastlayer.py --launch` (the only
 invocation documented anywhere; the run actually used an undocumented `--caps` override). Reproduction
 status: **PARTIAL**.
@@ -2623,6 +2692,8 @@ frozen arm trains on train+val. On agg AUC the two are equal (ratio 1.009–1.02
 ---
 
 ## E30 — Synthetic Italian from English — DONE (FLORES) / partial (toxic)
+
+> **DO NOT QUOTE:** Do not quote the toxic arm: only cap=160 is stored; the full run is NOT DONE.
 
 **Script to reproduce:** `synth_it.py` / `synth_toxic_it.py` — `python synth_it.py --generator
 HuggingFaceTB/SmolLM3-3B --gen-batch 16` (FLORES) and `python synth_toxic_it.py --generator
@@ -2741,6 +2812,8 @@ ratio 0.777). The `real_it` arm trains on 18,472 real-IT rows vs **160** synthet
 
 ## E31 — Generator comparison — FLORES DONE, toxic NOT DONE (verified 2026-10-20)
 
+> **DO NOT QUOTE:** Do not quote the toxic arm (NOT DONE). The "Qwen2B worse than 0.8B" claim is not supported (AUC CI favors 2B).
+
 **Script to reproduce:** `gen_compare.py` — `python gen_compare.py --datasets flores --backbones 210m`
 (FLORES table from the on-disk cache; ~2 min) and `python gen_compare.py --from-json` (rebuild
 `.md`/`.png` only). Reproduction status: **PARTIAL**.
@@ -2856,6 +2929,8 @@ with the metric. The toxic arm is **NOT DONE** (2/3 generators, no SmolLM2).
 ---
 
 ## E32 — Union of all generators' paraphrases — FLORES DONE (verified 2026-10-20), toxic PARTIAL
+
+> **DO NOT QUOTE:** Do not quote the toxic arm (2/3 generators) or the "diversity beats real Italian" claim: 3x volume, matched control below best single.
 
 **Script to reproduce:** `all_paraphrases.py` — `python all_paraphrases.py` (default `--datasets
 flores,toxic`, 273.7 s). FLORES only: `python all_paraphrases.py --datasets flores` (181.7 s). Rebuild
@@ -2995,6 +3070,8 @@ real-Italian reference at 3× the rows".
 
 ## E33 — FLORES-agg precision/recall vs threshold, 210m vs 610m (Optuna) — DONE, PARTIALLY REPRODUCIBLE (audited 2026-10-20)
 
+> **DO NOT QUOTE:** Do not quote as a fresh result: a full rerun is impossible (missing `agg_pr_methods`); only `--reemit-from-json` works.
+
 **Script to reproduce:** NOT AVAILABLE for a full rerun — `agg_pr_2models.py` imports the missing
 `agg_pr_methods`; only `--reemit-from-json` works. **(UNK for a full rerun.)**
 `python agg_pr_2models.py --reemit-from-json` regenerates figures + md/json only.
@@ -3131,6 +3208,8 @@ so the tuning objective does not predict transfer.
 ---
 
 ## E34 — Full-document chunk pooling vs 512-token truncation on MultiEURLEX — DONE (verified 2026-10-20)
+
+> **DO NOT QUOTE:** Do not quote the smoke outputs; the trunc/mean cells are the exact ones.
 
 **Script to reproduce:** `chunk_pool_mel.py` — `python chunk_pool_mel.py`. Reproduction status:
 **PARTIAL** (training / metric stage re-ran bit-exact for 2 of 4 schemes; the embedding stage was not
@@ -3269,6 +3348,8 @@ pooling sees 4.7× (en test), 7.4× (de test) and 7.1× (fr test) the tokens of 
 
 ## E35 — EN-trained vs IT-trained error buckets on FLORES, plus a general error lister — DONE (audited 2026-10-20)
 
+> **DO NOT QUOTE:** Only the sent artifact survives; the agg `list_errors` artifact was overwritten.
+
 **Script to reproduce:** `it_errors.py` / `list_errors.py` — `python it_errors.py`; `python
 list_errors.py --dataset sent` (and `--dataset agg`). Reproduction status: **REPRODUCIBLE**.
 
@@ -3367,6 +3448,8 @@ translations (E39), and what the pre-E18 baseline actually said (E40).
 ---
 
 ## E36 — Toxicity on the ORIGINAL leaky `toxi-text-3M` splits — PROVENANCE ONLY, DO NOT QUOTE
+
+> **DO NOT QUOTE:** PROVENANCE ONLY. Do not quote any number: 84.7-99.9% of eval-test texts appear in the train pool.
 
 **Script to reproduce:** `toxi_proof.py` — `python toxi_proof.py` (detached:
 `python toxi_proof.py --launch`). Reproduction status: **PARTIAL** (test composition, pool sizes and
@@ -3635,6 +3718,8 @@ four classifiers were not refit; the JSON is a merged, older artifact).
 
 ## E38 — GGUF quantization quality (EN->IT) and EN->PL paraphrase->translate — PARTIAL (audited 2026-10-20)
 
+> **DO NOT QUOTE:** Do not quote absolute chrF/BLEU: the references are Latin-1-mangled. Ratios survive; the EN->PL per-variant block is vacuous.
+
 **Script to reproduce:** `gguf_quant_quality.py` — `python gguf_quant_quality.py --n 150 --n-ctx 2048
 --n-gpu-layers -1 --n-threads 4`. Reproduction status: **PARTIAL**.
 
@@ -3764,6 +3849,8 @@ prompts, but it is a 25-sentence, single-seed result.
 
 ## E39 — Exact-translation retrieval (FLORES + Europarl) — DONE (audited 2026-10-20)
 
+> **DO NOT QUOTE:** Do not quote the Europarl table: the embedding directories are empty and no output was committed.
+
 **Script to reproduce:** `table1.py` / `table1_agg.py` / `table1_europarl_multilang.py` — `python
 table1.py` (currently fails: see Inputs), `python table1_agg.py`, `python
 table1_europarl_multilang.py all`. Reproduction status: **PARTIAL** (FLORES and FLORES-agg reproduce;
@@ -3881,6 +3968,8 @@ Germanic ones. The shift is the dominant lever in every table.
 ---
 
 ## E40 — Legacy pre-E18 XGBoost suite (FLORES topic / SST-2 / emotion) — SUPERSEDED (audited 2026-10-20)
+
+> **DO NOT QUOTE:** Do not quote the published tables from the working tree: every entry point aborts on the 2006-row CSV.
 
 **Script to reproduce:** NOT AVAILABLE for the published result tables — the scripts exist but their
 JSON/MD outputs were deleted and not retained. **(UNK)** Partial re-runs are possible; see the table.
@@ -4020,6 +4109,8 @@ Italian (E27, E37)? And what did the pre-clean, leaky toxicity run say before E2
 ---
 
 ## E41 — Dimensionality diagnostics: PCA, η², SHAP — DONE, evidence PARTIAL (audited 2026-10-20)
+
+> **DO NOT QUOTE:** Do not quote SHAP numbers: the JSON/MD were deleted and 3/4 scripts crash on the 2006-row CSV.
 
 **Script to reproduce:** `pca_plots.py` / `lang_dims.py` / `shap_flores_lang.py` /
 `shap_flores_dropped.py` — `python pca_plots.py`; `python lang_dims.py`;
