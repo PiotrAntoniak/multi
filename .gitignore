@@ -87,3 +87,10 @@ toxi_emb_610/
 models/*.gguf
 *.partial.json
 *.pyc
+
+# MARC: tracked data is the single 10k-per-language CSV; full data and
+# embeddings stay local.
+data/marc_full/
+marc_emb_full/
+data/marc/*.jsonl
+data/marc/*.jsonl.meta.json
