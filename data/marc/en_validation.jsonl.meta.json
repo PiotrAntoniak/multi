@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "kept": 2000,
+  "stream_rows": 5000,
+  "cap": 2000,
+  "seed": 1,
+  "sampler": "uniform-over-stream (heap of random keys)"
+}
